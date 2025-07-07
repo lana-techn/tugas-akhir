@@ -1,6 +1,6 @@
 <?php
 session_start();
-require '../config/koneksi.php';
+require __DIR__ . '/../config/koneksi.php';
 
 // Cek apakah pengguna login dan levelnya admin
 if (!isset($_SESSION['level']) || $_SESSION['level'] !== 'admin') {

@@ -1,17 +1,17 @@
 <?php
-session_start();
-if (!isset($_SESSION['level']) || $_SESSION['level'] !== 'pemilik') {
-    header("Location: login.php");
-    exit;
-}
-$level = $_SESSION['level'];
+require_once 'config/koneksi.php';
+requireLogin('pemilik');
+
+$userInfo = getUserInfo();
+$level = $userInfo['level'];
+$email = $userInfo['email'];
 ?>
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <title>Dashboard Pemilik</title>
-    <link rel="stylesheet" href="../public/css/style.css">
+    <link rel="stylesheet" href="assets/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
@@ -32,13 +32,13 @@ $level = $_SESSION['level'];
                 </ul>
             </li>
 
-            <li><a href="logout.php"><i class="fas fa-sign-out-alt"></i> <span>Logout</span></a></li>
+            <li><a href="auth/logout.php"><i class="fas fa-sign-out-alt"></i> <span>Logout</span></a></li>
         </ul>
     </div>
 
     <div class="main-content">
         <div class="topbar">
-            <span><?php echo $level; ?>@gmail.com</span>
+            <span><?php echo !empty($email) ? $email : $level . '@gmail.com'; ?></span>
         </div>
 
         <div class="dashboard-header">

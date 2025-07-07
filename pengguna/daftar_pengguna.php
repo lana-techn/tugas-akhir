@@ -1,15 +1,11 @@
 <?php
-session_start();
-require '../config/koneksi.php';
-
-// Cek login dan level admin
-if (!isset($_SESSION['level']) || $_SESSION['level'] !== 'admin') {
-    header('Location: login.php');
-    exit;
-}
+require __DIR__ . '/../config/koneksi.php';
+requireLogin('admin');
 
 $query = "SELECT * FROM pengguna";
 $result = mysqli_query($conn, $query);
+
+$userInfo = getUserInfo();
 ?>
 
 <!DOCTYPE html>
@@ -17,7 +13,7 @@ $result = mysqli_query($conn, $query);
 <head>
     <meta charset="UTF-8">
     <title>Daftar Pengguna</title>
-    <link rel="stylesheet" href="../public/css/daftar_pengguna.css">
+    <link rel="stylesheet" href="../assets/css/daftar_pengguna.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
@@ -65,7 +61,7 @@ $result = mysqli_query($conn, $query);
 
 <div class="main-content">
     <div class="topbar">
-        <span><?= htmlspecialchars($_SESSION['email'] ?? '') ?></span>
+        <span><?= htmlspecialchars($userInfo['email']) ?></span>
     </div>
 
     <div class="content">
@@ -89,11 +85,11 @@ $result = mysqli_query($conn, $query);
                 ?>
                     <tr>
                         <td><?= $no++ ?></td>
-                        <td><?= htmlspecialchars($row['email']) ?></td>
-                        <td><?= htmlspecialchars($row['level']) ?></td>
+                        <td><?= htmlspecialchars($row['Email']) ?></td>
+                        <td><?= htmlspecialchars($row['Level']) ?></td>
                         <td>
-                            <a href="edit_pengguna.php?id=<?= $row['id_pengguna'] ?>" class="btn-edit">Edit</a>
-                            <a href="hapus_pengguna.php?id=<?= $row['id_pengguna'] ?>" class="btn-hapus" onclick="return confirm('Anda yakin ingin menghapusnya ?')">Hapus</a>
+                            <a href="edit_pengguna.php?id=<?= $row['Id_Pengguna'] ?>" class="btn-edit">Edit</a>
+                            <a href="hapus_pengguna.php?id=<?= $row['Id_Pengguna'] ?>" class="btn-hapus" onclick="return confirm('Anda yakin ingin menghapusnya ?')">Hapus</a>
                         </td>
                     </tr>
                 <?php endwhile ?>

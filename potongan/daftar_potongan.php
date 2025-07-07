@@ -1,6 +1,6 @@
 <?php
 session_start();
-require '../config/koneksi.php';
+require __DIR__ . '/../config/koneksi.php';
 
 if (!isset($_SESSION['level']) || $_SESSION['level'] !== 'admin') {
     header("Location: login.php");

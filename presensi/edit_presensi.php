@@ -1,6 +1,6 @@
 <?php
 session_start();
-require '../config/koneksi.php';
+require __DIR__ . '/../config/koneksi.php';
 
 $id = $_GET['id'] ?? '';
 if (!$id) {

@@ -1,17 +1,17 @@
 <?php
-session_start();
-if (!isset($_SESSION['level']) || $_SESSION['level'] !== 'admin') {
-    header("Location: ../auth/login.php");
-    exit;
-}
-$level = $_SESSION['level'];
+require_once 'config/koneksi.php';
+requireLogin('admin');
+
+$userInfo = getUserInfo();
+$level = $userInfo['level'];
+$email = $userInfo['email'];
 ?>
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <title>Dashboard</title>
-    <link rel="stylesheet" href="../public/css/style.css">
+    <link rel="stylesheet" href="assets/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
@@ -25,21 +25,21 @@ $level = $_SESSION['level'];
             <li class="has-submenu">
                 <a href="#"><i class="fas fa-folder"></i> <span>Data Master</span> <i class="fas fa-chevron-down"></i></a>
                 <ul class="submenu">
-                    <li><a href="daftar_pengguna.php">Pengguna</a></li>
-                    <li><a href="daftar_jabatan.php">Jabatan</a></li>
-                    <li><a href="daftar_karyawan.php">Karyawan</a></li>
-                    <li><a href="daftar_presensi.php">Presensi</a></li>
-                    <li><a href="daftar_gapok.php">Gaji Pokok</a></li>
-                    <li><a href="daftar_tunjangan.php">Tunjangan</a></li>
-                    <li><a href="daftar_lembur.php">Lembur</a></li>
-                    <li><a href="daftar_potongan.php">Potongan</a></li>
+                    <li><a href="pengguna/daftar_pengguna.php">Pengguna</a></li>
+                    <li><a href="jabatan/daftar_jabatan.php">Jabatan</a></li>
+                    <li><a href="karyawan/daftar_karyawan.php">Karyawan</a></li>
+                    <li><a href="presensi/daftar_presensi.php">Presensi</a></li>
+                    <li><a href="gaji/daftar_gapok.php">Gaji Pokok</a></li>
+                    <li><a href="tunjangan/daftar_tunjangan.php">Tunjangan</a></li>
+                    <li><a href="lembur/daftar_lembur.php">Lembur</a></li>
+                    <li><a href="potongan/daftar_potongan.php">Potongan</a></li>
                 </ul>
             </li>
 
             <li class="has-submenu">
               <a href="#"><i class="fas fa-money-bill"></i> <span>Penggajian</span> <i class="fas fa-chevron-down"></i></a>
                  <ul class="submenu">
-                    <li><a href="../gaji/pengajuan_gaji.php">Pengajuan Gaji</a></li>
+                    <li><a href="gaji/pengajuan_gaji.php">Pengajuan Gaji</a></li>
                     <li><a href="#">Daftar Gaji</a></li>
                     <li><a href="#">Slip Gaji</a></li>
                 </ul>
@@ -53,13 +53,13 @@ $level = $_SESSION['level'];
                 </ul>
             </li>
 
-            <li><a href="../auth/logout.php"><i class="fas fa-sign-out-alt"></i> <span>Logout</span></a></li>
+            <li><a href="auth/logout.php"><i class="fas fa-sign-out-alt"></i> <span>Logout</span></a></li>
         </ul>
     </div>
 
     <div class="main-content">
         <div class="topbar">
-            <span><?php echo $level; ?>@gmail.com</span>
+            <span><?php echo !empty($email) ? $email : $level . '@gmail.com'; ?></span>
         </div>
 
         <div class="dashboard-header">

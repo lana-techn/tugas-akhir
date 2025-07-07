@@ -1,6 +1,6 @@
 <?php
 session_start();
-require '../config/koneksi.php';
+require __DIR__ . '/../config/koneksi.php';
 
 // Cek apakah tabel pengguna masih kosong
 $cek_user = $conn->query("SELECT COUNT(*) AS total FROM pengguna");

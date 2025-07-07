@@ -1,6 +1,6 @@
 <?php
 session_start();
-require './config/koneksi.php';
+require __DIR__ . '/../config/koneksi.php';
 
 $error = '';
 
@@ -9,21 +9,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $password = $_POST['password'] ?? '';
 
     if (!empty($email) && !empty($password)) {
-        $stmt = $conn->prepare("SELECT * FROM pengguna WHERE email = ?");
+        $stmt = $conn->prepare("SELECT * FROM pengguna WHERE Email = ?");
         $stmt->bind_param("s", $email);
         $stmt->execute();
         $result = $stmt->get_result();
 
         if ($result->num_rows === 1) {
             $user = $result->fetch_assoc();
-
-            // Cek apakah password tersimpan sebagai hash atau teks biasa
-            if (password_verify($password, $user['password']) || $password === $user['password']) {
-                $_SESSION['email'] = $user['email'];
-                $_SESSION['level'] = $user['level'];
-
+            
+            // Cek password
+            if (password_verify($password, $user['Password']) || $password === $user['Password']) {
+                $_SESSION['email'] = $user['Email'];
+                $_SESSION['level'] = $user['Level'];
+                
                 // Redirect sesuai level
-                switch ($user['level']) {
+                $userLevel = strtolower($user['Level']);
+                
+                switch ($userLevel) {
                     case 'admin':
                         header("Location: ../index.php");
                         break;
@@ -34,14 +36,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         header("Location: ../karyawan/index_karyawan.php");
                         break;
                     default:
-                        $error = "Level pengguna tidak dikenali.";
+                        $error = "Level pengguna tidak dikenali!";
                 }
                 exit;
             } else {
-                $error = "Password salah!";
+                $error = "Email atau password salah!";
             }
         } else {
-            $error = "Email tidak ditemukan!";
+            $error = "Email atau password salah!";
         }
     } else {
         $error = "Email dan password wajib diisi!";
@@ -53,7 +55,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <html>
 <head>
     <title>Login</title>
-    <link rel="stylesheet" type="text/css" href="../public/css/login.css">
+    <link rel="stylesheet" type="text/css" href="../assets/css/login.css">
 </head>
 <body>
     <div class="login-container">
