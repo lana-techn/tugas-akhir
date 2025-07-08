@@ -9,8 +9,6 @@ $action = $_GET['action'] ?? 'list'; // Aksi default
 $id = $_GET['id'] ?? null;
 $page_title = 'Manajemen Tunjangan';
 
-// Ambil data untuk dropdown jabatan
-$jabatan_list = $conn->query("SELECT id_jabatan, nama_jabatan FROM jabatan ORDER BY nama_jabatan ASC")->fetch_all(MYSQLI_ASSOC);
 
 // 2. LOGIC HANDLING
 // =======================================
@@ -41,24 +39,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $id_tunjangan = $_POST['id_tunjangan'] ?? null;
     $nama_tunjangan = trim($_POST['nama_tunjangan']);
-    $id_jabatan = $_POST['id_jabatan'];
     $jumlah = filter_input(INPUT_POST, 'jumlah_tunjangan', FILTER_VALIDATE_INT);
     $keterangan = trim($_POST['keterangan']);
 
-    if (empty($nama_tunjangan) || empty($id_jabatan) || $jumlah === false) {
-        set_flash_message('error', 'Nama, jabatan, dan jumlah tunjangan wajib diisi dengan format yang benar.');
+    if (empty($nama_tunjangan) || $jumlah === false) {
+        set_flash_message('error', 'Nama dan jumlah tunjangan wajib diisi dengan format yang benar.');
     } else {
         if ($id_tunjangan) { // --- Proses EDIT ---
-            $stmt = $conn->prepare("UPDATE tunjangan SET nama_tunjangan = ?, id_jabatan = ?, jumlah_tunjangan = ?, keterangan = ? WHERE id_tunjangan = ?");
-            $stmt->bind_param("ssiss", $nama_tunjangan, $id_jabatan, $jumlah, $keterangan, $id_tunjangan);
+            $stmt = $conn->prepare("UPDATE tunjangan SET nama_tunjangan = ?, jumlah_tunjangan = ?, keterangan = ? WHERE id_tunjangan = ?");
+            $stmt->bind_param("siss", $nama_tunjangan, $jumlah, $keterangan, $id_tunjangan);
             $action_text = 'diperbarui';
         } else { // --- Proses TAMBAH ---
             $result = $conn->query("SELECT id_tunjangan FROM tunjangan ORDER BY id_tunjangan DESC LIMIT 1");
             $last_id_num = $result->num_rows > 0 ? intval(substr($result->fetch_assoc()['id_tunjangan'], 2)) : 0;
             $id_tunjangan_new = 'TJ' . str_pad($last_id_num + 1, 3, '0', STR_PAD_LEFT);
             
-            $stmt = $conn->prepare("INSERT INTO tunjangan (id_tunjangan, nama_tunjangan, id_jabatan, jumlah_tunjangan, keterangan) VALUES (?, ?, ?, ?, ?)");
-            $stmt->bind_param("sssis", $id_tunjangan_new, $nama_tunjangan, $id_jabatan, $jumlah, $keterangan);
+            $stmt = $conn->prepare("INSERT INTO tunjangan (id_tunjangan, nama_tunjangan, jumlah_tunjangan, keterangan) VALUES (?, ?, ?, ?)");
+            $stmt->bind_param("ssis", $id_tunjangan_new, $nama_tunjangan, $jumlah, $keterangan);
             $action_text = 'ditambahkan';
         }
 
@@ -136,7 +133,6 @@ generate_csrf_token();
                         <thead class="text-xs uppercase bg-[#a5d6a7]">
                             <tr>
                                 <th class="px-4 py-3 border">NAMA TUNJANGAN</th>
-                                <th class="px-4 py-3 border">JABATAN</th>
                                 <th class="px-4 py-3 border">JUMLAH</th>
                                 <th class="px-4 py-3 border">KETERANGAN</th>
                                 <th class="px-4 py-3 border">AKSI</th>
@@ -144,13 +140,12 @@ generate_csrf_token();
                         </thead>
                         <tbody>
                             <?php
-                            $query = "SELECT t.*, j.nama_jabatan FROM tunjangan t LEFT JOIN jabatan j ON t.id_jabatan = j.id_jabatan ORDER BY t.nama_tunjangan ASC";
+                            $query = "SELECT * FROM tunjangan ORDER BY nama_tunjangan ASC";
                             $result = $conn->query($query);
                             while ($row = $result->fetch_assoc()):
                             ?>
                             <tr class="bg-white border-b">
                                 <td class="px-4 py-3 border text-left"><?= e($row['nama_tunjangan']) ?></td>
-                                <td class="px-4 py-3 border text-left"><?= e($row['nama_jabatan']) ?></td>
                                 <td class="px-4 py-3 border">Rp <?= number_format($row['jumlah_tunjangan'], 0, ',', '.') ?></td>
                                 <td class="px-4 py-3 border text-left"><?= e($row['keterangan']) ?></td>
                                 <td class="px-4 py-3 border">
@@ -177,15 +172,6 @@ generate_csrf_token();
                         <input type="text" id="nama_tunjangan" name="nama_tunjangan" value="<?= e($tunjangan_data['nama_tunjangan'] ?? '') ?>" class="w-full px-3 py-2 border rounded-md" required>
                     </div>
 
-                    <div class="mb-4">
-                        <label for="id_jabatan" class="block mb-2 text-sm font-bold text-gray-700">Untuk Jabatan</label>
-                        <select id="id_jabatan" name="id_jabatan" class="w-full px-3 py-2 border rounded-md" required>
-                            <option value="">- Pilih Jabatan -</option>
-                            <?php foreach($jabatan_list as $jabatan): ?>
-                            <option value="<?= e($jabatan['id_jabatan']) ?>" <?= (isset($tunjangan_data) && $tunjangan_data['id_jabatan'] == $jabatan['id_jabatan']) ? 'selected' : '' ?>><?= e($jabatan['nama_jabatan']) ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
                     
                     <div class="mb-4">
                         <label for="jumlah_tunjangan" class="block mb-2 text-sm font-bold text-gray-700">Jumlah Tunjangan (Rp)</label>
