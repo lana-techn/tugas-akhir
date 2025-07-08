@@ -1,6 +1,6 @@
 <?php
 // Memuat fungsi inti dan memulai sesi
-require_once __DIR__ . '/../pages/functions.php';
+require_once __DIR__ . '/functions.php';
 ?>
 <!DOCTYPE html>
 <html lang="id">
