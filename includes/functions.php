@@ -12,7 +12,7 @@ require_once dirname(__DIR__) . '/config/koneksi.php';
  * @return mysqli
  */
 function db_connect() {
-    $conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
+    $conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME, 3306, '/Applications/XAMPP/xamppfiles/var/mysql/mysql.sock');
     if ($conn->connect_error) {
         die("Koneksi database gagal: " . $conn->connect_error);
     }
@@ -28,7 +28,7 @@ function require_login($required_level = null) {
         header('Location: ' . BASE_URL . '/auth/login.php');
         exit();
     }
-    if ($required_level && $_SESSION['level'] !== $required_level) {
+    if ($required_level && strtolower($_SESSION['level']) !== strtolower($required_level)) {
         http_response_code(403);
         die("Akses Ditolak. Anda tidak memiliki izin untuk mengakses halaman ini.");
     }
