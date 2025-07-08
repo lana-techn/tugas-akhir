@@ -1,56 +1,23 @@
 <?php
-$host = "localhost";
-$user = "root";
-$pass = "";
-$db   = "db_penggajian";
+// 1. PENGATURAN DATABASE
 
-$conn = new mysqli($host, $user, $pass, $db);
-if ($conn->connect_error) {
-    die("Koneksi gagal: " . $conn->connect_error);
-}
+define('DB_HOST', 'localhost');
+define('DB_USER', 'root');
+define('DB_PASS', '');
+define('DB_NAME', 'db_penggajian');
 
-// Authentication Functions
-function checkLogin($requiredLevel = null) {
-    if (session_status() == PHP_SESSION_NONE) {
-        session_start();
-    }
-    
-    if (!isset($_SESSION['level']) || empty($_SESSION['level'])) {
-        return false;
-    }
-    
-    if ($requiredLevel !== null && strtolower($_SESSION['level']) !== strtolower($requiredLevel)) {
-        return false;
-    }
-    
-    return true;
-}
+// 2. PENGATURAN APLIKASI
+define('APP_NAME', 'Sistem Penggajian Karyawan');
+// Ganti dengan path root folder proyek Anda di server
+define('BASE_URL', 'http://localhost/tugas-akhir'); 
 
-function redirectToLogin() {
-    // Get current directory to determine redirect path
-    $currentDir = basename(dirname($_SERVER['PHP_SELF']));
-    
-    if ($currentDir === 'karyawan') {
-        header("Location: ../auth/login.php");
-    } else {
-        header("Location: auth/login.php");
-    }
-    exit;
-}
+// 3. PENGATURAN KEAMANAN & SESI
+define('SESSION_TIMEOUT', 3600); // Durasi sesi dalam detik (1 jam)
 
-function requireLogin($requiredLevel = null) {
-    if (!checkLogin($requiredLevel)) {
-        redirectToLogin();
-    }
-}
+// 4. PENGATURAN ZONA WAKTU
+date_default_timezone_set('Asia/Jakarta');
 
-function getUserInfo() {
-    if (session_status() == PHP_SESSION_NONE) {
-        session_start();
-    }
-    
-    return [
-        'level' => $_SESSION['level'] ?? '',
-        'email' => $_SESSION['email'] ?? ''
-    ];
-}
+// 5. PENGATURAN ERROR REPORTING (matikan di production)
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+?>
