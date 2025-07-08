@@ -14,16 +14,16 @@ $current_page = $current_page ?? ''; // Halaman aktif saat ini
 
         <?php if ($user_level === 'admin'): ?>
         <div class="px-5 mt-4 mb-2 text-xs uppercase text-gray-500 font-bold">Data Master</div>
-        <a href="<?= BASE_URL ?>/pengguna/pengguna.php" class="flex items-center px-5 py-3 text-sm text-black hover:bg-[#388e3c] hover:text-white"><i class="fas fa-user-shield w-6 text-center"></i> <span class="ml-2">Pengguna</span></a>
-        <a href="<?= BASE_URL ?>/jabatan/jabatan.php" class="flex items-center px-5 py-3 text-sm text-black hover:bg-[#388e3c] hover:text-white"><i class="fas fa-briefcase w-6 text-center"></i> <span class="ml-2">Jabatan</span></a>
-        <a href="<?= BASE_URL ?>/karyawan/karyawan.php" class="flex items-center px-5 py-3 text-sm text-black hover:bg-[#388e3c] hover:text-white"><i class="fas fa-users w-6 text-center"></i> <span class="ml-2">Karyawan</span></a>
-        <a href="<?= BASE_URL ?>/presensi/presensi.php" class="flex items-center px-5 py-3 text-sm text-black hover:bg-[#388e3c] hover:text-white"><i class="fas fa-user-check w-6 text-center"></i> <span class="ml-2">Presensi</span></a>
+        <a href="<?= BASE_URL ?>/pages/pengguna.php" class="flex items-center px-5 py-3 text-sm text-black hover:bg-[#388e3c] hover:text-white"><i class="fas fa-user-shield w-6 text-center"></i> <span class="ml-2">Pengguna</span></a>
+        <a href="<?= BASE_URL ?>/pages/jabatan.php" class="flex items-center px-5 py-3 text-sm text-black hover:bg-[#388e3c] hover:text-white"><i class="fas fa-briefcase w-6 text-center"></i> <span class="ml-2">Jabatan</span></a>
+        <a href="<?= BASE_URL ?>/pages/karyawan.php" class="flex items-center px-5 py-3 text-sm text-black hover:bg-[#388e3c] hover:text-white"><i class="fas fa-users w-6 text-center"></i> <span class="ml-2">Karyawan</span></a>
+        <a href="<?= BASE_URL ?>/pages/presensi.php" class="flex items-center px-5 py-3 text-sm text-black hover:bg-[#388e3c] hover:text-white"><i class="fas fa-user-check w-6 text-center"></i> <span class="ml-2">Presensi</span></a>
         
         <div class="px-5 mt-4 mb-2 text-xs uppercase text-gray-500 font-bold">Penggajian</div>
-        <a href="<?= BASE_URL ?>/gaji/salary.php" class="flex items-center px-5 py-3 text-sm text-black hover:bg-[#388e3c] hover:text-white"><i class="fas fa-money-check-dollar w-6 text-center"></i> <span class="ml-2">Gaji Pokok</span></a>
-        <a href="<?= BASE_URL ?>/tunjangan/tunjangan.php" class="flex items-center px-5 py-3 text-sm text-black hover:bg-[#388e3c] hover:text-white"><i class="fas fa-gift w-6 text-center"></i> <span class="ml-2">Tunjangan</span></a>
-        <a href="<?= BASE_URL ?>/lembur/lembur.php" class="flex items-center px-5 py-3 text-sm text-black hover:bg-[#388e3c] hover:text-white"><i class="fas fa-clock w-6 text-center"></i> <span class="ml-2">Lembur</span></a>
-        <a href="<?= BASE_URL ?>/potongan/potongan.php" class="flex items-center px-5 py-3 text-sm text-black hover:bg-[#388e3c] hover:text-white"><i class="fas fa-cut w-6 text-center"></i> <span class="ml-2">Potongan</span></a>
+        <a href="<?= BASE_URL ?>/pages/salary.php" class="flex items-center px-5 py-3 text-sm text-black hover:bg-[#388e3c] hover:text-white"><i class="fas fa-money-check-dollar w-6 text-center"></i> <span class="ml-2">Gaji Pokok</span></a>
+        <a href="<?= BASE_URL ?>/pages/tunjangan.php" class="flex items-center px-5 py-3 text-sm text-black hover:bg-[#388e3c] hover:text-white"><i class="fas fa-gift w-6 text-center"></i> <span class="ml-2">Tunjangan</span></a>
+        <a href="<?= BASE_URL ?>/pages/lembur.php" class="flex items-center px-5 py-3 text-sm text-black hover:bg-[#388e3c] hover:text-white"><i class="fas fa-clock w-6 text-center"></i> <span class="ml-2">Lembur</span></a>
+        <a href="<?= BASE_URL ?>/pages/potongan.php" class="flex items-center px-5 py-3 text-sm text-black hover:bg-[#388e3c] hover:text-white"><i class="fas fa-cut w-6 text-center"></i> <span class="ml-2">Potongan</span></a>
         
         <?php endif; ?>
 
@@ -32,7 +32,7 @@ $current_page = $current_page ?? ''; // Halaman aktif saat ini
         <a href="#" class="flex items-center px-5 py-3 text-sm text-black hover:bg-[#388e3c] hover:text-white"><i class="fas fa-file-alt w-6 text-center"></i> <span>Laporan</span></a>
         <?php endif; ?>
         
-        <a href="<?= BASE_URL ?>/auth/logout.php" class="flex items-center px-5 py-3 text-sm text-black hover:bg-[#388e3c] hover:text-white mt-4">
+        <a href="<?= BASE_URL ?>/pages/logout.php" class="flex items-center px-5 py-3 text-sm text-black hover:bg-[#388e3c] hover:text-white mt-4">
             <i class="fas fa-sign-out-alt w-6 text-center"></i> <span class="ml-2">Logout</span>
         </a>
     </nav>

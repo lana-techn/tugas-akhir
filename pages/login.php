@@ -1,6 +1,6 @@
 <?php
 // 1. SETUP
-require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/functions.php';
 
 // Jika sudah login, langsung arahkan ke dashboard yang sesuai
 if (isset($_SESSION['user_id'])) {

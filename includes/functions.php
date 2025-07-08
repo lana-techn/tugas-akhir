@@ -5,7 +5,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 // Memuat file konfigurasi
-require_once dirname(__DIR__) . '/config/config.php';
+require_once dirname(__DIR__) . '/config/koneksi.php';
 
 /**
  * Membuat koneksi ke database menggunakan mysqli.
