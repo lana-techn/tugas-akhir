@@ -8,7 +8,8 @@ define('DB_NAME', 'db_penggajian');
 
 // 2. PENGATURAN APLIKASI
 define('APP_NAME', 'Sistem Penggajian Karyawan');
-// Ganti dengan path root folder proyek Anda di server
+
+
 define('BASE_URL', 'http://localhost/tugas-akhir'); 
 
 // 3. PENGATURAN KEAMANAN & SESI
