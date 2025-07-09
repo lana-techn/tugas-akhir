@@ -11,10 +11,8 @@ $page_title = 'Manajemen Jabatan';
 
 // --- PROSES HAPUS ---
 if ($action === 'delete' && $id) {
-    if (!isset($_GET['token']) || !hash_equals($_SESSION['csrf_token'], $_GET['token'])) {
-        set_flash_message('error', 'Token keamanan tidak valid.');
-    } else {
-        $stmt_check = $conn->prepare("SELECT COUNT(*) FROM karyawan WHERE id_jabatan = ?");
+    if (isset($_GET['token']) && hash_equals($_SESSION['csrf_token'], $_GET['token'])) {
+        $stmt_check = $conn->prepare("SELECT COUNT(*) FROM KARYAWAN WHERE Id_Jabatan = ?");
         $stmt_check->bind_param("s", $id);
         $stmt_check->execute();
         $count = $stmt_check->get_result()->fetch_row()[0];
@@ -23,15 +21,14 @@ if ($action === 'delete' && $id) {
         if ($count > 0) {
             set_flash_message('error', 'Jabatan tidak bisa dihapus karena masih digunakan oleh karyawan.');
         } else {
-            $stmt = $conn->prepare("DELETE FROM jabatan WHERE id_jabatan = ?");
+            $stmt = $conn->prepare("DELETE FROM JABATAN WHERE Id_Jabatan = ?");
             $stmt->bind_param("s", $id);
-            if ($stmt->execute()) {
-                set_flash_message('success', 'Data jabatan berhasil dihapus.');
-            } else {
-                set_flash_message('error', 'Gagal menghapus data jabatan.');
-            }
+            if ($stmt->execute()) set_flash_message('success', 'Data jabatan berhasil dihapus.');
+            else set_flash_message('error', 'Gagal menghapus data jabatan.');
             $stmt->close();
         }
+    } else {
+        set_flash_message('error', 'Token keamanan tidak valid.');
     }
     header('Location: jabatan.php?action=list');
     exit;
@@ -41,30 +38,30 @@ if ($action === 'delete' && $id) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!validate_csrf_token()) die('Validasi CSRF gagal.');
 
-    $id_jabatan = $_POST['id_jabatan'] ?? null;
-    $nama_jabatan = trim($_POST['nama_jabatan'] ?? '');
-    $pendidikan = $_POST['pendidikan'] ?? '';
+    $id_jabatan = $_POST['Id_Jabatan'] ?? null;
+    $nama_jabatan = trim($_POST['Nama_Jabatan'] ?? '');
+    $pendidikan = $_POST['Pendidikan'] ?? '';
 
     if (empty($nama_jabatan) || empty($pendidikan)) {
         set_flash_message('error', 'Semua kolom wajib diisi.');
     } else {
         if ($id_jabatan) { // Edit
-            $stmt = $conn->prepare("UPDATE jabatan SET nama_jabatan = ?, pendidikan = ? WHERE id_jabatan = ?");
+            $stmt = $conn->prepare("UPDATE JABATAN SET Nama_Jabatan = ?, Pendidikan = ? WHERE Id_Jabatan = ?");
             $stmt->bind_param("sss", $nama_jabatan, $pendidikan, $id_jabatan);
             $action_text = 'diperbarui';
         } else { // Tambah
             $nama_clean = preg_replace('/\s+/', '', $nama_jabatan);
             $prefix = strtoupper(substr($nama_clean, 0, 2));
-            $stmt_cek = $conn->prepare("SELECT id_jabatan FROM jabatan WHERE id_jabatan LIKE ? ORDER BY id_jabatan DESC LIMIT 1");
+            $stmt_cek = $conn->prepare("SELECT Id_Jabatan FROM JABATAN WHERE Id_Jabatan LIKE ? ORDER BY Id_Jabatan DESC LIMIT 1");
             $prefix_like = $prefix . '%';
             $stmt_cek->bind_param("s", $prefix_like);
             $stmt_cek->execute();
             $result_cek = $stmt_cek->get_result();
-            $last_id_num = ($row = $result_cek->fetch_assoc()) ? intval(substr($row['id_jabatan'], 2)) : 0;
+            $last_id_num = ($row = $result_cek->fetch_assoc()) ? intval(substr($row['Id_Jabatan'], 2)) : 0;
             $id_jabatan_new = $prefix . str_pad($last_id_num + 1, 3, '0', STR_PAD_LEFT);
             $stmt_cek->close();
 
-            $stmt = $conn->prepare("INSERT INTO jabatan (id_jabatan, nama_jabatan, pendidikan) VALUES (?, ?, ?)");
+            $stmt = $conn->prepare("INSERT INTO JABATAN (Id_Jabatan, Nama_Jabatan, Pendidikan) VALUES (?, ?, ?)");
             $stmt->bind_param("sss", $id_jabatan_new, $nama_jabatan, $pendidikan);
             $action_text = 'ditambahkan';
         }
@@ -78,11 +75,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// --- PERSIAPAN DATA UNTUK FORM EDIT ---
 $jabatan_data = null;
 if ($action === 'edit' && $id) {
     $page_title = 'Edit Jabatan';
-    $stmt = $conn->prepare("SELECT * FROM jabatan WHERE id_jabatan = ?");
+    $stmt = $conn->prepare("SELECT * FROM JABATAN WHERE Id_Jabatan = ?");
     $stmt->bind_param("s", $id);
     $stmt->execute();
     $jabatan_data = $stmt->get_result()->fetch_assoc();
@@ -129,17 +125,17 @@ require_once __DIR__ . '/../includes/sidebar.php';
                 <tbody>
                     <?php
                     $conn = db_connect();
-                    $result = $conn->query("SELECT * FROM jabatan ORDER BY nama_jabatan ASC");
+                    $result = $conn->query("SELECT * FROM JABATAN ORDER BY Nama_Jabatan ASC");
                     $no = 1;
                     while ($row = $result->fetch_assoc()):
                     ?>
                     <tr class="bg-white border-b hover:bg-gray-50">
                         <td class="px-4 py-3 font-medium"><?= $no++ ?></td>
-                        <td class="px-4 py-3 font-medium text-gray-900"><?= e($row['nama_jabatan']) ?></td>
-                        <td class="px-4 py-3"><?= e($row['pendidikan']) ?></td>
+                        <td class="px-4 py-3 font-medium text-gray-900"><?= e($row['Nama_Jabatan']) ?></td>
+                        <td class="px-4 py-3"><?= e($row['Pendidikan']) ?></td>
                         <td class="px-4 py-3 text-center space-x-2">
-                            <a href="jabatan.php?action=edit&id=<?= e($row['id_jabatan']) ?>" class="bg-blue-500 text-white text-xs font-semibold px-3 py-1.5 rounded-md hover:bg-blue-600">Edit</a>
-                            <a href="jabatan.php?action=delete&id=<?= e($row['id_jabatan']) ?>&token=<?= e($_SESSION['csrf_token']) ?>" class="bg-red-500 text-white text-xs font-semibold px-3 py-1.5 rounded-md hover:bg-red-600" onclick="return confirm('Yakin ingin menghapus data ini?')">Hapus</a>
+                            <a href="jabatan.php?action=edit&id=<?= e($row['Id_Jabatan']) ?>" class="bg-blue-500 text-white text-xs font-semibold px-3 py-1.5 rounded-md hover:bg-blue-600">Edit</a>
+                            <a href="jabatan.php?action=delete&id=<?= e($row['Id_Jabatan']) ?>&token=<?= e($_SESSION['csrf_token']) ?>" class="bg-red-500 text-white text-xs font-semibold px-3 py-1.5 rounded-md hover:bg-red-600" onclick="return confirm('Yakin ingin menghapus data ini?')">Hapus</a>
                         </td>
                     </tr>
                     <?php endwhile; $conn->close(); ?>
@@ -151,23 +147,23 @@ require_once __DIR__ . '/../includes/sidebar.php';
 
 <?php if ($action === 'add' || $action === 'edit'): ?>
     <div class="bg-white p-8 rounded-lg shadow-md max-w-lg mx-auto">
-         <h2 class="text-2xl font-bold text-gray-800 text-center mb-8"><?= e(ucfirst($action)) ?> Jabatan</h2>
+        <h2 class="text-2xl font-bold text-gray-800 text-center mb-8"><?= e(ucfirst($action)) ?> Jabatan</h2>
         <form method="POST" action="jabatan.php">
             <?php csrf_input(); ?>
-            <input type="hidden" name="id_jabatan" value="<?= e($jabatan_data['id_jabatan'] ?? '') ?>">
+            <input type="hidden" name="Id_Jabatan" value="<?= e($jabatan_data['Id_Jabatan'] ?? '') ?>">
             
             <div class="mb-5">
-                <label for="nama_jabatan" class="block mb-2 text-sm font-bold text-gray-700">Nama Jabatan</label>
-                <input type="text" id="nama_jabatan" name="nama_jabatan" value="<?= e($jabatan_data['nama_jabatan'] ?? '') ?>" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500" required>
+                <label for="Nama_Jabatan" class="block mb-2 text-sm font-bold text-gray-700">Nama Jabatan</label>
+                <input type="text" id="Nama_Jabatan" name="Nama_Jabatan" value="<?= e($jabatan_data['Nama_Jabatan'] ?? '') ?>" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500" required>
             </div>
             
             <div class="mb-8">
-                <label for="pendidikan" class="block mb-2 text-sm font-bold text-gray-700">Pendidikan Minimal</label>
-                <select id="pendidikan" name="pendidikan" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500" required>
+                <label for="Pendidikan" class="block mb-2 text-sm font-bold text-gray-700">Pendidikan Minimal</label>
+                <select id="Pendidikan" name="Pendidikan" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500" required>
                     <option value="">-- Pilih Pendidikan --</option>
                     <?php $pendidikan_opts = ['SMA/SMK', 'D3', 'S1', 'S2']; ?>
                     <?php foreach ($pendidikan_opts as $p): ?>
-                        <option value="<?= e($p) ?>" <?= (isset($jabatan_data) && $jabatan_data['pendidikan'] == $p) ? 'selected' : '' ?>><?= e($p) ?></option>
+                        <option value="<?= e($p) ?>" <?= (isset($jabatan_data) && $jabatan_data['Pendidikan'] == $p) ? 'selected' : '' ?>><?= e($p) ?></option>
                     <?php endforeach; ?>
                 </select>
             </div>
@@ -179,7 +175,7 @@ require_once __DIR__ . '/../includes/sidebar.php';
         </form>
     </div>
 <?php endif; ?>
+
 <?php
-// Asumsi: footer.php berada di folder ../includes/
 require_once __DIR__ . '/../includes/footer.php';
 ?>
