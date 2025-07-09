@@ -1,20 +1,17 @@
 <?php
-// 1. SETUP & ROUTING
+// 1. SETUP & LOGIKA
 // =======================================
 require_once __DIR__ . '/../includes/functions.php';
 require_login('admin');
 
 $conn = db_connect();
-$action = $_GET['action'] ?? 'list'; // Aksi default
+$action = $_GET['action'] ?? 'list';
 $id = $_GET['id'] ?? null;
 $page_title = 'Manajemen Presensi';
 
 // Ambil data untuk dropdown dan filter
 $karyawan_list = $conn->query("SELECT id_karyawan, nama_karyawan FROM karyawan ORDER BY nama_karyawan ASC")->fetch_all(MYSQLI_ASSOC);
 $bulan_list = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-
-// 2. LOGIC HANDLING
-// =======================================
 
 // --- PROSES HAPUS ---
 if ($action === 'delete' && $id) {
@@ -31,7 +28,7 @@ if ($action === 'delete' && $id) {
     exit;
 }
 
-// --- PROSES TAMBAH & EDIT (POST REQUEST) ---
+// --- PROSES TAMBAH & EDIT ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!validate_csrf_token()) die('Validasi CSRF gagal.');
 
@@ -47,12 +44,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($id_karyawan) || empty($bulan) || $tahun === false || $hadir === false || $sakit === false || $izin === false || $alpha === false) {
         set_flash_message('error', 'Semua kolom wajib diisi dengan format yang benar.');
     } else {
-        if ($id_presensi) { // --- Proses EDIT ---
-            $stmt = $conn->prepare("UPDATE presensi SET id_karyawan=?, bulan=?, tahun=?, hadir=?, sakit=?, izin=?, alpha=? WHERE id_presensi=?");
-            $stmt->bind_param("ssiiiis", $id_karyawan, $bulan, $tahun, $hadir, $sakit, $izin, $alpha, $id_presensi);
+        if ($id_presensi) { // Edit
+            $stmt = $conn->prepare("UPDATE presensi SET hadir=?, sakit=?, izin=?, alpha=? WHERE id_presensi=?");
+            $stmt->bind_param("iiiis", $hadir, $sakit, $izin, $alpha, $id_presensi);
             $action_text = 'diperbarui';
-        } else { // --- Proses TAMBAH ---
-            // Cek duplikat data presensi untuk karyawan, bulan, dan tahun yang sama
+        } else { // Tambah
             $stmt_cek = $conn->prepare("SELECT id_presensi FROM presensi WHERE id_karyawan = ? AND bulan = ? AND tahun = ?");
             $stmt_cek->bind_param("ssi", $id_karyawan, $bulan, $tahun);
             $stmt_cek->execute();
@@ -73,7 +69,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         if ($stmt->execute()) set_flash_message('success', "Data presensi berhasil {$action_text}.");
-        else set_flash_message('error', "Gagal memproses data presensi.");
+        else set_flash_message('error', "Gagal memproses data presensi: " . $stmt->error);
         
         $stmt->close();
         header('Location: presensi.php?action=list');
@@ -81,8 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// 3. DATA PREPARATION FOR VIEW
-// =======================================
+// --- PERSIAPAN DATA UNTUK FORM EDIT ---
 $presensi_data = null;
 if ($action === 'edit' && $id) {
     $page_title = 'Edit Presensi';
@@ -101,180 +96,173 @@ if ($action === 'edit' && $id) {
 }
 
 generate_csrf_token();
+$conn->close();
+
+// 2. MEMANGGIL TAMPILAN (VIEW)
+// =======================================
+require_once __DIR__ . '/../includes/header.php';
+require_once __DIR__ . '/../includes/sidebar.php';
+
 ?>
 
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= e($page_title) ?> - <?= e(APP_NAME) ?></title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <style>
-        .notif { padding: 12px 15px; background: white; border-radius: 5px; font-size: 15px; color: #444; border-left-width: 5px; margin-bottom: 20px; }
-        .notif-success { border-left-color: #43a047; }
-        .notif-error { border-left-color: #e53935; }
-        .form-grid { display: grid; grid-template-columns: repeat(1, minmax(0, 1fr)); gap: 1.5rem; }
-        @media (min-width: 768px) { .form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-    </style>
-</head>
-<body class="bg-[#e8f5e9] font-['Segoe_UI',_sans-serif]">
-<div class="flex min-h-screen">
-    <div class="w-64 flex-shrink-0 bg-gradient-to-b from-[#b2f2bb] to-white text-black">
-        <div class="p-5 bg-[#98eba3] text-center"><h3 class="text-xl font-bold">ADMIN</h3></div>
-        <nav class="mt-4">
-            <a href="../index.php" class="flex items-center px-5 py-3 text-sm text-black hover:bg-[#388e3c] hover:text-white"><i class="fas fa-home w-6 text-center"></i> <span class="ml-2">Dashboard</span></a>
-            <a href="presensi.php" class="flex items-center px-5 py-3 text-sm text-black hover:bg-[#388e3c] hover:text-white bg-[#388e3c] text-white"><i class="fas fa-user-check w-6 text-center"></i> <span class="ml-2">Presensi</span></a>
-            <a href="../auth/logout.php" class="flex items-center px-5 py-3 text-sm text-black hover:bg-[#388e3c] hover:text-white mt-4"><i class="fas fa-sign-out-alt w-6 text-center"></i> <span class="ml-2">Logout</span></a>
-        </nav>
-    </div>
+<?php display_flash_message(); ?>
 
-    <div class="flex-1 p-8">
-        <div class="text-right text-sm text-gray-600 mb-4"><?= e($_SESSION['email'] ?? '') ?></div>
-        <?php display_flash_message(); ?>
-
-        <?php if ($action === 'list'): ?>
-            <div class="bg-white p-6 rounded-lg shadow-md">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-2xl font-bold text-[#2e7d32]">DAFTAR PRESENSI</h2>
-                    <a href="presensi.php?action=add" class="bg-[#43a047] text-white px-4 py-2 rounded-md hover:bg-[#388e3c] text-sm font-bold">Tambah Presensi</a>
-                </div>
-
-                <form method="get" action="presensi.php" class="mt-6 p-4 bg-gray-50 rounded-lg flex items-center space-x-4">
-                    <input type="hidden" name="action" value="list">
-                    <select name="nama" class="w-full sm:w-1/3 px-3 py-2 border rounded-md text-sm">
+<?php if ($action === 'list'): ?>
+    <div class="bg-white p-6 rounded-lg shadow-md">
+        <div class="flex flex-col md:flex-row md:justify-between md:items-center mb-6 gap-4">
+            <h2 class="text-2xl font-bold text-gray-800">Daftar Presensi Karyawan</h2>
+            <a href="presensi.php?action=add" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 text-sm font-semibold shadow-sm w-full md:w-auto text-center">
+                <i class="fa-solid fa-plus mr-2"></i>Tambah Presensi
+            </a>
+        </div>
+        
+        <form method="get" action="presensi.php" class="mb-6 p-4 bg-gray-50 rounded-lg border">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                <input type="hidden" name="action" value="list">
+                <div>
+                    <label for="filter_nama" class="block mb-2 text-sm font-medium text-gray-700">Nama Karyawan</label>
+                    <select id="filter_nama" name="nama" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-green-500">
                         <option value="">-- Semua Karyawan --</option>
                         <?php foreach($karyawan_list as $k): ?>
                             <option value="<?= e($k['nama_karyawan']) ?>" <?= ($_GET['nama'] ?? '') == $k['nama_karyawan'] ? 'selected' : '' ?>><?= e($k['nama_karyawan']) ?></option>
                         <?php endforeach; ?>
                     </select>
-                    <input type="number" name="tahun" placeholder="Tahun (e.g. 2024)" value="<?= e($_GET['tahun'] ?? '') ?>" class="w-full sm:w-1/4 px-3 py-2 border rounded-md text-sm">
-                    <button type="submit" class="bg-[#43a047] text-white px-4 py-2 rounded-md hover:bg-[#388e3c] text-sm">Tampilkan</button>
-                    <a href="presensi.php?action=list" class="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 text-sm">Reset</a>
-                </form>
-
-                <div class="overflow-x-auto mt-6">
-                    <table class="w-full text-sm text-center text-gray-700">
-                        <thead class="text-xs uppercase bg-[#a5d6a7]">
-                            <tr>
-                                <th class="px-4 py-3">NAMA KARYAWAN</th>
-                                <th class="px-4 py-3">PERIODE</th>
-                                <th class="px-2 py-3">H</th>
-                                <th class="px-2 py-3">S</th>
-                                <th class="px-2 py-3">I</th>
-                                <th class="px-2 py-3">A</th>
-                                <th class="px-4 py-3">AKSI</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php
-                            $params = [];
-                            $types = '';
-                            $query = "SELECT p.*, k.nama_karyawan FROM presensi p JOIN karyawan k ON p.id_karyawan = k.id_karyawan WHERE 1=1";
-                            if (!empty($_GET['nama'])) {
-                                $query .= " AND k.nama_karyawan = ?";
-                                $params[] = $_GET['nama'];
-                                $types .= 's';
-                            }
-                            if (!empty($_GET['tahun'])) {
-                                $query .= " AND p.tahun = ?";
-                                $params[] = $_GET['tahun'];
-                                $types .= 'i';
-                            }
-                            $query .= " ORDER BY p.tahun DESC, FIELD(p.bulan, 'Desember', 'November', 'Oktober', 'September', 'Agustus', 'Juli', 'Juni', 'Mei', 'April', 'Maret', 'Februari', 'Januari'), k.nama_karyawan ASC";
-                            
-                            $stmt_list = $conn->prepare($query);
-                            if (!empty($params)) $stmt_list->bind_param($types, ...$params);
-                            $stmt_list->execute();
-                            $result = $stmt_list->get_result();
-
-                            while ($row = $result->fetch_assoc()):
-                            ?>
-                            <tr class="bg-white border-b">
-                                <td class="px-4 py-3 font-medium text-left"><?= e($row['nama_karyawan']) ?></td>
-                                <td class="px-4 py-3"><?= e($row['bulan']) ?> <?= e($row['tahun']) ?></td>
-                                <td class="px-2 py-3 font-bold text-green-600"><?= e($row['hadir']) ?></td>
-                                <td class="px-2 py-3 font-bold text-yellow-600"><?= e($row['sakit']) ?></td>
-                                <td class="px-2 py-3 font-bold text-blue-600"><?= e($row['izin']) ?></td>
-                                <td class="px-2 py-3 font-bold text-red-600"><?= e($row['alpha']) ?></td>
-                                <td class="px-4 py-3">
-                                    <a href="presensi.php?action=edit&id=<?= e($row['id_presensi']) ?>" class="bg-[#0288d1] text-white text-xs px-3 py-1 rounded">Edit</a>
-                                    <a href="presensi.php?action=delete&id=<?= e($row['id_presensi']) ?>&token=<?= e($_SESSION['csrf_token']) ?>" class="bg-[#e53935] text-white text-xs px-3 py-1 rounded" onclick="return confirm('Yakin?')">Hapus</a>
-                                </td>
-                            </tr>
-                            <?php endwhile; $stmt_list->close(); ?>
-                        </tbody>
-                    </table>
+                </div>
+                <div>
+                    <label for="filter_tahun" class="block mb-2 text-sm font-medium text-gray-700">Tahun</label>
+                    <input type="number" id="filter_tahun" name="tahun" placeholder="Cth: 2024" value="<?= e($_GET['tahun'] ?? '') ?>" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-green-500">
+                </div>
+                <div class="flex space-x-2">
+                    <button type="submit" class="w-full bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 text-sm font-semibold">Tampilkan</button>
+                    <a href="presensi.php?action=list" class="w-full text-center bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 text-sm font-semibold">Reset</a>
                 </div>
             </div>
-        <?php endif; ?>
-        
-        <?php if ($action === 'add' || $action === 'edit'): ?>
-            <div class="bg-white p-8 rounded-lg shadow-md max-w-4xl mx-auto">
-                 <h2 class="text-2xl font-bold text-[#2e7d32] text-center mb-6"><?= e(ucfirst($action)) ?> Presensi</h2>
-                <form method="POST" action="presensi.php">
-                    <?php csrf_input(); ?>
-                    <input type="hidden" name="id_presensi" value="<?= e($presensi_data['id_presensi'] ?? '') ?>">
+        </form>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm text-center text-gray-700">
+                <thead class="text-xs uppercase bg-gray-100 text-gray-600">
+                    <tr>
+                        <th class="px-4 py-3 text-left">Nama Karyawan</th>
+                        <th class="px-4 py-3">Periode</th>
+                        <th class="px-2 py-3" title="Hadir">H</th>
+                        <th class="px-2 py-3" title="Sakit">S</th>
+                        <th class="px-2 py-3" title="Izin">I</th>
+                        <th class="px-2 py-3" title="Alpha">A</th>
+                        <th class="px-4 py-3">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php
+                    $conn = db_connect();
+                    $params = [];
+                    $types = '';
+                    $query = "SELECT p.*, k.nama_karyawan FROM presensi p JOIN karyawan k ON p.id_karyawan = k.id_karyawan WHERE 1=1";
+                    if (!empty($_GET['nama'])) {
+                        $query .= " AND k.nama_karyawan = ?";
+                        $params[] = $_GET['nama'];
+                        $types .= 's';
+                    }
+                    if (!empty($_GET['tahun'])) {
+                        $query .= " AND p.tahun = ?";
+                        $params[] = $_GET['tahun'];
+                        $types .= 'i';
+                    }
+                    $query .= " ORDER BY p.tahun DESC, FIELD(p.bulan, 'Desember', 'November', 'Oktober', 'September', 'Agustus', 'Juli', 'Juni', 'Mei', 'April', 'Maret', 'Februari', 'Januari'), k.nama_karyawan ASC";
                     
-                    <div class="form-grid">
-                        <div>
-                            <div class="mb-4">
-                                <label for="id_karyawan" class="block mb-2 text-sm font-bold text-gray-700">Nama Karyawan</label>
-                                <select name="id_karyawan" id="id_karyawan" class="w-full px-3 py-2 border rounded-md" required <?= $action === 'edit' ? 'disabled' : '' ?>>
-                                    <option value="">- Pilih Karyawan -</option>
-                                    <?php foreach($karyawan_list as $k): ?>
-                                    <option value="<?= e($k['id_karyawan']) ?>" <?= (isset($presensi_data) && $presensi_data['id_karyawan'] == $k['id_karyawan']) ? 'selected' : '' ?>><?= e($k['nama_karyawan']) ?></option>
-                                    <?php endforeach; ?>
-                                </select>
-                                <?php if($action === 'edit'): ?>
-                                <input type="hidden" name="id_karyawan" value="<?= e($presensi_data['id_karyawan']) ?>">
-                                <?php endif; ?>
-                            </div>
-                            <div class="mb-4">
-                                <label for="bulan" class="block mb-2 text-sm font-bold text-gray-700">Bulan</label>
-                                <select name="bulan" id="bulan" class="w-full px-3 py-2 border rounded-md" required <?= $action === 'edit' ? 'disabled' : '' ?>>
-                                    <?php foreach($bulan_list as $b): ?>
-                                    <option value="<?= e($b) ?>" <?= (isset($presensi_data) && $presensi_data['bulan'] == $b) ? 'selected' : '' ?>><?= e($b) ?></option>
-                                    <?php endforeach; ?>
-                                </select>
-                                 <?php if($action === 'edit'): ?>
-                                <input type="hidden" name="bulan" value="<?= e($presensi_data['bulan']) ?>">
-                                <?php endif; ?>
-                            </div>
-                             <div class="mb-4">
-                                <label for="tahun" class="block mb-2 text-sm font-bold text-gray-700">Tahun</label>
-                                <input type="number" name="tahun" id="tahun" value="<?= e($presensi_data['tahun'] ?? date('Y')) ?>" class="w-full px-3 py-2 border rounded-md" required <?= $action === 'edit' ? 'readonly' : '' ?>>
-                            </div>
-                        </div>
-                        <div>
-                            <div class="mb-4">
-                                <label for="hadir" class="block mb-2 text-sm font-bold text-gray-700">Hadir</label>
-                                <input type="number" id="hadir" name="hadir" value="<?= e($presensi_data['hadir'] ?? '0') ?>" class="w-full px-3 py-2 border rounded-md" required>
-                            </div>
-                            <div class="mb-4">
-                                <label for="sakit" class="block mb-2 text-sm font-bold text-gray-700">Sakit</label>
-                                <input type="number" id="sakit" name="sakit" value="<?= e($presensi_data['sakit'] ?? '0') ?>" class="w-full px-3 py-2 border rounded-md" required>
-                            </div>
-                            <div class="mb-4">
-                                <label for="izin" class="block mb-2 text-sm font-bold text-gray-700">Izin</label>
-                                <input type="number" id="izin" name="izin" value="<?= e($presensi_data['izin'] ?? '0') ?>" class="w-full px-3 py-2 border rounded-md" required>
-                            </div>
-                             <div class="mb-4">
-                                <label for="alpha" class="block mb-2 text-sm font-bold text-gray-700">Alpha</label>
-                                <input type="number" id="alpha" name="alpha" value="<?= e($presensi_data['alpha'] ?? '0') ?>" class="w-full px-3 py-2 border rounded-md" required>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="flex items-center justify-end space-x-4 mt-6">
-                        <a href="presensi.php?action=list" class="bg-[#e53935] text-white px-4 py-2 rounded-md hover:bg-[#c62828] font-bold text-sm">Batal</a>
-                        <button type="submit" class="bg-[#43a047] text-white px-4 py-2 rounded-md hover:bg-[#388e3c] font-bold text-sm">Simpan</button>
-                    </div>
-                </form>
-            </div>
-        <?php endif; ?>
+                    $stmt_list = $conn->prepare($query);
+                    if (!empty($params)) $stmt_list->bind_param($types, ...$params);
+                    $stmt_list->execute();
+                    $result = $stmt_list->get_result();
+
+                    while ($row = $result->fetch_assoc()):
+                    ?>
+                    <tr class="bg-white border-b hover:bg-gray-50">
+                        <td class="px-4 py-3 font-medium text-left text-gray-900"><?= e($row['nama_karyawan']) ?></td>
+                        <td class="px-4 py-3"><?= e($row['bulan']) ?> <?= e($row['tahun']) ?></td>
+                        <td class="px-2 py-3 font-bold text-green-600"><?= e($row['hadir']) ?></td>
+                        <td class="px-2 py-3 font-bold text-yellow-600"><?= e($row['sakit']) ?></td>
+                        <td class="px-2 py-3 font-bold text-blue-600"><?= e($row['izin']) ?></td>
+                        <td class="px-2 py-3 font-bold text-red-600"><?= e($row['alpha']) ?></td>
+                        <td class="px-4 py-3 space-x-2">
+                            <a href="presensi.php?action=edit&id=<?= e($row['id_presensi']) ?>" class="bg-blue-500 text-white text-xs font-semibold px-3 py-1.5 rounded-md hover:bg-blue-600">Edit</a>
+                            <a href="presensi.php?action=delete&id=<?= e($row['id_presensi']) ?>&token=<?= e($_SESSION['csrf_token']) ?>" class="bg-red-500 text-white text-xs font-semibold px-3 py-1.5 rounded-md hover:bg-red-600" onclick="return confirm('Yakin?')">Hapus</a>
+                        </td>
+                    </tr>
+                    <?php endwhile; $stmt_list->close(); $conn->close(); ?>
+                </tbody>
+            </table>
+        </div>
     </div>
-</div>
-</body>
-</html>
-<?php $conn->close(); ?>
+<?php endif; ?>
+
+<?php if ($action === 'add' || $action === 'edit'): ?>
+    <div class="bg-white p-8 rounded-lg shadow-md max-w-4xl mx-auto">
+        <h2 class="text-2xl font-bold text-gray-800 text-center mb-8"><?= e(ucfirst($action)) ?> Data Presensi</h2>
+        <form method="POST" action="presensi.php">
+            <?php csrf_input(); ?>
+            <input type="hidden" name="id_presensi" value="<?= e($presensi_data['id_presensi'] ?? '') ?>">
+            
+            <div class="grid md:grid-cols-2 gap-x-6 gap-y-5">
+                <div>
+                    <label for="id_karyawan" class="block mb-2 text-sm font-bold text-gray-700">Nama Karyawan</label>
+                    <select name="id_karyawan" id="id_karyawan" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500" required <?= $action === 'edit' ? 'disabled' : '' ?>>
+                        <option value="">- Pilih Karyawan -</option>
+                        <?php foreach($karyawan_list as $k): ?>
+                        <option value="<?= e($k['id_karyawan']) ?>" <?= (isset($presensi_data) && $presensi_data['id_karyawan'] == $k['id_karyawan']) ? 'selected' : '' ?>><?= e($k['nama_karyawan']) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                    <?php if($action === 'edit'): ?>
+                    <input type="hidden" name="id_karyawan" value="<?= e($presensi_data['id_karyawan']) ?>">
+                    <?php endif; ?>
+                </div>
+                <div class="grid grid-cols-2 gap-x-4">
+                    <div>
+                        <label for="bulan" class="block mb-2 text-sm font-bold text-gray-700">Bulan</label>
+                        <select name="bulan" id="bulan" class="w-full px-3 py-2 border border-gray-300 rounded-md" required <?= $action === 'edit' ? 'disabled' : '' ?>>
+                            <?php foreach($bulan_list as $b): ?>
+                            <option value="<?= e($b) ?>" <?= (isset($presensi_data) && $presensi_data['bulan'] == $b) ? 'selected' : '' ?>><?= e($b) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                         <?php if($action === 'edit'): ?>
+                        <input type="hidden" name="bulan" value="<?= e($presensi_data['bulan']) ?>">
+                        <?php endif; ?>
+                    </div>
+                    <div>
+                        <label for="tahun" class="block mb-2 text-sm font-bold text-gray-700">Tahun</label>
+                        <input type="number" name="tahun" id="tahun" value="<?= e($presensi_data['tahun'] ?? date('Y')) ?>" class="w-full px-3 py-2 border border-gray-300 rounded-md" required <?= $action === 'edit' ? 'readonly' : '' ?>>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-x-4">
+                    <div>
+                       <label for="hadir" class="block mb-2 text-sm font-bold text-gray-700">Hadir</label>
+                        <input type="number" id="hadir" name="hadir" value="<?= e($presensi_data['hadir'] ?? '0') ?>" class="w-full px-3 py-2 border border-gray-300 rounded-md" required>
+                    </div>
+                    <div>
+                        <label for="sakit" class="block mb-2 text-sm font-bold text-gray-700">Sakit</label>
+                        <input type="number" id="sakit" name="sakit" value="<?= e($presensi_data['sakit'] ?? '0') ?>" class="w-full px-3 py-2 border border-gray-300 rounded-md" required>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-x-4">
+                     <div>
+                        <label for="izin" class="block mb-2 text-sm font-bold text-gray-700">Izin</label>
+                        <input type="number" id="izin" name="izin" value="<?= e($presensi_data['izin'] ?? '0') ?>" class="w-full px-3 py-2 border border-gray-300 rounded-md" required>
+                    </div>
+                     <div>
+                        <label for="alpha" class="block mb-2 text-sm font-bold text-gray-700">Alpha</label>
+                        <input type="number" id="alpha" name="alpha" value="<?= e($presensi_data['alpha'] ?? '0') ?>" class="w-full px-3 py-2 border border-gray-300 rounded-md" required>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex items-center justify-end space-x-4 mt-8">
+                <a href="presensi.php?action=list" class="bg-gray-500 text-white px-4 py-2.5 rounded-md hover:bg-gray-600 font-semibold text-sm">Batal</a>
+                <button type="submit" class="bg-green-600 text-white px-4 py-2.5 rounded-md hover:bg-green-700 font-semibold text-sm">Simpan</button>
+            </div>
+        </form>
+    </div>
+<?php endif; ?>
+
+<?php
+require_once __DIR__ . '/../includes/footer.php';
+?>
