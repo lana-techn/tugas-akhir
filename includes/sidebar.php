@@ -12,21 +12,31 @@ $current_page = basename($_SERVER['PHP_SELF']);
 $navigation = [
     // ... (array navigasi Anda tetap sama)
     // Menu Umum
-    ['name' => 'Dashboard', 'href' => 'index.php', 'icon' => 'fa-solid fa-gauge-high', 'roles' => ['admin', 'pemilik']],
+    ['name' => 'Dashboard', 'href' => 'dashboard', 'icon' => 'fa-solid fa-gauge-high', 'roles' => ['admin', 'pemilik', 'karyawan']],
+
     // Menu Admin
+
     ['group' => 'Data Master', 'roles' => ['admin']],
     ['name' => 'Pengguna', 'href' => 'pengguna.php', 'icon' => 'fa-solid fa-user-shield', 'roles' => ['admin']],
     ['name' => 'Jabatan', 'href' => 'jabatan.php', 'icon' => 'fa-solid fa-briefcase', 'roles' => ['admin']],
     ['name' => 'Karyawan', 'href' => 'karyawan.php', 'icon' => 'fa-solid fa-users', 'roles' => ['admin']],
     ['name' => 'Presensi', 'href' => 'presensi.php', 'icon' => 'fa-solid fa-user-check', 'roles' => ['admin']],
+
     ['group' => 'Penggajian', 'roles' => ['admin']],
     ['name' => 'Gaji Pokok', 'href' => 'salary.php', 'icon' => 'fa-solid fa-money-check-dollar', 'roles' => ['admin']],
     ['name' => 'Tunjangan', 'href' => 'tunjangan.php', 'icon' => 'fa-solid fa-gift', 'roles' => ['admin']],
     ['name' => 'Lembur', 'href' => 'lembur.php', 'icon' => 'fa-solid fa-clock', 'roles' => ['admin']],
     ['name' => 'Potongan', 'href' => 'potongan.php', 'icon' => 'fa-solid fa-scissors', 'roles' => ['admin']],
+
     // Menu Pemilik
-    ['name' => 'Penggajian', 'href' => 'penggajian_pemilik.php', 'icon' => 'fa-solid fa-money-bill-wave', 'roles' => ['pemilik']],
-    ['name' => 'Laporan', 'href' => 'laporan.php', 'icon' => 'fa-solid fa-file-alt', 'roles' => ['pemilik']],
+    ['group' => 'Pemilik', 'roles' => ['pemilik']],
+    ['name' => 'Persetujuan Gaji', 'href' => '/pemilik/penggajian_pemilik.php', 'icon' => 'fa-solid fa-check-to-slot', 'roles' => ['pemilik']],
+    ['name' => 'Laporan', 'href' => '/pemilik/laporan.php', 'icon' => 'fa-solid fa-file-alt', 'roles' => ['pemilik']],
+    
+    // Menu Karyawan
+
+    ['group' => 'Pegawai', 'roles' => ['karyawan']],
+    ['name' => 'Slip Gaji', 'href' => '/karyawan/slip_gaji.php', 'icon' => 'fa-solid fa-money-bill-wave', 'roles' => ['karyawan']]
 ];
 
 ?>
@@ -48,11 +58,28 @@ $navigation = [
                                     <?= e($item['group']) ?>
                                 </div>
                             <?php else: ?>
-                                <?php 
-                                    $is_current = ($current_page === $item['href']);
-                                    $link_href = (strpos($item['href'], '.php') !== false) ? BASE_URL . '/pages/' . $item['href'] : BASE_URL . '/' . $item['href'];
-                                    if ($item['href'] === 'index.php') {
-                                        $link_href = BASE_URL . '/index.php';
+                                <?php
+                                    // ** LOGIKA DINAMIS UNTUK URL DAN STATUS AKTIF **
+                                    $link_href = '';
+                                    $is_current = false;
+
+                                    if ($item['href'] === 'dashboard') {
+                                        // Tentukan URL dan status aktif untuk link Dashboard berdasarkan role
+                                        if ($user_level === 'pemilik') {
+                                            $link_href = BASE_URL . '/index_pemilik.php';
+                                            $is_current = ($current_page === 'index_pemilik.php');
+                                        } elseif ($user_level === 'karyawan') {
+                                            $link_href = BASE_URL . '/index_karyawan.php';
+                                            $is_current = ($current_page === 'index_karyawan.php');
+                                        } else { // Default untuk Admin
+                                            $link_href = BASE_URL . '/index.php';
+                                            $is_current = ($current_page === 'index.php');
+                                        }
+                                    } else {
+                                        // Logika untuk semua link menu lainnya
+                                        $base_folder = !empty($item['folder']) ? '/' . $item['folder'] . '/' : '/pages/';
+                                        $link_href = BASE_URL . $base_folder . $item['href'];
+                                        $is_current = ($current_page === $item['href']);
                                     }
                                 ?>
                                 <li>
@@ -61,7 +88,7 @@ $navigation = [
                                            ? 'bg-green-600 text-white shadow-sm' // <-- WARNA AKTIF DIUBAH
                                            : 'text-gray-600 hover:text-green-700 hover:bg-green-50'; // <-- WARNA HOVER DIUBAH
                                        ?> group flex items-center gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold transition-all duration-200">
-                                        
+
                                         <span class="flex h-6 w-6 items-center justify-center">
                                             <i class="<?= e($item['icon']) ?> <?= $is_current ? 'text-white' : 'text-gray-400 group-hover:text-green-600'; ?> text-base"></i>
                                         </span>
