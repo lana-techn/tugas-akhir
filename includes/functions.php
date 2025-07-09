@@ -9,10 +9,14 @@ require_once dirname(__DIR__) . '/config/koneksi.php';
 
 /**
  * Membuat koneksi ke database menggunakan mysqli.
+ * FUNGSI INI SUDAH DIPERBAIKI.
  * @return mysqli
  */
 function db_connect() {
-    $conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME, 3306, '/Applications/XAMPP/xamppfiles/var/mysql/mysql.sock');
+    // Menghapus port dan socket path yang spesifik agar bisa berjalan di semua sistem
+    $conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
+    
+    // Cek koneksi
     if ($conn->connect_error) {
         die("Koneksi database gagal: " . $conn->connect_error);
     }
@@ -58,10 +62,12 @@ function display_flash_message() {
         ];
         $alertClass = $colors[$type] ?? $colors['info'];
         
-        echo "<div class='notif {$alertClass}'>{$message}</div>";
+        // Menggunakan class dari header.php sebelumnya
+        echo "<div class='notif notif-{$type} p-4 mb-4 text-sm rounded-lg {$alertClass}'>{$message}</div>";
         unset($_SESSION['flash_message']);
     }
 }
+
 
 /**
  * Fungsi untuk sanitasi output HTML (mencegah XSS).
@@ -89,11 +95,9 @@ function csrf_input() {
 function validate_csrf_token() {
     if (!isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
         set_flash_message('error', 'Sesi tidak valid atau telah kedaluwarsa. Silakan coba lagi.');
-        // Hapus token agar dibuat ulang
         unset($_SESSION['csrf_token']);
         return false;
     }
-    // Hapus token setelah digunakan untuk mencegah replay attacks
     unset($_SESSION['csrf_token']);
     return true;
 }
