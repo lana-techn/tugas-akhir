@@ -73,9 +73,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $last_id_num = $result->num_rows > 0 ? intval(substr($result->fetch_assoc()['Id_Pengguna'], 1)) : 0;
             $id_pengguna_new = $prefix . str_pad($last_id_num + 1, 2, '0', STR_PAD_LEFT);
 
-            $hashed_password = password_hash($password, PASSWORD_DEFAULT);
             $stmt = $conn->prepare("INSERT INTO PENGGUNA (Id_Pengguna, Email, Level, Password) VALUES (?, ?, ?, ?)");
-            $stmt->bind_param("ssss", $id_pengguna_new, $email, $level, $hashed_password);
+            $stmt->bind_param("ssss", $id_pengguna_new, $email, $level, $password);
             $action_text = 'ditambahkan';
         }
 

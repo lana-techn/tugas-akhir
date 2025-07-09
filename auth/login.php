@@ -5,50 +5,53 @@ require_once __DIR__ . '/../includes/functions.php';
 // Jika sudah login, langsung arahkan ke dashboard yang sesuai
 if (isset($_SESSION['user_id'])) {
     $redirect_url = BASE_URL . '/index.php'; // Default redirect
-    if ($_SESSION['level'] === 'pemilik') {
-        $redirect_url = BASE_URL . '/index_pemilik.php';
-    } elseif ($_SESSION['level'] === 'karyawan') {
-        $redirect_url = BASE_URL . '../pages/karyawan.php?action=dashboard'; // Asumsi ada dashboard karyawan
+    if (isset($_SESSION['level'])) {
+        if ($_SESSION['level'] === 'Pemilik') {
+            $redirect_url = BASE_URL . '/index_pemilik.php';
+        } elseif ($_SESSION['level'] === 'Karyawan') {
+            // Anda bisa membuat halaman khusus dashboard karyawan
+            $redirect_url = BASE_URL . '/index_karyawan.php'; 
+        }
     }
     header('Location: ' . $redirect_url);
     exit;
 }
 
 // 2. LOGIC HANDLING (POST REQUEST)
+$error = null;
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (!validate_csrf_token()) {
-        die('Validasi CSRF gagal.');
-    }
-    
     $conn = db_connect();
     $email = trim($_POST['email'] ?? '');
     $password = $_POST['password'] ?? '';
 
     if (empty($email) || empty($password)) {
-        set_flash_message('error', 'Email dan password wajib diisi.');
+        $error = 'Email dan password wajib diisi.';
     } else {
-        $stmt = $conn->prepare("SELECT id_pengguna, email, password, level FROM pengguna WHERE email = ?");
+        // Menggunakan nama tabel dan kolom PascalCase sesuai DB Anda
+        $stmt = $conn->prepare("SELECT Id_Pengguna, Email, Password, Level FROM PENGGUNA WHERE Email = ?");
         $stmt->bind_param("s", $email);
         $stmt->execute();
         $result = $stmt->get_result();
 
         if ($user = $result->fetch_assoc()) {
-            // PERBAIKAN KRUSIAL: Hanya verifikasi password yang sudah di-hash
-            if (password_verify($password, $user['password'])) {
-                // Regenerasi session ID untuk mencegah session fixation
+            // Memeriksa password sebagai teks biasa (string comparison)
+            if ($password === $user['Password']) {
+                // Login berhasil
                 session_regenerate_id(true);
                 
-                // Simpan data penting ke session
-                $_SESSION['user_id'] = $user['id_pengguna'];
-                $_SESSION['email'] = $user['email'];
-                $_SESSION['level'] = $user['level'];
+                // Simpan data penting ke session menggunakan nama kolom dari DB
+                $_SESSION['user_id'] = $user['Id_Pengguna'];
+                $_SESSION['username'] = explode('@', $user['Email'])[0];
+                $_SESSION['email'] = $user['Email'];
+                $_SESSION['level'] = $user['Level'];
                 
-                // Arahkan ke dashboard yang sesuai
-                $redirect_url = BASE_URL . '/index.php'; // Default
-                if ($user['level'] === 'pemilik') {
+                // --- INI BAGIAN UTAMA YANG DIPERBAIKI ---
+                // Arahkan ke dashboard yang sesuai dengan level pengguna
+                $redirect_url = BASE_URL . '/index.php'; // Default untuk Admin
+                if ($user['Level'] === 'Pemilik') {
                     $redirect_url = BASE_URL . '/index_pemilik.php';
-                } elseif ($user['level'] === 'karyawan') {
-                    $redirect_url = BASE_URL . '../pages/karyawan.php?action=dashboard';
+                } elseif ($user['Level'] === 'Karyawan') {
+                    $redirect_url = BASE_URL . '/index_karyawan.php';
                 }
                 
                 header('Location: ' . $redirect_url);
@@ -56,11 +59,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
         // Pesan error yang sama untuk email tidak ditemukan atau password salah
-        set_flash_message('error', 'Email atau password yang Anda masukkan salah.');
+        $error = 'Email atau password yang Anda masukkan salah.';
     }
     $conn->close();
-    header('Location: login.php');
-    exit;
 }
 
 // 3. VIEW

@@ -108,6 +108,6 @@ CREATE TABLE DETAIL_GAJI (
 
 -- Pastikan password di-hash menggunakan password_hash() di PHP
 INSERT INTO PENGGUNA (Id_Pengguna, Email, Password, Level) VALUES
-('a01', 'admin@gmail.com', '$2y$10$Y.aJcZ.UaY.aJcZ.UaY.aJcZ.UaY.aJcZ.UaY.aJcZ.U', 'Admin'),
-('p01', 'pemilik@gmail.com', '$2y$10$Y.aJcZ.UaY.aJcZ.UaY.aJcZ.UaY.aJcZ.UaY.aJcZ.U', 'Pemilik'),
-('k01', 'karyawan@gmail.com', '$2y$10$Y.aJcZ.UaY.aJcZ.UaY.aJcZ.UaY.aJcZ.UaY.aJcZ.U', 'Karyawan');
+('ADM001', 'admin123@gmail.com', 'admin123', 'Admin'),
+('PEM001', 'pemilik1@gmail.com', 'pemilik123', 'Pemilik'),
+('KAR001', 'karyawan1@gmail.com', 'karyawan123', 'Karyawan');
