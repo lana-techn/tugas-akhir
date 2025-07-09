@@ -52,12 +52,15 @@ CREATE TABLE TUNJANGAN (
     Id_Tunjangan INT AUTO_INCREMENT PRIMARY KEY,
     Nama_Tunjangan VARCHAR(50),
     Jumlah_Tunjangan DECIMAL(12,2),
-    Keterangan TEXT
+    Keterangan TEXT,
+    Id_Jabatan VARCHAR(15),
+    FOREIGN KEY (Id_Jabatan) REFERENCES JABATAN(Id_Jabatan) ON DELETE CASCADE
 );
 
 CREATE TABLE LEMBUR (
     Id_Lembur INT AUTO_INCREMENT PRIMARY KEY,
-    Nama_Lembur VARCHAR(50), -- Kolom yang ditambahkan
+    Nama_Lembur VARCHAR(50),
+    Lama_Lembur INT, -- Kolom yang ditambahkan
     Upah_Lembur DECIMAL(12,2),
     Keterangan TEXT
 );
