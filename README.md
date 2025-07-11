@@ -48,15 +48,29 @@ Buka alat manajemen database Anda (misalnya phpMyAdmin, MySQL Workbench, atau kl
 CREATE DATABASE db_penggajian;
 ```
 
-b. **Impor Skema Database**
+b. Impor Skema Database melalui phpMyAdmin
 
-Impor file skema database yang terletak di `sql/db_penggajian.sql` ke database `db_penggajian` yang baru Anda buat. Anda bisa melakukannya melalui phpMyAdmin atau dengan perintah MySQL CLI:
+1.
+Buka browser web Anda dan navigasikan ke phpMyAdmin (biasanya http://localhost/phpmyadmin).
 
-```bash
-mysql -u your_username -p db_penggajian < sql/db_penggajian.sql
-```
+2.
+Pilih database db_penggajian yang baru saja Anda buat dari daftar di sisi kiri.
 
-*(Ganti `your_username` dengan username MySQL Anda. Anda akan diminta untuk memasukkan password.)*
+3.
+Klik tab Import di bagian atas.
+
+4.
+Klik tombol Choose File atau Browse dan pilih file db_penggajian.sql yang terletak di folder sql/ di dalam direktori proyek Anda (tugas-akhir/sql/db_penggajian.sql).
+
+5.
+Biarkan opsi lainnya pada nilai default.
+
+6.
+Gulir ke bawah dan klik tombol Go untuk memulai proses impor.
+
+Setelah proses impor selesai, Anda akan melihat pesan sukses, dan semua tabel yang diperlukan akan muncul di database db_penggajian.
+
+
 
 c. **Konfigurasi Koneksi Database**
 
