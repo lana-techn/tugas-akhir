@@ -19,7 +19,13 @@ $nama_karyawan = $karyawan_data['Nama_Karyawan'] ?? 'Karyawan';
 // Ambil data gaji terakhir
 $gaji_terakhir = null;
 if ($karyawan_data) {
-    $stmt_gaji = $conn->prepare("SELECT Tgl_Gaji, Gaji_Bersih FROM GAJI WHERE Id_Karyawan = (SELECT Id_Karyawan FROM KARYAWAN WHERE Id_Pengguna = ?) ORDER BY Tgl_Gaji DESC LIMIT 1");
+    $stmt_gaji = $conn->prepare(
+        "SELECT g.Tgl_Gaji, g.Gaji_Bersih 
+         FROM GAJI g 
+         JOIN KARYAWAN k ON g.Id_Karyawan = k.Id_Karyawan 
+         WHERE k.Id_Pengguna = ? 
+         ORDER BY g.Tgl_Gaji DESC LIMIT 1"
+    );
     $stmt_gaji->bind_param("i", $id_pengguna);
     $stmt_gaji->execute();
     $gaji_terakhir = $stmt_gaji->get_result()->fetch_assoc();

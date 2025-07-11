@@ -62,7 +62,9 @@ if (isset($_SESSION['user_id'])) {
             // Ambil detail komponen gaji dari tabel DETAIL_GAJI
             $stmt_detail = $conn->prepare("
                 SELECT
-                    dg.Id_Tunjangan, dg.Id_Potongan, dg.Id_Lembur, dg.Jumlah,
+                    dg.Id_Tunjangan, dg.Id_Potongan, dg.Id_Lembur,
+                    dg.Jumlah_Tunjangan, dg.Jumlah_Potongan, dg.Jumlah_Lembur,
+                    dg.Nominal_Gapok,
                     t.Nama_Tunjangan, p.Nama_Potongan, l.Nama_Lembur, l.Lama_Lembur, l.Upah_Lembur
                 FROM DETAIL_GAJI dg
                 LEFT JOIN TUNJANGAN t ON dg.Id_Tunjangan = t.Id_Tunjangan
@@ -124,12 +126,12 @@ require_once __DIR__ . '/../../includes/sidebar.php';
                                 <?php if (!empty($detail['Id_Tunjangan'])): // Ini adalah tunjangan ?>
                                 <tr>
                                     <td class="py-2">Tunjangan: <?= e($detail['Nama_Tunjangan']) ?></td>
-                                    <td class="py-2 text-right">Rp <?= number_format($detail['Jumlah'], 0, ',', '.') ?></td>
+                                    <td class="py-2 text-right">Rp <?= number_format($detail['Jumlah_Tunjangan'], 0, ',', '.') ?></td>
                                 </tr>
                                 <?php elseif (!empty($detail['Id_Lembur'])): // Ini adalah lembur ?>
                                 <tr>
                                     <td class="py-2">Lembur: <?= e($detail['Nama_Lembur']) ?> (<?= e($detail['Lama_Lembur']) ?> jam)</td>
-                                    <td class="py-2 text-right">Rp <?= number_format($detail['Jumlah'], 0, ',', '.') ?></td>
+                                    <td class="py-2 text-right">Rp <?= number_format($detail['Jumlah_Lembur'], 0, ',', '.') ?></td>
                                 </tr>
                                 <?php endif; ?>
                             <?php endforeach; ?>
@@ -150,7 +152,7 @@ require_once __DIR__ . '/../../includes/sidebar.php';
                                 <?php if (!empty($detail['Id_Potongan'])): // Ini adalah potongan ?>
                                 <tr>
                                     <td class="py-2">Potongan: <?= e($detail['Nama_Potongan']) ?></td>
-                                    <td class="py-2 text-right">- Rp <?= number_format($detail['Jumlah'], 0, ',', '.') ?></td>
+                                    <td class="py-2 text-right">- Rp <?= number_format($detail['Jumlah_Potongan'], 0, ',', '.') ?></td>
                                 </tr>
                                 <?php endif; ?>
                             <?php endforeach; ?>
