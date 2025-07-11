@@ -120,24 +120,3 @@ Anda akan diarahkan ke halaman login. Gunakan kredensial default dari `sql/db_pe
 | Pemilik   | `pemilik1@gmail.com`   | `pemilik123` |
 | Karyawan  | `karyawan1@gmail.com`  | `karyawan123` |
 
-## Catatan Keamanan (Penting!)
-
-*   **Password**: Untuk lingkungan produksi, **sangat disarankan** untuk mengimplementasikan hashing password (misalnya menggunakan `password_hash()` dan `password_verify()` di PHP) daripada menyimpan password dalam teks biasa.
-*   **Error Reporting**: Matikan `error_reporting` dan `display_errors` di `config/koneksi.php` saat aplikasi di-deploy ke lingkungan produksi untuk mencegah pengungkapan informasi sensitif.
-
-```php
-// config/koneksi.php
-// ...
-// 5. PENGATURAN ERROR REPORTING (matikan di production)
-// error_reporting(E_ALL);
-// ini_set('display_errors', 1);
-// ...
-```
-
-## Kontribusi
-
-Jika Anda ingin berkontribusi pada proyek ini, silakan fork repositori dan buat pull request dengan perubahan Anda.
-
-## Lisensi
-
-Proyek ini dilisensikan di bawah Lisensi MIT. Lihat file `LICENSE` untuk detail lebih lanjut. (Jika ada file LICENSE di repositori asli, jika tidak, ini adalah placeholder.)
