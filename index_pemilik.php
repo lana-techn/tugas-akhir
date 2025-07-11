@@ -1,10 +1,11 @@
 <?php
 $page_title = 'Dashboard Pemilik';
 $current_page = 'dashboard';
-require_once __DIR__ . '/includes/header.php';
+require_once __DIR__ . '/includes/functions.php'; // Tambahkan functions.php
 require_login('pemilik');
 ?>
 
+<?php require_once __DIR__ . '/includes/header.php'; ?>
 <?php require_once __DIR__ . '/includes/sidebar.php'; ?>
 
 <main class="flex-1 p-8">
@@ -20,3 +21,4 @@ require_login('pemilik');
     </main>
 
 <?php require_once __DIR__ . '/includes/footer.php'; ?>
+
