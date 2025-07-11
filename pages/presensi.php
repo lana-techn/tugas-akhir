@@ -17,7 +17,7 @@ $bulan_list = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', '
 if ($action === 'delete' && $id) {
     if (isset($_GET['token']) && hash_equals($_SESSION['csrf_token'], $_GET['token'])) {
         $stmt = $conn->prepare("DELETE FROM PRESENSI WHERE Id_Presensi = ?");
-        $stmt->bind_param("i", $id); // Id_Presensi adalah INT
+        $stmt->bind_param("i", $id);
         if ($stmt->execute()) set_flash_message('success', 'Data presensi berhasil dihapus.');
         else set_flash_message('error', 'Gagal menghapus data presensi.');
         $stmt->close();
@@ -97,7 +97,6 @@ $conn->close();
 // 2. MEMANGGIL TAMPILAN (VIEW)
 // =======================================
 require_once __DIR__ . '/../includes/header.php';
-require_once __DIR__ . '/../includes/sidebar.php';
 
 ?>
 
@@ -105,16 +104,15 @@ require_once __DIR__ . '/../includes/sidebar.php';
 
 <?php if ($action === 'list'): ?>
     <div class="bg-white p-6 rounded-lg shadow-md">
-        <div class="flex flex-col md:flex-row md:justify-between md:items-center mb-6 gap-4">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
             <h2 class="text-2xl font-bold text-gray-800">Daftar Presensi Karyawan</h2>
-            <a href="presensi.php?action=add" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 text-sm font-semibold shadow-sm w-full md:w-auto text-center">
+            <a href="presensi.php?action=add" class="w-full sm:w-auto bg-green-600 text-white text-center px-4 py-2 rounded-md hover:bg-green-700 text-sm font-semibold shadow-sm">
                 <i class="fa-solid fa-plus mr-2"></i>Tambah Presensi
             </a>
         </div>
         
-        <!-- Filter Data -->
         <form method="get" action="presensi.php" class="mb-6 p-4 bg-gray-50 rounded-lg border">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
                 <input type="hidden" name="action" value="list">
                 <div>
                     <label for="filter_nama" class="block mb-2 text-sm font-medium text-gray-700">Nama Karyawan</label>
@@ -126,10 +124,10 @@ require_once __DIR__ . '/../includes/sidebar.php';
                     </select>
                 </div>
                 <div>
-                    <label for="filter_tahun" class="block mb-2 text-sm font-medium text-gray-700">Tahun</label>
-                    <input type="number" id="filter_tahun" name="tahun" placeholder="Cth: 2024" value="<?= e($_GET['tahun'] ?? '') ?>" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-green-500">
+                    <label for="filter_tahun" class="block text-sm font-medium text-gray-700 mb-1">Tahun</label>
+                    <input type="number" name="tahun" id="filter_tahun" placeholder="Cth: <?= date('Y') ?>" value="<?= e($_GET['tahun'] ?? '') ?>" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm">
                 </div>
-                <div class="flex space-x-2">
+                <div class="flex space-x-2 pt-6">
                     <button type="submit" class="w-full bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 text-sm font-semibold">Tampilkan</button>
                     <a href="presensi.php?action=list" class="w-full text-center bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 text-sm font-semibold">Reset</a>
                 </div>
@@ -142,10 +140,10 @@ require_once __DIR__ . '/../includes/sidebar.php';
                     <tr>
                         <th class="px-4 py-3 text-left">Nama Karyawan</th>
                         <th class="px-4 py-3">Periode</th>
-                        <th class="px-2 py-3" title="Hadir">H</th>
-                        <th class="px-2 py-3" title="Sakit">S</th>
-                        <th class="px-2 py-3" title="Izin">I</th>
-                        <th class="px-2 py-3" title="Alpha">A</th>
+                        <th class="px-2 py-3" title="Hadir">Hadir</th>
+                        <th class="px-2 py-3" title="Sakit">Sakit</th>
+                        <th class="px-2 py-3" title="Izin">Izin</th>
+                        <th class="px-2 py-3" title="Alpha">Alpha</th>
                         <th class="px-4 py-3">Aksi</th>
                     </tr>
                 </thead>
@@ -181,9 +179,11 @@ require_once __DIR__ . '/../includes/sidebar.php';
                         <td class="px-2 py-3 font-bold text-yellow-600"><?= e($row['Sakit']) ?></td>
                         <td class="px-2 py-3 font-bold text-blue-600"><?= e($row['Izin']) ?></td>
                         <td class="px-2 py-3 font-bold text-red-600"><?= e($row['Alpha']) ?></td>
-                        <td class="px-4 py-3 space-x-2">
-                            <a href="presensi.php?action=edit&id=<?= e($row['Id_Presensi']) ?>" class="bg-blue-500 text-white text-xs font-semibold px-3 py-1.5 rounded-md hover:bg-blue-600">Edit</a>
-                            <a href="presensi.php?action=delete&id=<?= e($row['Id_Presensi']) ?>&token=<?= e($_SESSION['csrf_token']) ?>" class="bg-red-500 text-white text-xs font-semibold px-3 py-1.5 rounded-md hover:bg-red-600" onclick="return confirm('Yakin?')">Hapus</a>
+                        <td class="px-4 py-3">
+                            <div class="flex items-center justify-center gap-2">
+                                <a href="presensi.php?action=edit&id=<?= e($row['Id_Presensi']) ?>" class="bg-blue-500 text-white text-xs font-semibold px-3 py-1.5 rounded-md hover:bg-blue-600">Edit</a>
+                                <a href="presensi.php?action=delete&id=<?= e($row['Id_Presensi']) ?>&token=<?= e($_SESSION['csrf_token']) ?>" class="bg-red-500 text-white text-xs font-semibold px-3 py-1.5 rounded-md hover:bg-red-600" onclick="return confirm('Yakin?')">Hapus</a>
+                            </div>
                         </td>
                     </tr>
                     <?php endwhile; $stmt_list->close(); $conn->close(); ?>
@@ -201,7 +201,6 @@ require_once __DIR__ . '/../includes/sidebar.php';
             <input type="hidden" name="Id_Presensi" value="<?= e($presensi_data['Id_Presensi'] ?? '') ?>">
             
             <div class="grid md:grid-cols-2 gap-x-6 gap-y-5">
-                <!-- Kolom Kiri -->
                 <div>
                     <label for="Id_Karyawan" class="block mb-2 text-sm font-bold text-gray-700">Nama Karyawan</label>
                     <select name="Id_Karyawan" id="Id_Karyawan" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500" required <?= $action === 'edit' ? 'disabled' : '' ?>>
@@ -231,8 +230,7 @@ require_once __DIR__ . '/../includes/sidebar.php';
                         <input type="number" name="Tahun" id="Tahun" value="<?= e($presensi_data['Tahun'] ?? date('Y')) ?>" class="w-full px-3 py-2 border border-gray-300 rounded-md" required <?= $action === 'edit' ? 'readonly' : '' ?>>
                     </div>
                 </div>
-                <!-- Kolom Kanan -->
-                <div class="grid grid-cols-2 gap-x-4">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-x-4 md:col-span-2">
                     <div>
                        <label for="Hadir" class="block mb-2 text-sm font-bold text-gray-700">Hadir</label>
                         <input type="number" id="Hadir" name="Hadir" value="<?= e($presensi_data['Hadir'] ?? '0') ?>" class="w-full px-3 py-2 border border-gray-300 rounded-md" required>
@@ -241,8 +239,6 @@ require_once __DIR__ . '/../includes/sidebar.php';
                         <label for="Sakit" class="block mb-2 text-sm font-bold text-gray-700">Sakit</label>
                         <input type="number" id="Sakit" name="Sakit" value="<?= e($presensi_data['Sakit'] ?? '0') ?>" class="w-full px-3 py-2 border border-gray-300 rounded-md" required>
                     </div>
-                </div>
-                <div class="grid grid-cols-2 gap-x-4">
                      <div>
                         <label for="Izin" class="block mb-2 text-sm font-bold text-gray-700">Izin</label>
                         <input type="number" id="Izin" name="Izin" value="<?= e($presensi_data['Izin'] ?? '0') ?>" class="w-full px-3 py-2 border border-gray-300 rounded-md" required>

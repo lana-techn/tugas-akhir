@@ -15,11 +15,22 @@ if ($action === 'delete' && $id) {
         if ($id == $_SESSION['user_id']) {
             set_flash_message('error', 'Anda tidak dapat menghapus akun Anda sendiri.');
         } else {
-            $stmt = $conn->prepare("DELETE FROM PENGGUNA WHERE Id_Pengguna = ?");
-            $stmt->bind_param("s", $id);
-            if ($stmt->execute()) set_flash_message('success', 'Data pengguna berhasil dihapus.');
-            else set_flash_message('error', 'Gagal menghapus data pengguna.');
-            $stmt->close();
+            // Cek apakah pengguna terkait dengan data karyawan
+            $stmt_check = $conn->prepare("SELECT COUNT(*) FROM KARYAWAN WHERE Id_Pengguna = ?");
+            $stmt_check->bind_param("s", $id);
+            $stmt_check->execute();
+            $count = $stmt_check->get_result()->fetch_row()[0];
+            $stmt_check->close();
+
+            if ($count > 0) {
+                set_flash_message('error', 'Pengguna tidak bisa dihapus karena terikat dengan data karyawan.');
+            } else {
+                $stmt = $conn->prepare("DELETE FROM PENGGUNA WHERE Id_Pengguna = ?");
+                $stmt->bind_param("s", $id);
+                if ($stmt->execute()) set_flash_message('success', 'Data pengguna berhasil dihapus.');
+                else set_flash_message('error', 'Gagal menghapus data pengguna.');
+                $stmt->close();
+            }
         }
     } else {
         set_flash_message('error', 'Token keamanan tidak valid.');
@@ -44,10 +55,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt = $conn->prepare("UPDATE PENGGUNA SET Email = ?, Level = ? WHERE Id_Pengguna = ?");
             $stmt->bind_param("sss", $email, $level, $id_pengguna);
             $action_text = 'diperbarui';
-            if ($password) {
-                $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+            
+            // Hanya update password jika diisi
+            if (!empty($password)) {
                 $stmt_pass = $conn->prepare("UPDATE PENGGUNA SET Password = ? WHERE Id_Pengguna = ?");
-                $stmt_pass->bind_param("ss", $hashed_password, $id_pengguna);
+                // Di dunia nyata, gunakan hashing. Untuk proyek ini, kita simpan teks biasa.
+                $stmt_pass->bind_param("ss", $password, $id_pengguna);
                 $stmt_pass->execute();
                 $stmt_pass->close();
             }
@@ -68,10 +81,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             $stmt_cek->close();
 
-            $prefix = strtolower(substr($level, 0, 1));
+            $prefix_map = ['Admin' => 'ADM', 'Pemilik' => 'PEM', 'Karyawan' => 'KAR'];
+            $prefix = $prefix_map[$level] ?? 'USR';
+            
             $result = $conn->query("SELECT Id_Pengguna FROM PENGGUNA WHERE Id_Pengguna LIKE '{$prefix}%' ORDER BY Id_Pengguna DESC LIMIT 1");
-            $last_id_num = $result->num_rows > 0 ? intval(substr($result->fetch_assoc()['Id_Pengguna'], 1)) : 0;
-            $id_pengguna_new = $prefix . str_pad($last_id_num + 1, 2, '0', STR_PAD_LEFT);
+            $last_id_num = $result->num_rows > 0 ? intval(substr($result->fetch_assoc()['Id_Pengguna'], 3)) : 0;
+            $id_pengguna_new = $prefix . str_pad($last_id_num + 1, 3, '0', STR_PAD_LEFT);
 
             $stmt = $conn->prepare("INSERT INTO PENGGUNA (Id_Pengguna, Email, Level, Password) VALUES (?, ?, ?, ?)");
             $stmt->bind_param("ssss", $id_pengguna_new, $email, $level, $password);
@@ -110,7 +125,7 @@ $conn->close();
 // 2. MEMANGGIL TAMPILAN (VIEW)
 // =======================================
 require_once __DIR__ . '/../includes/header.php';
-require_once __DIR__ . '/../includes/sidebar.php';
+// sidebar.php tidak perlu dipanggil lagi karena sudah ada di header.php
 
 ?>
 
@@ -118,9 +133,9 @@ require_once __DIR__ . '/../includes/sidebar.php';
 
 <?php if ($action === 'list'): ?>
     <div class="bg-white p-6 rounded-lg shadow-md">
-        <div class="flex justify-between items-center mb-6">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
             <h2 class="text-2xl font-bold text-gray-800">Daftar Pengguna Sistem</h2>
-            <a href="pengguna.php?action=add" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 text-sm font-semibold shadow-sm">
+            <a href="pengguna.php?action=add" class="w-full sm:w-auto bg-green-600 text-white text-center px-4 py-2 rounded-md hover:bg-green-700 text-sm font-semibold shadow-sm">
                 <i class="fa-solid fa-plus mr-2"></i>Tambah Pengguna
             </a>
         </div>
@@ -128,7 +143,7 @@ require_once __DIR__ . '/../includes/sidebar.php';
             <table class="w-full text-sm text-left text-gray-700">
                 <thead class="text-xs uppercase bg-gray-100 text-gray-600">
                     <tr>
-                        <th class="px-4 py-3">No</th>
+                        <th class="px-4 py-3">ID</th>
                         <th class="px-4 py-3">Email</th>
                         <th class="px-4 py-3">Level</th>
                         <th class="px-4 py-3 text-center">Aksi</th>
@@ -138,11 +153,10 @@ require_once __DIR__ . '/../includes/sidebar.php';
                     <?php
                     $conn = db_connect();
                     $result = $conn->query("SELECT * FROM PENGGUNA ORDER BY Level, Email ASC");
-                    $no = 1;
                     while ($row = $result->fetch_assoc()):
                     ?>
                     <tr class="bg-white border-b hover:bg-gray-50">
-                        <td class="px-4 py-3 font-medium"><?= $no++ ?></td>
+                        <td class="px-4 py-3 font-mono text-xs"><?= e($row['Id_Pengguna']) ?></td>
                         <td class="px-4 py-3 font-medium text-gray-900"><?= e($row['Email']) ?></td>
                         <td class="px-4 py-3">
                             <span class="px-2.5 py-1 text-xs font-semibold rounded-full 
@@ -153,12 +167,14 @@ require_once __DIR__ . '/../includes/sidebar.php';
                                 <?= e(ucfirst($row['Level'])) ?>
                             </span>
                         </td>
-                        <td class="px-4 py-3 text-center space-x-2">
+                        <td class="px-4 py-3 text-center">
+                        <div class="flex items-center justify-center gap-2">
                             <a href="pengguna.php?action=edit&id=<?= e($row['Id_Pengguna']) ?>" class="bg-blue-500 text-white text-xs font-semibold px-3 py-1.5 rounded-md hover:bg-blue-600">Edit</a>
                             <?php if ($row['Id_Pengguna'] !== $_SESSION['user_id']): ?>
                             <a href="pengguna.php?action=delete&id=<?= e($row['Id_Pengguna']) ?>&token=<?= e($_SESSION['csrf_token']) ?>" class="bg-red-500 text-white text-xs font-semibold px-3 py-1.5 rounded-md hover:bg-red-600" onclick="return confirm('Yakin ingin menghapus pengguna ini?')">Hapus</a>
                             <?php endif; ?>
-                        </td>
+                        </div>
+                    </td>
                     </tr>
                     <?php endwhile; $conn->close(); ?>
                 </tbody>

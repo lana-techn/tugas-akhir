@@ -12,6 +12,7 @@ $page_title = 'Manajemen Jabatan';
 // --- PROSES HAPUS ---
 if ($action === 'delete' && $id) {
     if (isset($_GET['token']) && hash_equals($_SESSION['csrf_token'], $_GET['token'])) {
+        // Cek apakah jabatan masih digunakan oleh karyawan
         $stmt_check = $conn->prepare("SELECT COUNT(*) FROM KARYAWAN WHERE Id_Jabatan = ?");
         $stmt_check->bind_param("s", $id);
         $stmt_check->execute();
@@ -52,12 +53,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else { // Tambah
             $nama_clean = preg_replace('/\s+/', '', $nama_jabatan);
             $prefix = strtoupper(substr($nama_clean, 0, 2));
+            
             $stmt_cek = $conn->prepare("SELECT Id_Jabatan FROM JABATAN WHERE Id_Jabatan LIKE ? ORDER BY Id_Jabatan DESC LIMIT 1");
             $prefix_like = $prefix . '%';
             $stmt_cek->bind_param("s", $prefix_like);
             $stmt_cek->execute();
             $result_cek = $stmt_cek->get_result();
-            $last_id_num = ($row = $result_cek->fetch_assoc()) ? intval(substr($row['Id_Jabatan'], 2)) : 0;
+            $last_id_num = ($row = $result_cek->fetch_assoc()) ? intval(substr($row['Id_Jabatan'], strlen($prefix))) : 0;
             $id_jabatan_new = $prefix . str_pad($last_id_num + 1, 3, '0', STR_PAD_LEFT);
             $stmt_cek->close();
 
@@ -67,7 +69,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         if ($stmt->execute()) set_flash_message('success', "Jabatan berhasil {$action_text}.");
-        else set_flash_message('error', "Gagal memproses data jabatan.");
+        else set_flash_message('error', "Gagal memproses data jabatan: " . $stmt->error);
         
         $stmt->close();
         header('Location: jabatan.php?action=list');
@@ -97,18 +99,16 @@ $conn->close();
 
 // 2. MEMANGGIL TAMPILAN (VIEW)
 // =======================================
-// Asumsi: header.php berada di folder ../includes/
 require_once __DIR__ . '/../includes/header.php';
-require_once __DIR__ . '/../includes/sidebar.php';
 ?>
 
 <?php display_flash_message(); ?>
 
 <?php if ($action === 'list'): ?>
     <div class="bg-white p-6 rounded-lg shadow-md">
-        <div class="flex justify-between items-center mb-6">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
             <h2 class="text-2xl font-bold text-gray-800">Daftar Jabatan</h2>
-            <a href="jabatan.php?action=add" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 text-sm font-semibold shadow-sm">
+            <a href="jabatan.php?action=add" class="w-full sm:w-auto bg-green-600 text-white text-center px-4 py-2 rounded-md hover:bg-green-700 text-sm font-semibold shadow-sm">
                 <i class="fa-solid fa-plus mr-2"></i>Tambah Jabatan
             </a>
         </div>
@@ -116,7 +116,7 @@ require_once __DIR__ . '/../includes/sidebar.php';
             <table class="w-full text-sm text-left text-gray-700">
                 <thead class="text-xs uppercase bg-gray-100 text-gray-600">
                     <tr>
-                        <th class="px-4 py-3">No</th>
+                        <th class="px-4 py-3">ID</th>
                         <th class="px-4 py-3">Nama Jabatan</th>
                         <th class="px-4 py-3">Pendidikan Minimal</th>
                         <th class="px-4 py-3 text-center">Aksi</th>
@@ -126,16 +126,17 @@ require_once __DIR__ . '/../includes/sidebar.php';
                     <?php
                     $conn = db_connect();
                     $result = $conn->query("SELECT * FROM JABATAN ORDER BY Nama_Jabatan ASC");
-                    $no = 1;
                     while ($row = $result->fetch_assoc()):
                     ?>
                     <tr class="bg-white border-b hover:bg-gray-50">
-                        <td class="px-4 py-3 font-medium"><?= $no++ ?></td>
+                        <td class="px-4 py-3 font-mono text-xs"><?= e($row['Id_Jabatan']) ?></td>
                         <td class="px-4 py-3 font-medium text-gray-900"><?= e($row['Nama_Jabatan']) ?></td>
                         <td class="px-4 py-3"><?= e($row['Pendidikan']) ?></td>
-                        <td class="px-4 py-3 text-center space-x-2">
-                            <a href="jabatan.php?action=edit&id=<?= e($row['Id_Jabatan']) ?>" class="bg-blue-500 text-white text-xs font-semibold px-3 py-1.5 rounded-md hover:bg-blue-600">Edit</a>
-                            <a href="jabatan.php?action=delete&id=<?= e($row['Id_Jabatan']) ?>&token=<?= e($_SESSION['csrf_token']) ?>" class="bg-red-500 text-white text-xs font-semibold px-3 py-1.5 rounded-md hover:bg-red-600" onclick="return confirm('Yakin ingin menghapus data ini?')">Hapus</a>
+                        <td class="px-4 py-3 text-center">
+                            <div class="flex items-center justify-center gap-2">
+                                <a href="jabatan.php?action=edit&id=<?= e($row['Id_Jabatan']) ?>" class="bg-blue-500 text-white text-xs font-semibold px-3 py-1.5 rounded-md hover:bg-blue-600">Edit</a>
+                                <a href="jabatan.php?action=delete&id=<?= e($row['Id_Jabatan']) ?>&token=<?= e($_SESSION['csrf_token']) ?>" class="bg-red-500 text-white text-xs font-semibold px-3 py-1.5 rounded-md hover:bg-red-600" onclick="return confirm('Yakin ingin menghapus data ini?')">Hapus</a>
+                            </div>
                         </td>
                     </tr>
                     <?php endwhile; $conn->close(); ?>

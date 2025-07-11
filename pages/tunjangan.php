@@ -11,7 +11,7 @@ $page_title = 'Manajemen Tunjangan';
 if ($action === 'delete' && $id) {
     if (isset($_GET['token']) && hash_equals($_SESSION['csrf_token'], $_GET['token'])) {
         $stmt = $conn->prepare("DELETE FROM TUNJANGAN WHERE Id_Tunjangan = ?");
-        $stmt->bind_param("i", $id); // ID adalah INT AUTO_INCREMENT
+        $stmt->bind_param("i", $id);
         if ($stmt->execute()) {
             set_flash_message('success', 'Data tunjangan berhasil dihapus.');
         } else {
@@ -80,16 +80,15 @@ $conn->close();
 
 // Memanggil header.php
 require_once __DIR__ . '/../includes/header.php';
-require_once __DIR__ . '/../includes/sidebar.php';
 ?>
 
 <?php display_flash_message(); ?>
 
 <?php if ($action === 'list'): ?>
     <div class="bg-white p-6 rounded-lg shadow-md">
-        <div class="flex justify-between items-center mb-6">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
             <h2 class="text-2xl font-bold text-gray-800">Daftar Tunjangan</h2>
-            <a href="tunjangan.php?action=add" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 text-sm font-semibold shadow-sm">
+            <a href="tunjangan.php?action=add" class="w-full sm:w-auto bg-green-600 text-white text-center px-4 py-2 rounded-md hover:bg-green-700 text-sm font-semibold shadow-sm">
                 <i class="fa-solid fa-plus mr-2"></i>Tambah Tunjangan
             </a>
         </div>
@@ -116,9 +115,11 @@ require_once __DIR__ . '/../includes/sidebar.php';
                         <td class="px-4 py-3 font-medium text-gray-900"><?= e($row['Nama_Tunjangan']) ?></td>
                         <td class="px-4 py-3 text-right">Rp <?= number_format($row['Jumlah_Tunjangan'] ?? 0, 0, ',', '.') ?></td>
                         <td class="px-4 py-3"><?= e($row['Keterangan']) ?></td>
-                        <td class="px-4 py-3 text-center space-x-2">
-                            <a href="tunjangan.php?action=edit&id=<?= e($row['Id_Tunjangan']) ?>" class="bg-blue-500 text-white text-xs font-semibold px-3 py-1.5 rounded-md hover:bg-blue-600">Edit</a>
-                            <a href="tunjangan.php?action=delete&id=<?= e($row['Id_Tunjangan']) ?>&token=<?= e($_SESSION['csrf_token']) ?>" class="bg-red-500 text-white text-xs font-semibold px-3 py-1.5 rounded-md hover:bg-red-600" onclick="return confirm('Yakin ingin menghapus data ini?')">Hapus</a>
+                        <td class="px-4 py-3 text-center">
+                            <div class="flex items-center justify-center gap-2">
+                                <a href="tunjangan.php?action=edit&id=<?= e($row['Id_Tunjangan']) ?>" class="bg-blue-500 text-white text-xs font-semibold px-3 py-1.5 rounded-md hover:bg-blue-600">Edit</a>
+                                <a href="tunjangan.php?action=delete&id=<?= e($row['Id_Tunjangan']) ?>&token=<?= e($_SESSION['csrf_token']) ?>" class="bg-red-500 text-white text-xs font-semibold px-3 py-1.5 rounded-md hover:bg-red-600" onclick="return confirm('Yakin ingin menghapus data ini?')">Hapus</a>
+                            </div>
                         </td>
                     </tr>
                     <?php endwhile; $conn->close(); ?>

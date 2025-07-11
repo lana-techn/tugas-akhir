@@ -89,11 +89,13 @@ if ($action === 'edit' && $id) {
         exit;
     }
     
+    // Ambil data pengguna yang terpilih untuk mode edit agar tetap muncul di dropdown
     $stmt_pengguna_edit = $conn->prepare("SELECT Id_Pengguna, Email FROM PENGGUNA WHERE Id_Pengguna = ?");
     $stmt_pengguna_edit->bind_param("s", $karyawan_data['Id_Pengguna']);
     $stmt_pengguna_edit->execute();
     $pengguna_terpilih = $stmt_pengguna_edit->get_result()->fetch_assoc();
     if ($pengguna_terpilih) {
+        // Tambahkan ke awal list agar terpilih
         array_unshift($pengguna_list, $pengguna_terpilih);
     }
     $stmt_pengguna_edit->close();
@@ -108,7 +110,6 @@ $conn->close();
 // 2. MEMANGGIL TAMPILAN (VIEW)
 // =======================================
 require_once __DIR__ . '/../includes/header.php';
-require_once __DIR__ . '/../includes/sidebar.php';
 
 ?>
 
@@ -116,9 +117,9 @@ require_once __DIR__ . '/../includes/sidebar.php';
 
 <?php if ($action === 'list'): ?>
     <div class="bg-white p-6 rounded-lg shadow-md">
-        <div class="flex justify-between items-center mb-6">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
             <h2 class="text-2xl font-bold text-gray-800">Daftar Karyawan</h2>
-            <a href="karyawan.php?action=add" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 text-sm font-semibold shadow-sm">
+            <a href="karyawan.php?action=add" class="w-full sm:w-auto bg-green-600 text-white text-center px-4 py-2 rounded-md hover:bg-green-700 text-sm font-semibold shadow-sm">
                 <i class="fa-solid fa-plus mr-2"></i>Tambah Karyawan
             </a>
         </div>
@@ -150,9 +151,11 @@ require_once __DIR__ . '/../includes/sidebar.php';
                                 <?= e($row['Status']) ?>
                             </span>
                         </td>
-                        <td class="px-4 py-3 text-center space-x-2">
-                            <a href="karyawan.php?action=edit&id=<?= e($row['Id_Karyawan']) ?>" class="bg-blue-500 text-white text-xs font-semibold px-3 py-1.5 rounded-md hover:bg-blue-600">Edit</a>
-                            <a href="karyawan.php?action=delete&id=<?= e($row['Id_Karyawan']) ?>&token=<?= e($_SESSION['csrf_token']) ?>" class="bg-red-500 text-white text-xs font-semibold px-3 py-1.5 rounded-md hover:bg-red-600" onclick="return confirm('Yakin ingin menghapus data ini?')">Hapus</a>
+                        <td class="px-4 py-3 text-center">
+                            <div class="flex items-center justify-center gap-2">
+                                <a href="karyawan.php?action=edit&id=<?= e($row['Id_Karyawan']) ?>" class="bg-blue-500 text-white text-xs font-semibold px-3 py-1.5 rounded-md hover:bg-blue-600">Edit</a>
+                                <a href="karyawan.php?action=delete&id=<?= e($row['Id_Karyawan']) ?>&token=<?= e($_SESSION['csrf_token']) ?>" class="bg-red-500 text-white text-xs font-semibold px-3 py-1.5 rounded-md hover:bg-red-600" onclick="return confirm('Yakin ingin menghapus data ini?')">Hapus</a>
+                            </div>
                         </td>
                     </tr>
                     <?php endwhile; $conn->close(); ?>
