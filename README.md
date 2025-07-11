@@ -1,6 +1,6 @@
 # Sistem Penggajian Karyawan
 
-Sistem Penggajian Karyawan adalah aplikasi berbasis web yang dikembangkan menggunakan PHP dan MySQL untuk mengelola data karyawan, jabatan, presensi, lembur, potongan, dan proses penggajian secara efisien.
+Sistem Penggajian Karyawan adalah aplikasi berbasis web yang dikembangkan menggunakan PHP dan MySQL untuk mengelola data karyawan, jabatan, presensi, lembur, potongan, dan proses penggajian .
 
 ## Fitur Utama
 
@@ -50,25 +50,19 @@ CREATE DATABASE db_penggajian;
 
 b. Impor Skema Database melalui phpMyAdmin
 
-1.
-Buka browser web Anda dan navigasikan ke phpMyAdmin (biasanya http://localhost/phpmyadmin).
+    1. Buka browser web Anda dan navigasikan ke phpMyAdmin (biasanya http://localhost/phpmyadmin).
+  
+    2. Pilih database db_penggajian yang baru saja Anda buat dari daftar di sisi kiri.
+  
+    3. Klik tab Import di bagian atas.
+  
+    4. Klik tombol Choose File atau Browse dan pilih file db_penggajian.sql yang terletak di folder sql/ di dalam direktori proyek Anda (tugas-akhir/sql/db_penggajian.sql).
+  
+    5. Biarkan opsi lainnya pada nilai default.
+  
+    6. Scroll ke bawah dan klik tombol Go untuk memulai proses impor.
 
-2.
-Pilih database db_penggajian yang baru saja Anda buat dari daftar di sisi kiri.
-
-3.
-Klik tab Import di bagian atas.
-
-4.
-Klik tombol Choose File atau Browse dan pilih file db_penggajian.sql yang terletak di folder sql/ di dalam direktori proyek Anda (tugas-akhir/sql/db_penggajian.sql).
-
-5.
-Biarkan opsi lainnya pada nilai default.
-
-6.
-Gulir ke bawah dan klik tombol Go untuk memulai proses impor.
-
-Setelah proses impor selesai, Anda akan melihat pesan sukses, dan semua tabel yang diperlukan akan muncul di database db_penggajian.
+Setelah proses impor selesai, nanti ada pesan sukses, dan semua tabel yang diperlukan bakalan ada di database db_penggajian.
 
 
 
