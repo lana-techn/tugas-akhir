@@ -13,7 +13,7 @@ if ($action === 'approve' && $id_gaji) {
     if (isset($_GET['token']) && hash_equals($_SESSION['csrf_token'], $_GET['token'])) {
         // Update status gaji menjadi 'Disetujui'
         $stmt = $conn->prepare("UPDATE GAJI SET Status = 'Disetujui' WHERE Id_Gaji = ?");
-        $stmt->bind_param("s", $id_gaji);
+        $stmt->bind_param("i", $id_gaji); // Id_Gaji is INT
         if ($stmt->execute()) {
             set_flash_message('success', 'Penggajian berhasil disetujui.');
         } else {
@@ -99,3 +99,4 @@ generate_csrf_token();
 </main>
 
 <?php require_once __DIR__ . '/../../includes/footer.php'; ?>
+
