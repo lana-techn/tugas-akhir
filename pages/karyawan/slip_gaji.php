@@ -13,7 +13,7 @@ $gaji_pokok_nominal = 0;
 if (isset($_SESSION['user_id'])) {
     $id_pengguna = $_SESSION['user_id'];
 
-    // Ambil Id_Karyawan dan Tgl_Awal_Kerja berdasarkan Id_Pengguna
+    // Ambil Id_Karyawan, Tgl_Awal_Kerja, dan Id_Jabatan berdasarkan Id_Pengguna
     $stmt_karyawan = $conn->prepare("SELECT Id_Karyawan, Tgl_Awal_Kerja, Id_Jabatan FROM KARYAWAN WHERE Id_Pengguna = ?");
     $stmt_karyawan->bind_param("s", $id_pengguna);
     $stmt_karyawan->execute();
@@ -62,15 +62,15 @@ if (isset($_SESSION['user_id'])) {
             // Ambil detail komponen gaji dari tabel DETAIL_GAJI
             $stmt_detail = $conn->prepare("
                 SELECT
-                    dg.Jumlah_Tunjangan, dg.Jumlah_Potongan, dg.Jumlah_Lembur,
-                    t.Nama_Tunjangan, p.Nama_Potongan, l.Lama_Lembur
+                    dg.Id_Tunjangan, dg.Id_Potongan, dg.Id_Lembur, dg.Jumlah,
+                    t.Nama_Tunjangan, p.Nama_Potongan, l.Nama_Lembur, l.Lama_Lembur, l.Upah_Lembur
                 FROM DETAIL_GAJI dg
                 LEFT JOIN TUNJANGAN t ON dg.Id_Tunjangan = t.Id_Tunjangan
                 LEFT JOIN POTONGAN p ON dg.Id_Potongan = p.Id_Potongan
                 LEFT JOIN LEMBUR l ON dg.Id_Lembur = l.Id_Lembur
                 WHERE dg.Id_Gaji = ?
             ");
-            $stmt_detail->bind_param("s", $slip_gaji['Id_Gaji']);
+            $stmt_detail->bind_param("i", $slip_gaji['Id_Gaji']); // Changed 's' to 'i' for Id_Gaji
             $stmt_detail->execute();
             $detail_komponen = $stmt_detail->get_result()->fetch_all(MYSQLI_ASSOC);
             $stmt_detail->close();
@@ -118,25 +118,26 @@ require_once __DIR__ . '/../../includes/sidebar.php';
                         <tbody>
                             <tr>
                                 <td class="py-2">Gaji Pokok</td>
-                                <td class="py-2 text-right">Rp <?= number_format($gaji_pokok_nominal, 2, ',', '.') ?></td>
+                                <td class="py-2 text-right">Rp <?= number_format($gaji_pokok_nominal, 0, ',', '.') ?></td>
                             </tr>
                             <?php foreach ($detail_komponen as $detail): ?>
-                                <?php if (!empty($detail['Nama_Tunjangan']) && $detail['Jumlah_Tunjangan'] > 0): ?>
+                                <?php if (!empty($detail['Id_Tunjangan'])): // Ini adalah tunjangan ?>
                                 <tr>
                                     <td class="py-2">Tunjangan: <?= e($detail['Nama_Tunjangan']) ?></td>
-                                    <td class="py-2 text-right">Rp <?= number_format($detail['Jumlah_Tunjangan'], 2, ',', '.') ?></td>
+                                    <td class="py-2 text-right">Rp <?= number_format($detail['Jumlah'], 0, ',', '.') ?></td>
+                                </tr>
+                                <?php elseif (!empty($detail['Id_Lembur'])): // Ini adalah lembur ?>
+                                <tr>
+                                    <td class="py-2">Lembur: <?= e($detail['Nama_Lembur']) ?> (<?= e($detail['Lama_Lembur']) ?> jam)</td>
+                                    <td class="py-2 text-right">Rp <?= number_format($detail['Jumlah'], 0, ',', '.') ?></td>
                                 </tr>
                                 <?php endif; ?>
                             <?php endforeach; ?>
-                             <tr>
-                                <td class="py-2">Total Lembur</td>
-                                <td class="py-2 text-right">Rp <?= number_format($slip_gaji['Total_Lembur'], 2, ',', '.') ?></td>
-                            </tr>
                         </tbody>
                         <tfoot class="font-bold">
                              <tr class="bg-gray-50">
                                 <td class="py-2.5">Total Pendapatan (Gaji Kotor)</td>
-                                <td class="py-2.5 text-right">Rp <?= number_format($slip_gaji['Gaji_Kotor'], 2, ',', '.') ?></td>
+                                <td class="py-2.5 text-right">Rp <?= number_format($slip_gaji['Gaji_Kotor'], 0, ',', '.') ?></td>
                             </tr>
                         </tfoot>
                     </table>
@@ -146,10 +147,10 @@ require_once __DIR__ . '/../../includes/sidebar.php';
                      <table class="w-full text-sm">
                         <tbody>
                             <?php foreach ($detail_komponen as $detail): ?>
-                                <?php if (!empty($detail['Nama_Potongan']) && $detail['Jumlah_Potongan'] > 0): ?>
+                                <?php if (!empty($detail['Id_Potongan'])): // Ini adalah potongan ?>
                                 <tr>
                                     <td class="py-2">Potongan: <?= e($detail['Nama_Potongan']) ?></td>
-                                    <td class="py-2 text-right">- Rp <?= number_format($detail['Jumlah_Potongan'], 2, ',', '.') ?></td>
+                                    <td class="py-2 text-right">- Rp <?= number_format($detail['Jumlah'], 0, ',', '.') ?></td>
                                 </tr>
                                 <?php endif; ?>
                             <?php endforeach; ?>
@@ -157,7 +158,7 @@ require_once __DIR__ . '/../../includes/sidebar.php';
                          <tfoot class="font-bold">
                              <tr class="bg-gray-50">
                                 <td class="py-2.5">Total Potongan</td>
-                                <td class="py-2.5 text-right">- Rp <?= number_format($slip_gaji['Total_Potongan'], 2, ',', '.') ?></td>
+                                <td class="py-2.5 text-right">- Rp <?= number_format($slip_gaji['Total_Potongan'], 0, ',', '.') ?></td>
                             </tr>
                         </tfoot>
                     </table>
@@ -166,7 +167,7 @@ require_once __DIR__ . '/../../includes/sidebar.php';
 
             <div class="mt-8 bg-green-50 p-4 rounded-lg text-right">
                 <p class="text-sm text-gray-600">GAJI BERSIH (TAKE HOME PAY)</p>
-                <p class="text-2xl font-bold text-green-800">Rp <?= number_format($slip_gaji['Gaji_Bersih'], 2, ',', '.') ?></p>
+                <p class="text-2xl font-bold text-green-800">Rp <?= number_format($slip_gaji['Gaji_Bersih'], 0, ',', '.') ?></p>
             </div>
 
         </div>
@@ -178,3 +179,5 @@ require_once __DIR__ . '/../../includes/sidebar.php';
 </main>
 
 <?php require_once __DIR__ . '/../../includes/footer.php'; ?>
+
+
