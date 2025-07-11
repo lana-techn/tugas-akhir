@@ -85,7 +85,6 @@ $conn->close();
 // 2. MEMANGGIL TAMPILAN (VIEW)
 // =======================================
 require_once __DIR__ . '/../includes/header.php';
-require_once __DIR__ . '/../includes/sidebar.php';
 
 ?>
 
@@ -93,9 +92,9 @@ require_once __DIR__ . '/../includes/sidebar.php';
 
 <?php if ($action === 'list_gapok'): ?>
     <div class="bg-white p-6 rounded-lg shadow-md">
-        <div class="flex justify-between items-center mb-6">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
             <h2 class="text-2xl font-bold text-gray-800">Daftar Gaji Pokok</h2>
-            <a href="salary.php?action=add_gapok" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 text-sm font-semibold shadow-sm">
+            <a href="salary.php?action=add_gapok" class="w-full sm:w-auto bg-green-600 text-white text-center px-4 py-2 rounded-md hover:bg-green-700 text-sm font-semibold shadow-sm">
                 <i class="fa-solid fa-plus mr-2"></i>Tambah Gaji Pokok
             </a>
         </div>
@@ -122,9 +121,11 @@ require_once __DIR__ . '/../includes/sidebar.php';
                         <td class="px-4 py-3 font-medium text-gray-900"><?= e($row['Nama_Jabatan']) ?></td>
                         <td class="px-4 py-3 text-center"><?= e($row['Masa_Kerja']) ?></td>
                         <td class="px-4 py-3 text-right">Rp <?= number_format($row['Nominal'] ?? 0, 0, ',', '.') ?></td>
-                        <td class="px-4 py-3 text-center space-x-2">
-                            <a href="salary.php?action=edit_gapok&id=<?= e($row['Id_Gapok']) ?>" class="bg-blue-500 text-white text-xs font-semibold px-3 py-1.5 rounded-md hover:bg-blue-600">Edit</a>
-                            <a href="salary.php?action=delete_gapok&id=<?= e($row['Id_Gapok']) ?>&token=<?= e($_SESSION['csrf_token']) ?>" class="bg-red-500 text-white text-xs font-semibold px-3 py-1.5 rounded-md hover:bg-red-600" onclick="return confirm('Yakin ingin menghapus data ini?')">Hapus</a>
+                        <td class="px-4 py-3 text-center">
+                            <div class="flex items-center justify-center gap-2">
+                                <a href="salary.php?action=edit_gapok&id=<?= e($row['Id_Gapok']) ?>" class="bg-blue-500 text-white text-xs font-semibold px-3 py-1.5 rounded-md hover:bg-blue-600">Edit</a>
+                                <a href="salary.php?action=delete_gapok&id=<?= e($row['Id_Gapok']) ?>&token=<?= e($_SESSION['csrf_token']) ?>" class="bg-red-500 text-white text-xs font-semibold px-3 py-1.5 rounded-md hover:bg-red-600" onclick="return confirm('Yakin ingin menghapus data ini?')">Hapus</a>
+                            </div>
                         </td>
                     </tr>
                     <?php endwhile; $conn->close(); ?>
@@ -172,8 +173,7 @@ require_once __DIR__ . '/../includes/sidebar.php';
 <?php if ($action === 'new_payroll'): ?>
     <div class="bg-white p-8 rounded-lg shadow-md max-w-lg mx-auto">
         <h2 class="text-2xl font-bold text-gray-800 text-center mb-8">Pengajuan Gaji Baru</h2>
-        <form method="POST" action="payroll_process.php"> <!-- Arahkan ke file proses terpisah -->
-            <?php csrf_input(); ?>
+        <form method="POST" action="payroll_process.php"> <?php csrf_input(); ?>
             <div class="mb-5">
                 <label for="Id_Karyawan" class="block mb-2 text-sm font-bold text-gray-700">Nama Karyawan</label>
                 <select name="Id_Karyawan" id="Id_Karyawan" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500" required>
