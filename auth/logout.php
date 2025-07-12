@@ -15,5 +15,5 @@ if (ini_get("session.use_cookies")) {
 
 // Hancurkan sesi
 session_destroy();
-header('Location: ' . BASE_URL . '/auth/login.php?status=logout_success');
+header('Location: login.php?status=logout_success');
 exit();

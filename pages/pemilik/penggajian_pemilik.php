@@ -2,7 +2,7 @@
 $page_title = 'Persetujuan Gaji';
 $current_page = 'penggajian_pemilik';
 require_once __DIR__ . '/../../includes/functions.php';
-require_login('pemilik');
+requireLogin('pemilik');
 
 $conn = db_connect();
 $action = $_GET['action'] ?? 'list';

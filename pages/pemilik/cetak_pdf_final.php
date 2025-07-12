@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . 
 '/../../includes/functions.php';
-require_login('pemilik');
+requireLogin('pemilik');
 
 // Include DomPDF library
 // Pastikan Anda telah menginstal DomPDF via Composer:

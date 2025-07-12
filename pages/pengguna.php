@@ -1,9 +1,11 @@
 <?php
 // 1. SETUP & LOGIKA
 require_once __DIR__ . '/../includes/functions.php';
-require_login('admin');
+requireLogin(); // Menggunakan fungsi yang sudah diperbarui
 
-$conn = db_connect();
+// Menggunakan koneksi PDO
+$database = new Database();
+$conn = $database->getConnection();
 $action = $_GET['action'] ?? 'list';
 $id = $_GET['id'] ?? null;
 $page_title = 'Manajemen Pengguna';
@@ -21,20 +23,22 @@ if ($action === 'delete' && $id) {
         if ($id == $_SESSION['user_id']) {
             set_flash_message('error', 'Anda tidak dapat menghapus akun Anda sendiri.');
         } else {
-            $stmt_check = $conn->prepare("SELECT COUNT(*) FROM KARYAWAN WHERE Id_Pengguna = ?");
-            $stmt_check->bind_param("s", $id);
+            // Menggunakan PDO prepared statements
+            $stmt_check = $conn->prepare("SELECT COUNT(*) as count FROM KARYAWAN WHERE Id_Pengguna = :id");
+            $stmt_check->bindParam(':id', $id);
             $stmt_check->execute();
-            $count = $stmt_check->get_result()->fetch_row()[0];
-            $stmt_check->close();
+            $count = $stmt_check->fetch(PDO::FETCH_ASSOC)['count'];
 
             if ($count > 0) {
                 set_flash_message('error', 'Pengguna tidak bisa dihapus karena terikat dengan data karyawan.');
             } else {
-                $stmt = $conn->prepare("DELETE FROM PENGGUNA WHERE Id_Pengguna = ?");
-                $stmt->bind_param("s", $id);
-                if ($stmt->execute()) set_flash_message('success', 'Data pengguna berhasil dihapus.');
-                else set_flash_message('error', 'Gagal menghapus data pengguna.');
-                $stmt->close();
+                $stmt = $conn->prepare("DELETE FROM PENGGUNA WHERE Id_Pengguna = :id");
+                $stmt->bindParam(':id', $id);
+                if ($stmt->execute()) {
+                    set_flash_message('success', 'Data pengguna berhasil dihapus.');
+                } else {
+                    set_flash_message('error', 'Gagal menghapus data pengguna.');
+                }
             }
         }
     } else {
@@ -57,16 +61,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         set_flash_message('error', 'Email dan Level wajib diisi dengan format yang benar.');
     } else {
         if ($id_pengguna) { // Edit
-            $stmt = $conn->prepare("UPDATE PENGGUNA SET Email = ?, Level = ? WHERE Id_Pengguna = ?");
-            $stmt->bind_param("sss", $email, $level, $id_pengguna);
+            $stmt = $conn->prepare("UPDATE PENGGUNA SET Email = :email, Level = :level WHERE Id_Pengguna = :id");
+            $stmt->bindParam(':email', $email);
+            $stmt->bindParam(':level', $level);
+            $stmt->bindParam(':id', $id_pengguna);
             $action_text = 'diperbarui';
             
             if (!empty($password)) {
-                // Di dunia nyata, gunakan password_hash(). Untuk proyek ini, kita biarkan teks biasa.
-                $stmt_pass = $conn->prepare("UPDATE PENGGUNA SET Password = ? WHERE Id_Pengguna = ?");
-                $stmt_pass->bind_param("ss", $password, $id_pengguna);
+                $stmt_pass = $conn->prepare("UPDATE PENGGUNA SET Password = :password WHERE Id_Pengguna = :id");
+                $stmt_pass->bindParam(':password', $password); // Sebaiknya di-hash
+                $stmt_pass->bindParam(':id', $id_pengguna);
                 $stmt_pass->execute();
-                $stmt_pass->close();
             }
         } else { // Tambah
             if (empty($password)) {
@@ -75,32 +80,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 exit;
             }
             
-            $stmt_cek = $conn->prepare("SELECT Id_Pengguna FROM PENGGUNA WHERE Email = ?");
-            $stmt_cek->bind_param("s", $email);
+            $stmt_cek = $conn->prepare("SELECT Id_Pengguna FROM PENGGUNA WHERE Email = :email");
+            $stmt_cek->bindParam(':email', $email);
             $stmt_cek->execute();
-            if ($stmt_cek->get_result()->num_rows > 0) {
+            if ($stmt_cek->rowCount() > 0) {
                  set_flash_message('error', 'Email sudah terdaftar. Gunakan email lain.');
                  header('Location: pengguna.php?action=add');
                  exit;
             }
-            $stmt_cek->close();
 
             $prefix_map = ['Admin' => 'ADM', 'Pemilik' => 'PEM', 'Karyawan' => 'KAR'];
             $prefix = $prefix_map[$level] ?? 'USR';
             
-            $result = $conn->query("SELECT Id_Pengguna FROM PENGGUNA WHERE Id_Pengguna LIKE '{$prefix}%' ORDER BY Id_Pengguna DESC LIMIT 1");
-            $last_id_num = $result->num_rows > 0 ? intval(substr($result->fetch_assoc()['Id_Pengguna'], 3)) : 0;
+            $stmt_last = $conn->prepare("SELECT Id_Pengguna FROM PENGGUNA WHERE Id_Pengguna LIKE :prefix ORDER BY Id_Pengguna DESC LIMIT 1");
+            $like_prefix = $prefix . '%';
+            $stmt_last->bindParam(':prefix', $like_prefix);
+            $stmt_last->execute();
+            $result = $stmt_last->fetch(PDO::FETCH_ASSOC);
+            $last_id_num = $result ? intval(substr($result['Id_Pengguna'], 3)) : 0;
             $id_pengguna_new = $prefix . str_pad($last_id_num + 1, 3, '0', STR_PAD_LEFT);
 
-            $stmt = $conn->prepare("INSERT INTO PENGGUNA (Id_Pengguna, Email, Level, Password) VALUES (?, ?, ?, ?)");
-            $stmt->bind_param("ssss", $id_pengguna_new, $email, $level, $password);
+            $stmt = $conn->prepare("INSERT INTO PENGGUNA (Id_Pengguna, Email, Level, Password) VALUES (:id, :email, :level, :password)");
+            $stmt->bindParam(':id', $id_pengguna_new);
+            $stmt->bindParam(':email', $email);
+            $stmt->bindParam(':level', $level);
+            $stmt->bindParam(':password', $password); // Sebaiknya di-hash
             $action_text = 'ditambahkan';
         }
 
-        if ($stmt->execute()) set_flash_message('success', "Pengguna berhasil {$action_text}.");
-        else set_flash_message('error', "Gagal memproses data pengguna: " . $stmt->error);
+        if ($stmt->execute()) {
+            set_flash_message('success', "Pengguna berhasil {$action_text}.");
+        } else {
+            set_flash_message('error', "Gagal memproses data pengguna.");
+        }
         
-        $stmt->close();
         header('Location: pengguna.php?action=list');
         exit;
     }
@@ -109,11 +122,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $pengguna_data = null;
 if ($action === 'edit' && $id) {
     $page_title = 'Edit Pengguna';
-    $stmt = $conn->prepare("SELECT * FROM PENGGUNA WHERE Id_Pengguna = ?");
-    $stmt->bind_param("s", $id);
-    $stmt->execute();
-    $pengguna_data = $stmt->get_result()->fetch_assoc();
-    $stmt->close();
+    // Gunakan koneksi mysqli sementara untuk get_result, atau ubah cara fetch data
+    $conn_mysqli = db_connect();
+    $stmt_mysqli = $conn_mysqli->prepare("SELECT * FROM PENGGUNA WHERE Id_Pengguna = ?");
+    $stmt_mysqli->bind_param("s", $id);
+    $stmt_mysqli->execute();
+    $pengguna_data = $stmt_mysqli->get_result()->fetch_assoc();
+    $stmt_mysqli->close();
     if (!$pengguna_data) {
         set_flash_message('error', 'Data pengguna tidak ditemukan.');
         header('Location: pengguna.php?action=list');
@@ -176,42 +191,36 @@ require_once __DIR__ . '/../includes/header.php';
                 <tbody>
                     <?php
                     // Build query dinamis
-                    $count_params = [];
-                    $types_string_count = '';
-                    $count_sql = "SELECT COUNT(Id_Pengguna) as total FROM PENGGUNA WHERE Email LIKE ?";
+                    $count_sql = "SELECT COUNT(Id_Pengguna) as total FROM PENGGUNA WHERE Email LIKE :search";
                     $search_param = "%" . $search . "%";
-                    array_push($count_params, $search_param);
-                    $types_string_count .= 's';
+                    $params = [':search' => $search_param];
 
                     if ($level_filter) {
-                        $count_sql .= " AND Level = ?";
-                        array_push($count_params, $level_filter);
-                        $types_string_count .= 's';
+                        $count_sql .= " AND Level = :level";
+                        $params[':level'] = $level_filter;
                     }
                     $stmt_count = $conn->prepare($count_sql);
-                    $stmt_count->bind_param($types_string_count, ...$count_params);
-                    $stmt_count->execute();
-                    $total_records = $stmt_count->get_result()->fetch_assoc()['total'];
+                    $stmt_count->execute($params);
+                    $total_records = $stmt_count->fetch(PDO::FETCH_ASSOC)['total'];
                     $total_pages = ceil($total_records / $records_per_page);
-                    $stmt_count->close();
 
-                    $data_params = $count_params;
-                    $types_string_data = $types_string_count;
-                    $sql = "SELECT * FROM PENGGUNA WHERE Email LIKE ?";
+                    $sql = "SELECT * FROM PENGGUNA WHERE Email LIKE :search";
                     if ($level_filter) {
-                        $sql .= " AND Level = ?";
+                        $sql .= " AND Level = :level";
                     }
-                    $sql .= " ORDER BY Level, Email ASC LIMIT ? OFFSET ?";
-                    array_push($data_params, $records_per_page, $offset);
-                    $types_string_data .= 'ii';
-
-                    $stmt = $conn->prepare($sql);
-                    $stmt->bind_param($types_string_data, ...$data_params);
-                    $stmt->execute();
-                    $result = $stmt->get_result();
+                    $sql .= " ORDER BY Level, Email ASC LIMIT :limit OFFSET :offset";
                     
-                    if($result->num_rows > 0) {
-                        while ($row = $result->fetch_assoc()):
+                    $stmt = $conn->prepare($sql);
+                    $stmt->bindValue(':search', $search_param);
+                    if ($level_filter) {
+                        $stmt->bindValue(':level', $level_filter);
+                    }
+                    $stmt->bindValue(':limit', (int) $records_per_page, PDO::PARAM_INT);
+                    $stmt->bindValue(':offset', (int) $offset, PDO::PARAM_INT);
+                    $stmt->execute();
+    
+                    if($stmt->rowCount() > 0) {
+                        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)):
                     ?>
                     <tr class="bg-white border-b hover:bg-gray-50 transition-colors">
                         <td class="px-6 py-4 font-mono text-xs"><?= e($row['Id_Pengguna']) ?></td>
@@ -239,14 +248,14 @@ require_once __DIR__ . '/../includes/header.php';
                     } else {
                         echo '<tr><td colspan="4" class="text-center py-5 text-gray-500">Tidak ada data ditemukan.</td></tr>';
                     }
-                    $stmt->close(); $conn->close(); 
+                    // TIDAK ADA $stmt->close() ATAU $conn->close() DI SINI
                     ?>
                 </tbody>
             </table>
         </div>
         
         <?php 
-        echo generate_pagination_links($page, $total_pages, 'pengguna.php', ['action' => 'list', 'search' => $search, 'level' => $level_filter]);
+        echo generate_pagination_links($page, $total_pages, ['action' => 'list', 'search' => $search, 'level' => $level_filter]);
         ?>
     </div>
 <?php endif; ?>

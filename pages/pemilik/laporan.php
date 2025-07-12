@@ -2,7 +2,7 @@
 $page_title = 'Laporan Gaji';
 $current_page = 'laporan'; // Berguna untuk menandai menu aktif di sidebar
 require_once __DIR__ . '/../../includes/functions.php';
-require_login('pemilik');
+requireLogin('pemilik');
 
 $conn = db_connect();
 

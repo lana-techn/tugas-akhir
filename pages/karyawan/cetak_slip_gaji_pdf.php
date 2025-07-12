@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/../../includes/functions.php';
-require_login('karyawan');
+requireLogin('karyawan');
 
 // Include DomPDF library
 require_once __DIR__ . '/../../vendor/autoload.php';

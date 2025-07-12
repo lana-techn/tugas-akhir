@@ -1,7 +1,7 @@
 <?php
 // 1. SETUP & LOGIKA
 require_once __DIR__ . '/../includes/functions.php';
-require_login('admin');
+requireLogin('admin');
 
 $conn = db_connect();
 $action = $_GET['action'] ?? 'list';

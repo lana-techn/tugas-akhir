@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/../includes/functions.php';
-require_login('admin');
+requireLogin('admin');
 
 $conn = db_connect();
 

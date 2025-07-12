@@ -4,12 +4,12 @@ require_once __DIR__ . '/../includes/functions.php';
 
 // Jika sudah login, langsung arahkan ke dashboard yang sesuai
 if (isset($_SESSION['user_id'])) {
-    $redirect_url = BASE_URL . '/index.php'; // Default redirect
+    $redirect_url = '../index.php'; // Default redirect
     if (isset($_SESSION['level'])) {
         if (strtolower($_SESSION['level']) === 'pemilik') {
-            $redirect_url = BASE_URL . '/index_pemilik.php';
+            $redirect_url = '../index_pemilik.php';
         } elseif (strtolower($_SESSION['level']) === 'karyawan') {
-            $redirect_url = BASE_URL . '/index_karyawan.php';
+            $redirect_url = '../index_karyawan.php';
         }
     }
     header('Location: ' . $redirect_url);
@@ -19,7 +19,7 @@ if (isset($_SESSION['user_id'])) {
 // 2. LOGIC HANDLING (POST REQUEST)
 $error = null;
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $conn = db_connect();
+    $conn = db_connect(); // Menggunakan fungsi koneksi mysqli yang ada
     $email = trim($_POST['email'] ?? '');
     $password = $_POST['password'] ?? '';
 
@@ -45,11 +45,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['level'] = $user['Level'];
                 
                 // Arahkan ke dashboard yang sesuai dengan level pengguna
-                $redirect_url = BASE_URL . '/index.php'; // Default untuk Admin
+                $redirect_url = '../index.php'; // Default untuk Admin
                 if (strtolower($user['Level']) === 'pemilik') {
-                    $redirect_url = BASE_URL . '/index_pemilik.php';
+                    $redirect_url = '../index_pemilik.php';
                 } elseif (strtolower($user['Level']) === 'karyawan') {
-                    $redirect_url = BASE_URL . '/index_karyawan.php';
+                    $redirect_url = '../index_karyawan.php';
                 }
                 
                 header('Location: ' . $redirect_url);
@@ -58,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         // Pesan error yang sama untuk email tidak ditemukan atau password salah
         set_flash_message('error', 'Email atau password yang Anda masukkan salah.');
-        header('Location: ' . BASE_URL . '/auth/login.php');
+        header('Location: login.php');
         exit;
     }
     $conn->close();

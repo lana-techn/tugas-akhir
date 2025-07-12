@@ -3,7 +3,7 @@ $page_title = 'Slip Gaji';
 $current_page = 'slip_gaji';
 // 1. SETUP
 require_once __DIR__ . '/../../includes/functions.php';
-require_login('karyawan');
+requireLogin('karyawan');
 
 $conn = db_connect();
 $slip_gaji = null;

@@ -2,7 +2,7 @@
 $page_title = 'Dashboard Karyawan';
 $current_page = 'dashboard';
 require_once __DIR__ . '/includes/functions.php';
-require_login('karyawan');
+requireLogin('karyawan');
 
 $conn = db_connect();
 

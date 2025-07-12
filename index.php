@@ -2,7 +2,7 @@
 $page_title = 'Dashboard Admin';
 $current_page = 'dashboard';
 require_once __DIR__ . '/includes/functions.php';
-require_login('admin');
+requireLogin('admin');
 
 // Menghubungkan ke DB untuk mengambil data dinamis
 $conn = db_connect();
