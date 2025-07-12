@@ -6,16 +6,15 @@ if (session_status() === PHP_SESSION_NONE) {
 
 // Ambil level pengguna dan halaman saat ini
 $user_level = strtolower($_SESSION['level'] ?? '');
-$current_page = basename($_SERVER['PHP_SELF']);
+$current_page_filename = basename($_SERVER['PHP_SELF']);
+$current_action = $_GET['action'] ?? '';
 
-// Definisikan struktur navigasi (tidak ada perubahan di sini)
+// Definisikan struktur navigasi
 $navigation = [
-    // ... (array navigasi Anda tetap sama)
     // Menu Umum
-    ['name' => 'Dashboard', 'href' => 'dashboard', 'icon' => 'fa-solid fa-gauge-high', 'roles' => ['admin', 'pemilik', 'karyawan']],
+    ['name' => 'Dashboard', 'href' => 'dashboard', 'icon' => 'fa-solid fa-house-chimney', 'roles' => ['admin', 'pemilik', 'karyawan']],
 
     // Menu Admin
-
     ['group' => 'Data Master', 'roles' => ['admin']],
     ['name' => 'Pengguna', 'href' => 'pengguna.php', 'icon' => 'fa-solid fa-user-shield', 'roles' => ['admin']],
     ['name' => 'Jabatan', 'href' => 'jabatan.php', 'icon' => 'fa-solid fa-briefcase', 'roles' => ['admin']],
@@ -30,69 +29,80 @@ $navigation = [
     ['name' => 'Pengajuan Gaji', 'href' => 'salary.php?action=new_payroll', 'icon' => 'fa-solid fa-file-invoice-dollar', 'roles' => ['admin']],
 
     // Menu Pemilik
-    ['group' => 'Pemilik', 'roles' => ['pemilik']],
-    ['name' => 'Persetujuan Gaji', 'href' => '/pemilik/penggajian_pemilik.php', 'icon' => 'fa-solid fa-check-to-slot', 'roles' => ['pemilik']],
-    ['name' => 'Laporan', 'href' => '/pemilik/laporan.php', 'icon' => 'fa-solid fa-file-alt', 'roles' => ['pemilik']],
+    ['group' => 'Manajemen Pemilik', 'roles' => ['pemilik']],
+    ['name' => 'Persetujuan Gaji', 'href' => 'penggajian_pemilik.php', 'folder' => 'pemilik', 'icon' => 'fa-solid fa-check-to-slot', 'roles' => ['pemilik']],
+    ['name' => 'Laporan', 'href' => 'laporan.php', 'folder' => 'pemilik', 'icon' => 'fa-solid fa-chart-pie', 'roles' => ['pemilik']],
     
     // Menu Karyawan
-
-    ['group' => 'Pegawai', 'roles' => ['karyawan']],
-    ['name' => 'Slip Gaji', 'href' => '/karyawan/slip_gaji.php', 'icon' => 'fa-solid fa-money-bill-wave', 'roles' => ['karyawan']]
+    ['group' => 'Area Pegawai', 'roles' => ['karyawan']],
+    ['name' => 'Slip Gaji', 'href' => 'slip_gaji.php', 'folder' => 'karyawan', 'icon' => 'fa-solid fa-receipt', 'roles' => ['karyawan']]
 ];
-
 ?>
-<div class="flex h-full flex-col bg-white">
-    <div class="flex h-20 shrink-0 items-center justify-center px-4 border-b border-gray-200">
+<div class="flex h-full flex-col bg-white border-r border-gray-200">
+    <div class="flex h-20 shrink-0 items-center justify-center px-4">
         <a href="<?= BASE_URL ?>/index.php">
-             <img src="<?= BASE_URL ?>/assets/images/logo.png" alt="Logo" class="h-12 w-auto">
-        </a>
+             <img src="<?= BASE_URL ?>/assets/images/logo.png" alt="Logo" class="h-16 w-auto">
+             </a>
     </div>
 
-    <nav class="flex flex-1 flex-col mt-4">
+    <nav class="flex flex-1 flex-col mt-2">
         <ul role="list" class="flex flex-1 flex-col gap-y-7 px-4">
             <li>
-                <ul role="list" class="space-y-2">
+                <ul role="list" class="space-y-1.5">
                     <?php foreach ($navigation as $item): ?>
                         <?php if (in_array($user_level, $item['roles'])): ?>
                             <?php if (isset($item['group'])): ?>
-                                <div class="px-2 pt-4 pb-2 text-xs font-bold uppercase text-gray-500">
+                                <div class="px-3 pt-4 pb-2 text-xs font-semibold uppercase text-gray-400 tracking-wider">
                                     <?= e($item['group']) ?>
                                 </div>
                             <?php else: ?>
                                 <?php
-                                    // ** LOGIKA DINAMIS UNTUK URL DAN STATUS AKTIF **
                                     $link_href = '';
                                     $is_current = false;
 
                                     if ($item['href'] === 'dashboard') {
-                                        // Tentukan URL dan status aktif untuk link Dashboard berdasarkan role
                                         if ($user_level === 'pemilik') {
                                             $link_href = BASE_URL . '/index_pemilik.php';
-                                            $is_current = ($current_page === 'index_pemilik.php');
+                                            $is_current = ($current_page_filename === 'index_pemilik.php');
                                         } elseif ($user_level === 'karyawan') {
                                             $link_href = BASE_URL . '/index_karyawan.php';
-                                            $is_current = ($current_page === 'index_karyawan.php');
-                                        } else { // Default untuk Admin
+                                            $is_current = ($current_page_filename === 'index_karyawan.php');
+                                        } else { // Admin
                                             $link_href = BASE_URL . '/index.php';
-                                            $is_current = ($current_page === 'index.php');
+                                            $is_current = ($current_page_filename === 'index.php');
                                         }
                                     } else {
-                                        // Logika untuk semua link menu lainnya
                                         $base_folder = !empty($item['folder']) ? '/' . $item['folder'] . '/' : '/pages/';
+                                        // Handle URLs with query strings like salary.php?action=new_payroll
+                                        $href_parts = explode('?', $item['href']);
+                                        $item_filename = $href_parts[0];
+                                        $item_query = $href_parts[1] ?? '';
+                                        
                                         $link_href = BASE_URL . $base_folder . $item['href'];
-                                        $is_current = ($current_page === $item['href']);
+
+                                        $is_page_current = ($current_page_filename === $item_filename);
+                                        $is_action_current = true; // Assume true if no action parameter
+                                        if (!empty($item_query)) {
+                                            parse_str($item_query, $query_vars);
+                                            $is_action_current = (isset($query_vars['action']) && $query_vars['action'] === $current_action);
+                                        } else {
+                                            // Jika menu tidak punya action, tapi halaman saat ini punya, jangan tandai aktif (kecuali untuk list default)
+                                            if(!empty($current_action) && $current_action !== 'list' && $current_action !== 'list_gapok') {
+                                                $is_action_current = false;
+                                            }
+                                        }
+
+                                        $is_current = $is_page_current && $is_action_current;
                                     }
                                 ?>
                                 <li>
                                     <a href="<?= $link_href ?>"
                                        class="<?= $is_current
-                                           ? 'bg-green-600 text-white shadow-sm' // <-- WARNA AKTIF DIUBAH
-                                           : 'text-gray-600 hover:text-green-700 hover:bg-green-50'; // <-- WARNA HOVER DIUBAH
-                                       ?> group flex items-center gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold transition-all duration-200">
+                                           ? 'bg-green-600 text-white shadow-md'
+                                           : 'text-gray-600 hover:text-green-700 hover:bg-green-50';
+                                       ?> group flex items-center gap-x-3 rounded-md p-3 text-sm leading-6 font-semibold transition-all duration-200">
 
-                                        <span class="flex h-6 w-6 items-center justify-center">
-                                            <i class="<?= e($item['icon']) ?> <?= $is_current ? 'text-white' : 'text-gray-400 group-hover:text-green-600'; ?> text-base"></i>
-                                        </span>
+                                        <i class="<?= e($item['icon']) ?> w-6 h-6 text-center text-base <?= $is_current ? 'text-white' : 'text-gray-400 group-hover:text-green-600'; ?>"></i>
                                         <?= e($item['name']) ?>
                                     </a>
                                 </li>
@@ -102,10 +112,8 @@ $navigation = [
                 </ul>
             </li>
             <li class="mt-auto mb-4">
-                 <a href="<?= BASE_URL ?>/auth/logout.php" class="group -mx-2 flex gap-x-3 rounded-md p-2 text-sm font-semibold leading-6 text-gray-500 hover:bg-red-50 hover:text-red-600 transition-colors duration-200">
-                    <span class="flex h-6 w-6 items-center justify-center">
-                       <i class="fa-solid fa-right-from-bracket text-gray-400 group-hover:text-red-500"></i>
-                    </span>
+                 <a href="<?= BASE_URL ?>/auth/logout.php" class="group flex items-center gap-x-3 rounded-md p-3 text-sm font-semibold leading-6 text-gray-500 hover:bg-red-50 hover:text-red-600 transition-colors duration-200">
+                    <i class="fa-solid fa-right-from-bracket w-6 h-6 text-center text-base text-gray-400 group-hover:text-red-500"></i>
                     Logout
                 </a>
             </li>
