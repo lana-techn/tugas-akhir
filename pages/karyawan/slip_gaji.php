@@ -88,9 +88,14 @@ require_once __DIR__ . '/../../includes/sidebar.php';
 <main class="flex-1 p-8">
     <div class="flex justify-between items-center mb-6 no-print">
         <h1 class="text-3xl font-bold text-[#2e7d32]">Slip Gaji</h1>
-        <button onclick="window.print()" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 text-sm font-semibold shadow-sm">
-            <i class="fa-solid fa-print mr-2"></i>Cetak
-        </button>
+        <div class="flex space-x-2">
+            <button onclick="window.print()" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 text-sm font-semibold shadow-sm">
+                <i class="fa-solid fa-print mr-2"></i>Cetak
+            </button>
+            <button onclick="cetakSlipPDF()" class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 text-sm font-semibold shadow-sm">
+                <i class="fa-solid fa-file-pdf mr-2"></i>Cetak PDF
+            </button>
+        </div>
     </div>
 
     <?php if ($slip_gaji): ?>
@@ -180,6 +185,12 @@ require_once __DIR__ . '/../../includes/sidebar.php';
     <?php endif; ?>
 </main>
 
-<?php require_once __DIR__ . '/../../includes/footer.php'; ?>
+<script>
+function cetakSlipPDF() {
+    // Buka file cetak PDF slip gaji di tab baru
+    window.open('cetak_slip_gaji_pdf.php', '_blank');
+}
+</script>
 
+<?php require_once __DIR__ . '/../../includes/footer.php'; ?>
 
