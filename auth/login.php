@@ -77,67 +77,93 @@ generate_csrf_token();
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <style>
         body { font-family: 'Inter', sans-serif; }
-        .notif { padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; border: 1px solid transparent; }
-        .notif-error { background-color: #fee2e2; border-color: #fca5a5; color: #b91c1c; }
+        .font-poppins { font-family: 'Poppins', sans-serif; }
+        .notif { padding: 1rem; border-radius: 0.5rem; margin-bottom: 1.5rem; border-left-width: 5px; font-size: 0.9rem; }
+        .notif-error { background-color: #fef2f2; border-color: #ef4444; color: #b91c1c; }
+        .login-bg {
+            background-image: url('https://images.unsplash.com/photo-1593083739213-c9a72d733642?q=80&w=1887&auto=format&fit=crop');
+            background-size: cover;
+            background-position: center;
+        }
     </style>
 </head>
-<body class="bg-gray-50 flex items-center justify-center min-h-screen">
-    <div class="w-full max-w-sm p-8 bg-white rounded-xl shadow-lg border border-gray-200">
-        <div class="flex flex-col items-center">
-            <div class="w-20 h-20 mb-4">
-                <img src="../assets/images/logo.png" alt="Logo Perusahaan" class="w-full h-full object-contain">
-            </div>
-            <h2 class="text-2xl font-bold text-gray-800">LOGIN</h2>
-            <p class="text-sm text-gray-500 mb-6">Silakan login dengan akun Anda</p>
-        </div>
+<body class="bg-gray-50">
 
-        <?php 
-            if(function_exists('display_flash_message')) {
-                display_flash_message();
-            }
-        ?>
-        
-        <form method="POST" action="login.php" autocomplete="off">
-            <?php if(function_exists('csrf_input')) csrf_input(); ?>
-            <div class="mb-4">
-                <label for="email" class="sr-only">Email</label>
-                <input type="email" name="email" id="email" placeholder="Email" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#4CAF50]" required>
-            </div>
-            <div class="mb-6">
-                <label for="password" class="sr-only">Password</label>
-                <input type="password" name="password" id="password" placeholder="Password" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#4CAF50]" required>
-            </div>
-            <div class="text-center">
-                <button type="submit" class="w-full bg-[#4CAF50] text-white font-bold py-2.5 px-4 rounded-md hover:bg-[#45a049] transition-colors duration-300 shadow-sm">
-                    LOGIN
-                </button>
-            </div>
-        </form>
+    <div class="flex min-h-screen">
+        <div class="flex flex-1 flex-col justify-center items-center px-4 sm:px-6 lg:px-20 xl:px-28 py-12">
+            <div class="w-full max-w-md">
+                <div class="flex flex-col items-center mb-8">
+                    <a href="#">
+                        <img src="../assets/images/logo.png" alt="Logo Perusahaan" class="h-20 w-auto mb-4">
+                    </a>
+                    <h1 class="text-3xl font-bold font-poppins text-gray-800">Selamat Datang</h1>
+                    <p class="text-gray-500 mt-2">Login untuk mengakses dashboard Anda</p>
+                </div>
 
-        <div class="mt-8 pt-6 border-t border-gray-200">
-            <div class="p-4 bg-green-50 rounded-lg border border-green-200 text-sm text-gray-700">
-                <h4 class="font-bold text-center mb-3 text-green-800">✨ Akun Demo ✨</h4>
-                <div class="space-y-3">
+                <?php 
+                    if(function_exists('display_flash_message')) {
+                        display_flash_message();
+                    }
+                ?>
+                
+                <form method="POST" action="login.php" autocomplete="off" class="space-y-5">
+                    <?php if(function_exists('csrf_input')) csrf_input(); ?>
                     <div>
-                        <p class="font-semibold text-gray-800">Role: Admin</p>
-                        <p><span class="font-mono text-gray-500">Email:</span> admin123@gmail.com</p>
-                        <p><span class="font-mono text-gray-500">Pass:</span> admin123</p>
+                        <label for="email" class="sr-only">Email</label>
+                        <div class="relative">
+                            <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                                <i class="fa-solid fa-envelope text-gray-400"></i>
+                            </div>
+                            <input type="email" name="email" id="email" placeholder="Email" class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition-shadow duration-300" required>
+                        </div>
                     </div>
-                    <div class="pt-2 border-t border-green-100">
-                        <p class="font-semibold text-gray-800">Role: Pemilik</p>
-                        <p><span class="font-mono text-gray-500">Email:</span> pemilik1@gmail.com</p>
-                        <p><span class="font-mono text-gray-500">Pass:</span> pemilik123</p>
+                    <div>
+                        <label for="password" class="sr-only">Password</label>
+                         <div class="relative">
+                            <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                               <i class="fa-solid fa-lock text-gray-400"></i>
+                            </div>
+                            <input type="password" name="password" id="password" placeholder="Password" class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition-shadow duration-300" required>
+                        </div>
                     </div>
-                    <div class="pt-2 border-t border-green-100">
-                        <p class="font-semibold text-gray-800">Role: Karyawan</p>
-                        <p><span class="font-mono text-gray-500">Email:</span> karyawan1@gmail.com</p>
-                        <p><span class="font-mono text-gray-500">Pass:</span> karyawan123</p>
+                    <div>
+                        <button type="submit" class="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-300 shadow-lg hover:shadow-green-500/30 transform hover:-translate-y-0.5">
+                            LOGIN
+                        </button>
+                    </div>
+                </form>
+
+                <div class="mt-10 pt-8 border-t border-gray-200">
+                    <h4 class="font-bold text-center mb-4 text-gray-600">✨ Akun Demo ✨</h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
+                        <div class="bg-gray-100 p-3 rounded-lg border border-gray-200">
+                            <p class="font-semibold text-gray-800">Admin</p>
+                            <p class="text-xs text-gray-500">admin123@gmail.com</p>
+                        </div>
+                        <div class="bg-gray-100 p-3 rounded-lg border border-gray-200">
+                            <p class="font-semibold text-gray-800">Pemilik</p>
+                            <p class="text-xs text-gray-500">pemilik1@gmail.com</p>
+                        </div>
+                        <div class="bg-gray-100 p-3 rounded-lg border border-gray-200">
+                            <p class="font-semibold text-gray-800">Karyawan</p>
+                            <p class="text-xs text-gray-500">karyawan1@gmail.com</p>
+                        </div>
                     </div>
                 </div>
+
             </div>
+        </div>
+
+        <div class="hidden lg:flex flex-1 items-center justify-center login-bg relative">
+             <div class="absolute inset-0 bg-green-900 bg-opacity-50"></div>
+             <div class="relative z-10 text-center text-white p-8">
+                 <h2 class="text-4xl font-bold font-poppins">Sistem Penggajian</h2>
+                 <p class="mt-4 text-lg max-w-md mx-auto">Manajemen penggajian menjadi lebih mudah, efisien, dan akurat.</p>
+             </div>
         </div>
     </div>
 </body>
