@@ -9,6 +9,7 @@ $conn = db_connect();
 $slip_gaji = null;
 $detail_komponen = [];
 $gaji_pokok_nominal = 0;
+$id_karyawan = '';
 
 if (isset($_SESSION['user_id'])) {
     $id_pengguna = $_SESSION['user_id'];
@@ -25,7 +26,7 @@ if (isset($_SESSION['user_id'])) {
         $id_jabatan = $karyawan_data['Id_Jabatan'];
         $tgl_awal_kerja = new DateTime($karyawan_data['Tgl_Awal_Kerja']);
 
-        // Ambil data gaji terbaru untuk karyawan ini
+        // Ambil data gaji terbaru yang sudah disetujui untuk karyawan ini
         $stmt_gaji = $conn->prepare("
             SELECT
                 g.Id_Gaji, g.Tgl_Gaji, g.Total_Tunjangan, g.Total_Lembur, g.Total_Potongan, g.Gaji_Kotor, g.Gaji_Bersih,
@@ -33,7 +34,7 @@ if (isset($_SESSION['user_id'])) {
             FROM GAJI g
             JOIN KARYAWAN k ON g.Id_Karyawan = k.Id_Karyawan
             JOIN JABATAN j ON k.Id_Jabatan = j.Id_Jabatan
-            WHERE g.Id_Karyawan = ?
+            WHERE g.Id_Karyawan = ? AND g.Status = 'Disetujui'
             ORDER BY g.Tgl_Gaji DESC
             LIMIT 1
         ");
@@ -43,12 +44,9 @@ if (isset($_SESSION['user_id'])) {
         $stmt_gaji->close();
 
         if ($slip_gaji) {
-            // Hitung masa kerja dalam tahun
             $tgl_gaji = new DateTime($slip_gaji['Tgl_Gaji']);
-            $masa_kerja_interval = $tgl_gaji->diff($tgl_awal_kerja);
-            $masa_kerja_tahun = $masa_kerja_interval->y;
+            $masa_kerja_tahun = $tgl_gaji->diff($tgl_awal_kerja)->y;
 
-            // Ambil Gaji Pokok berdasarkan Jabatan dan Masa Kerja
             $stmt_gapok = $conn->prepare(
                 "SELECT Nominal FROM GAJI_POKOK WHERE Id_Jabatan = ? AND Masa_Kerja <= ? ORDER BY Masa_Kerja DESC LIMIT 1"
             );
@@ -58,21 +56,18 @@ if (isset($_SESSION['user_id'])) {
             $gaji_pokok_nominal = $result_gapok['Nominal'] ?? 0;
             $stmt_gapok->close();
 
-
-            // Ambil detail komponen gaji dari tabel DETAIL_GAJI
             $stmt_detail = $conn->prepare("
                 SELECT
                     dg.Id_Tunjangan, dg.Id_Potongan, dg.Id_Lembur,
                     dg.Jumlah_Tunjangan, dg.Jumlah_Potongan, dg.Jumlah_Lembur,
-                    dg.Nominal_Gapok,
-                    t.Nama_Tunjangan, p.Nama_Potongan, l.Nama_Lembur, l.Lama_Lembur, l.Upah_Lembur
+                    t.Nama_Tunjangan, p.Nama_Potongan, l.Nama_Lembur, l.Lama_Lembur
                 FROM DETAIL_GAJI dg
                 LEFT JOIN TUNJANGAN t ON dg.Id_Tunjangan = t.Id_Tunjangan
                 LEFT JOIN POTONGAN p ON dg.Id_Potongan = p.Id_Potongan
                 LEFT JOIN LEMBUR l ON dg.Id_Lembur = l.Id_Lembur
                 WHERE dg.Id_Gaji = ?
             ");
-            $stmt_detail->bind_param("i", $slip_gaji['Id_Gaji']); // Changed 's' to 'i' for Id_Gaji
+            $stmt_detail->bind_param("s", $slip_gaji['Id_Gaji']);
             $stmt_detail->execute();
             $detail_komponen = $stmt_detail->get_result()->fetch_all(MYSQLI_ASSOC);
             $stmt_detail->close();
@@ -82,115 +77,131 @@ if (isset($_SESSION['user_id'])) {
 $conn->close();
 
 require_once __DIR__ . '/../../includes/header.php';
-require_once __DIR__ . '/../../includes/sidebar.php';
 ?>
 
-<main class="flex-1 p-8">
-    <div class="flex justify-between items-center mb-6 no-print">
-        <h1 class="text-3xl font-bold text-[#2e7d32]">Slip Gaji</h1>
+<div class="space-y-8">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 no-print">
+        <div>
+            <h2 class="text-2xl font-bold text-gray-800 font-poppins">Slip Gaji</h2>
+            <p class="text-gray-500 text-sm">Rincian pendapatan dan potongan gaji Anda.</p>
+        </div>
         <div class="flex space-x-2">
-            <button onclick="window.print()" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 text-sm font-semibold shadow-sm">
-                <i class="fa-solid fa-print mr-2"></i>Cetak
+            <button onclick="window.print()" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 text-sm font-semibold shadow-md hover:shadow-lg transition-all flex items-center gap-2">
+                <i class="fa-solid fa-print"></i>Cetak
             </button>
-            <button onclick="cetakSlipPDF()" class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 text-sm font-semibold shadow-sm">
-                <i class="fa-solid fa-file-pdf mr-2"></i>Cetak PDF
+            <button onclick="cetakSlipPDF()" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 text-sm font-semibold shadow-md hover:shadow-lg transition-all flex items-center gap-2">
+                <i class="fa-solid fa-file-pdf"></i>Unduh PDF
             </button>
         </div>
     </div>
 
     <?php if ($slip_gaji): ?>
-        <div class="bg-white p-8 rounded-lg shadow-lg max-w-4xl mx-auto border border-gray-200">
-            <div class="text-center mb-8">
-                <h1 class="text-2xl font-bold text-gray-800">SLIP GAJI KARYAWAN</h1>
+        <div class="bg-white p-6 sm:p-8 rounded-xl shadow-lg border border-gray-200">
+            <div class="text-center mb-8 pb-6 border-b-2 border-dashed">
+                <h1 class="text-2xl sm:text-3xl font-bold text-gray-800 font-poppins">SLIP GAJI KARYAWAN</h1>
                 <p class="text-gray-600">Periode: <?= e(date('F Y', strtotime($slip_gaji['Tgl_Gaji']))) ?></p>
             </div>
 
-            <div class="grid grid-cols-2 gap-x-8 mb-6 text-sm">
-                <div>
-                    <p><strong>Nama Karyawan:</strong><span class="ml-2"><?= e($slip_gaji['Nama_Karyawan']) ?></span></p>
-                    <p><strong>Jabatan:</strong><span class="ml-2"><?= e($slip_gaji['Nama_Jabatan']) ?></span></p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 mb-8 text-sm">
+                <div class="space-y-2">
+                    <div class="flex justify-between">
+                        <span class="font-medium text-gray-500">Nama Karyawan:</span>
+                        <span class="font-semibold text-gray-800"><?= e($slip_gaji['Nama_Karyawan']) ?></span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="font-medium text-gray-500">Jabatan:</span>
+                        <span class="font-semibold text-gray-800"><?= e($slip_gaji['Nama_Jabatan']) ?></span>
+                    </div>
                 </div>
-                <div>
-                    <p><strong>ID Karyawan:</strong><span class="ml-2"><?= e($id_karyawan) ?></span></p>
-                    <p><strong>Tanggal Pembayaran:</strong><span class="ml-2"><?= e(date('d M Y', strtotime($slip_gaji['Tgl_Gaji']))) ?></span></p>
+                <div class="space-y-2">
+                    <div class="flex justify-between">
+                        <span class="font-medium text-gray-500">ID Karyawan:</span>
+                        <span class="font-semibold text-gray-800"><?= e($id_karyawan) ?></span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="font-medium text-gray-500">Tanggal Pembayaran:</span>
+                        <span class="font-semibold text-gray-800"><?= e(date('d M Y', strtotime($slip_gaji['Tgl_Gaji']))) ?></span>
+                    </div>
                 </div>
             </div>
 
             <hr class="my-6">
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
                 <div>
-                    <h3 class="text-lg font-semibold text-green-700 mb-3">Pendapatan</h3>
-                    <table class="w-full text-sm">
-                        <tbody>
-                            <tr>
-                                <td class="py-2">Gaji Pokok</td>
-                                <td class="py-2 text-right">Rp <?= number_format($gaji_pokok_nominal, 0, ',', '.') ?></td>
-                            </tr>
-                            <?php foreach ($detail_komponen as $detail): ?>
-                                <?php if (!empty($detail['Id_Tunjangan'])): // Ini adalah tunjangan ?>
-                                <tr>
-                                    <td class="py-2">Tunjangan: <?= e($detail['Nama_Tunjangan']) ?></td>
-                                    <td class="py-2 text-right">Rp <?= number_format($detail['Jumlah_Tunjangan'], 0, ',', '.') ?></td>
-                                </tr>
-                                <?php elseif (!empty($detail['Id_Lembur'])): // Ini adalah lembur ?>
-                                <tr>
-                                    <td class="py-2">Lembur: <?= e($detail['Nama_Lembur']) ?> (<?= e($detail['Lama_Lembur']) ?> jam)</td>
-                                    <td class="py-2 text-right">Rp <?= number_format($detail['Jumlah_Lembur'], 0, ',', '.') ?></td>
-                                </tr>
-                                <?php endif; ?>
-                            <?php endforeach; ?>
-                        </tbody>
-                        <tfoot class="font-bold">
-                             <tr class="bg-gray-50">
-                                <td class="py-2.5">Total Pendapatan (Gaji Kotor)</td>
-                                <td class="py-2.5 text-right">Rp <?= number_format($slip_gaji['Gaji_Kotor'], 0, ',', '.') ?></td>
-                            </tr>
-                        </tfoot>
-                    </table>
+                    <h3 class="text-lg font-bold text-green-700 mb-3 flex items-center gap-2"><i class="fa-solid fa-arrow-down"></i>PENDAPATAN</h3>
+                    <div class="space-y-2 text-sm border-t pt-3">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Gaji Pokok</span>
+                            <span class="font-semibold text-gray-800">Rp <?= number_format($gaji_pokok_nominal, 0, ',', '.') ?></span>
+                        </div>
+                        <?php foreach ($detail_komponen as $detail): ?>
+                            <?php if (!empty($detail['Id_Tunjangan'])): ?>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Tunjangan: <?= e($detail['Nama_Tunjangan']) ?></span>
+                                <span class="font-semibold text-gray-800">Rp <?= number_format($detail['Jumlah_Tunjangan'], 0, ',', '.') ?></span>
+                            </div>
+                            <?php elseif (!empty($detail['Id_Lembur'])): ?>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Lembur (<?= e($detail['Lama_Lembur']) ?> jam)</span>
+                                <span class="font-semibold text-gray-800">Rp <?= number_format($detail['Jumlah_Lembur'], 0, ',', '.') ?></span>
+                            </div>
+                            <?php endif; ?>
+                        <?php endforeach; ?>
+                    </div>
+                    <div class="flex justify-between mt-3 pt-3 border-t-2 font-bold">
+                        <span>Total Pendapatan (Gaji Kotor)</span>
+                        <span>Rp <?= number_format($slip_gaji['Gaji_Kotor'], 0, ',', '.') ?></span>
+                    </div>
                 </div>
+
                 <div>
-                    <h3 class="text-lg font-semibold text-red-700 mb-3">Potongan</h3>
-                     <table class="w-full text-sm">
-                        <tbody>
-                            <?php foreach ($detail_komponen as $detail): ?>
-                                <?php if (!empty($detail['Id_Potongan'])): // Ini adalah potongan ?>
-                                <tr>
-                                    <td class="py-2">Potongan: <?= e($detail['Nama_Potongan']) ?></td>
-                                    <td class="py-2 text-right">- Rp <?= number_format($detail['Jumlah_Potongan'], 0, ',', '.') ?></td>
-                                </tr>
-                                <?php endif; ?>
-                            <?php endforeach; ?>
-                        </tbody>
-                         <tfoot class="font-bold">
-                             <tr class="bg-gray-50">
-                                <td class="py-2.5">Total Potongan</td>
-                                <td class="py-2.5 text-right">- Rp <?= number_format($slip_gaji['Total_Potongan'], 0, ',', '.') ?></td>
-                            </tr>
-                        </tfoot>
-                    </table>
+                    <h3 class="text-lg font-bold text-red-700 mb-3 flex items-center gap-2"><i class="fa-solid fa-arrow-up"></i>POTONGAN</h3>
+                    <div class="space-y-2 text-sm border-t pt-3">
+                         <?php 
+                         $ada_potongan = false;
+                         foreach ($detail_komponen as $detail): ?>
+                            <?php if (!empty($detail['Id_Potongan'])): $ada_potongan = true; ?>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Potongan: <?= e($detail['Nama_Potongan']) ?></span>
+                                <span class="font-semibold text-red-600">- Rp <?= number_format($detail['Jumlah_Potongan'], 0, ',', '.') ?></span>
+                            </div>
+                            <?php endif; ?>
+                        <?php endforeach; ?>
+                        <?php if(!$ada_potongan): ?>
+                            <div class="flex justify-between text-gray-500">
+                                <span>Tidak ada potongan</span>
+                                <span>- Rp 0</span>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                    <div class="flex justify-between mt-3 pt-3 border-t-2 font-bold">
+                        <span>Total Potongan</span>
+                        <span class="text-red-600">- Rp <?= number_format($slip_gaji['Total_Potongan'], 0, ',', '.') ?></span>
+                    </div>
                 </div>
             </div>
 
-            <div class="mt-8 bg-green-50 p-4 rounded-lg text-right">
-                <p class="text-sm text-gray-600">GAJI BERSIH (TAKE HOME PAY)</p>
-                <p class="text-2xl font-bold text-green-800">Rp <?= number_format($slip_gaji['Gaji_Bersih'], 0, ',', '.') ?></p>
+            <div class="mt-10 bg-green-50 p-4 rounded-lg text-center sm:text-right">
+                <p class="text-sm font-semibold text-gray-600">GAJI BERSIH (TAKE HOME PAY)</p>
+                <p class="text-3xl font-bold text-green-800">Rp <?= number_format($slip_gaji['Gaji_Bersih'], 0, ',', '.') ?></p>
             </div>
 
         </div>
     <?php else: ?>
-        <div class="bg-white p-6 rounded-lg shadow-md text-center">
-            <p class="text-gray-700">Belum ada slip gaji yang tersedia untuk Anda.</p>
+        <div class="bg-white p-10 rounded-xl shadow-lg text-center border border-gray-200">
+            <i class="fa-solid fa-folder-open text-4xl text-gray-400 mb-4"></i>
+            <h3 class="text-xl font-bold text-gray-700">Belum Ada Data</h3>
+            <p class="text-gray-500 mt-2">Slip gaji Anda akan tersedia di sini setelah proses penggajian selesai dan disetujui.</p>
         </div>
     <?php endif; ?>
-</main>
+</div>
 
 <script>
 function cetakSlipPDF() {
-    // Buka file cetak PDF slip gaji di tab baru
-    window.open('cetak_slip_gaji_pdf.php', '_blank');
+    // Arahkan ke skrip PHP yang menghasilkan PDF
+    window.open('karyawan/cetak_slip_gaji_pdf.php', '_blank');
 }
 </script>
 
 <?php require_once __DIR__ . '/../../includes/footer.php'; ?>
-
