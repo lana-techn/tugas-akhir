@@ -30,19 +30,21 @@ $navigation = [
 
     // Menu Pemilik
     ['group' => 'Manajemen Pemilik', 'roles' => ['pemilik']],
-    ['name' => 'Persetujuan Gaji', 'href' => 'penggajian_pemilik.php', 'folder' => 'pemilik', 'icon' => 'fa-solid fa-check-to-slot', 'roles' => ['pemilik']],
-    ['name' => 'Laporan', 'href' => 'laporan.php', 'folder' => 'pemilik', 'icon' => 'fa-solid fa-chart-pie', 'roles' => ['pemilik']],
+    // PERBAIKAN: Pastikan href tidak diawali dengan '/' dan path-nya benar
+    ['name' => 'Persetujuan Gaji', 'href' => 'pemilik/penggajian_pemilik.php', 'icon' => 'fa-solid fa-check-to-slot', 'roles' => ['pemilik']],
+    ['name' => 'Laporan', 'href' => 'pemilik/laporan.php', 'icon' => 'fa-solid fa-chart-pie', 'roles' => ['pemilik']],
     
     // Menu Karyawan
     ['group' => 'Area Pegawai', 'roles' => ['karyawan']],
-    ['name' => 'Slip Gaji', 'href' => 'slip_gaji.php', 'folder' => 'karyawan', 'icon' => 'fa-solid fa-receipt', 'roles' => ['karyawan']]
+    // PERBAIKAN: Pastikan href tidak diawali dengan '/' dan path-nya benar
+    ['name' => 'Slip Gaji', 'href' => 'karyawan/slip_gaji.php', 'icon' => 'fa-solid fa-receipt', 'roles' => ['karyawan']]
 ];
 ?>
 <div class="flex h-full flex-col bg-white border-r border-gray-200">
     <div class="flex h-20 shrink-0 items-center justify-center px-4">
         <a href="<?= BASE_URL ?>/index.php">
              <img src="<?= BASE_URL ?>/assets/images/logo.png" alt="Logo" class="h-16 w-auto">
-             </a>
+        </a>
     </div>
 
     <nav class="flex flex-1 flex-col mt-2">
@@ -72,27 +74,20 @@ $navigation = [
                                             $is_current = ($current_page_filename === 'index.php');
                                         }
                                     } else {
-                                        $base_folder = !empty($item['folder']) ? '/' . $item['folder'] . '/' : '/pages/';
-                                        // Handle URLs with query strings like salary.php?action=new_payroll
-                                        $href_parts = explode('?', $item['href']);
-                                        $item_filename = $href_parts[0];
-                                        $item_query = $href_parts[1] ?? '';
-                                        
+                                        // Logika pembuatan URL yang benar
+                                        $base_folder = '/pages/';
                                         $link_href = BASE_URL . $base_folder . $item['href'];
+                                        
+                                        $href_parts = explode('?', $item['href']);
+                                        $item_filename_path = $href_parts[0];
+                                        
+                                        $current_path_parts = explode('/', $_SERVER['PHP_SELF']);
+                                        $current_page_simple = end($current_path_parts);
 
-                                        $is_page_current = ($current_page_filename === $item_filename);
-                                        $is_action_current = true; // Assume true if no action parameter
-                                        if (!empty($item_query)) {
-                                            parse_str($item_query, $query_vars);
-                                            $is_action_current = (isset($query_vars['action']) && $query_vars['action'] === $current_action);
-                                        } else {
-                                            // Jika menu tidak punya action, tapi halaman saat ini punya, jangan tandai aktif (kecuali untuk list default)
-                                            if(!empty($current_action) && $current_action !== 'list' && $current_action !== 'list_gapok') {
-                                                $is_action_current = false;
-                                            }
-                                        }
-
-                                        $is_current = $is_page_current && $is_action_current;
+                                        $item_path_parts = explode('/', $item_filename_path);
+                                        $item_filename_simple = end($item_path_parts);
+                                        
+                                        $is_current = ($current_page_simple === $item_filename_simple);
                                     }
                                 ?>
                                 <li>
