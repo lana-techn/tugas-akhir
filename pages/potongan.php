@@ -1,7 +1,7 @@
 <?php
 // 1. SETUP & LOGIKA
 require_once __DIR__ . '/../includes/functions.php';
-requireLogin('admin');
+requirelogin('admin');
 
 $conn = db_connect();
 $action = $_GET['action'] ?? 'list';
@@ -92,8 +92,8 @@ require_once __DIR__ . '/../includes/header.php';
     <div class="bg-white p-6 rounded-xl shadow-lg">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
             <div>
-                <h2 class="text-2xl font-bold text-gray-800 font-poppins">Daftar Potongan</h2>
-                <p class="text-gray-500 text-sm">Kelola semua jenis potongan gaji karyawan.</p>
+                <h2 class="text-2xl font-bold text-gray-800 font-poppins">Daftar Potongan Gaji</h2>
+                <p class="text-gray-500 text-sm">Kelola semua jenis potongan gaji berbasis persentase.</p>
             </div>
             <a href="potongan.php?action=add" class="w-full sm:w-auto bg-green-600 text-white px-4 py-2.5 rounded-lg hover:bg-green-700 text-sm font-semibold shadow-md hover:shadow-lg transition-all flex items-center justify-center">
                 <i class="fa-solid fa-plus mr-2"></i>Tambah Potongan
@@ -115,7 +115,7 @@ require_once __DIR__ . '/../includes/header.php';
                 <thead class="text-xs uppercase bg-gray-100 text-gray-600">
                     <tr>
                         <th class="px-6 py-3">Nama Potongan</th>
-                        <th class="px-6 py-3 text-right">Tarif</th>
+                        <th class="px-6 py-3 text-right">Tarif (%)</th>
                         <th class="px-6 py-3">Keterangan</th>
                         <th class="px-6 py-3 text-center">Aksi</th>
                     </tr>
@@ -143,13 +143,7 @@ require_once __DIR__ . '/../includes/header.php';
                         <tr class="bg-white border-b hover:bg-gray-50 transition-colors">
                             <td class="px-6 py-4 font-medium text-gray-900"><?= e($row['Nama_Potongan']) ?></td>
                             <td class="px-6 py-4 text-right font-semibold text-red-600">
-                                <?php
-                                    if (strpos(strtolower($row['Nama_Potongan']), 'bpjs') !== false || strpos(strtolower($row['Nama_Potongan']), '%') !== false) {
-                                        echo e($row['Tarif']) . '%';
-                                    } else {
-                                        echo 'Rp ' . number_format($row['Tarif'] ?? 0, 0, ',', '.');
-                                    }
-                                ?>
+                                <?= e(rtrim(rtrim(number_format($row['Tarif'], 2, ',', '.'), '0'), ',')) ?>%
                             </td>
                             <td class="px-6 py-4 text-gray-500"><?= e($row['Keterangan']) ?: '-' ?></td>
                             <td class="px-6 py-4 text-center">
@@ -169,7 +163,7 @@ require_once __DIR__ . '/../includes/header.php';
             </table>
         </div>
         
-        <?php echo generate_pagination_links($page, $total_pages, 'potongan.php', ['action' => 'list', 'search' => $search]); ?>
+        <?php echo generate_pagination_links($page, $total_pages, ['action' => 'list', 'search' => $search]); ?>
     </div>
 <?php endif; ?>
 
@@ -187,9 +181,9 @@ require_once __DIR__ . '/../includes/header.php';
             </div>
             
             <div class="mb-5">
-                <label for="Tarif" class="block mb-2 text-sm font-medium text-gray-700">Tarif</label>
+                <label for="Tarif" class="block mb-2 text-sm font-medium text-gray-700">Tarif Persentase (%)</label>
                 <input type="number" step="0.01" id="Tarif" name="Tarif" value="<?= e($potongan_data['Tarif'] ?? '') ?>" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" required min="0">
-                <p class="text-xs text-gray-500 mt-1">Isi angka saja. Jika berbasis persentase (misal: 2.5% untuk BPJS), cukup isi `2.5`.</p>
+                <p class="text-xs text-gray-500 mt-1">Isi nilai persentasenya. Contoh: untuk 2.5%, cukup ketik `2.5`.</p>
             </div>
 
             <div class="mb-8">

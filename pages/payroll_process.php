@@ -23,11 +23,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajukan_gaji'])) {
     $date->modify('last day of this month');
     $tgl_gaji = $date->format('Y-m-d');
 
-    $gaji_kotor = $_POST['Gaji_Kotor'] ?? 0;
+    // Ambil data yang sudah dihitung dari form
+    $gaji_pokok = $_POST['Gaji_Pokok'] ?? 0;
     $total_tunjangan = $_POST['Total_Tunjangan'] ?? 0;
     $total_lembur = $_POST['Total_Lembur'] ?? 0;
     $total_potongan = $_POST['Total_Potongan'] ?? 0;
-    $gaji_bersih = $_POST['Gaji_Bersih'] ?? 0;
+    
+    // PERBAIKAN LOGIKA PENGGAJIAN SESUAI RUMUS YANG BENAR:
+    // Gaji Kotor = Gaji Pokok + Tunjangan + Lembur
+    $gaji_kotor = $gaji_pokok + $total_tunjangan + $total_lembur;
+    
+    // Gaji Bersih = Gaji Kotor - Potongan
+    $gaji_bersih = $gaji_kotor - $total_potongan;
+    
+    // Gaji (untuk db_penggajian) = Gaji Pokok + Tunjangan + Lembur - Potongan
+    // Ini sama dengan Gaji Bersih, jadi kita gunakan $gaji_bersih
+    $gaji = $gaji_bersih;
 
     $periode_id = date('Ym', strtotime($tgl_gaji));
     $id_gaji = "G-" . $periode_id . "-" . $id_karyawan;
@@ -42,11 +53,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajukan_gaji'])) {
     }
     $stmt_cek->close();
 
+    // Insert ke database dengan struktur yang benar
     $stmt_insert = $conn->prepare(
-        "INSERT INTO GAJI (Id_Gaji, Id_Karyawan, Tgl_Gaji, Total_Tunjangan, Total_Lembur, Total_Potongan, Gaji_Kotor, Gaji_Bersih, Status) 
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Diajukan')"
+        "INSERT INTO GAJI (Id_Gaji, Id_Karyawan, Tgl_Gaji, Gaji_Pokok, Total_Tunjangan, Total_Lembur, Total_Potongan, Gaji_Kotor, Gaji_Bersih, Gaji, Status) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Diajukan')"
     );
-    $stmt_insert->bind_param("sssddddd", $id_gaji, $id_karyawan, $tgl_gaji, $total_tunjangan, $total_lembur, $total_potongan, $gaji_kotor, $gaji_bersih);
+    $stmt_insert->bind_param("sssddddddd", $id_gaji, $id_karyawan, $tgl_gaji, $gaji_pokok, $total_tunjangan, $total_lembur, $total_potongan, $gaji_kotor, $gaji_bersih, $gaji);
     
     if ($stmt_insert->execute()) {
         set_flash_message('success', 'Gaji berhasil diajukan dan menunggu persetujuan pemilik.');
@@ -90,6 +102,7 @@ else if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['Id_Karyawan']) &
     $masa_kerja_text = (new DateTime($tgl_gaji))->diff($tgl_awal_kerja)->format('%y tahun, %m bulan');
     $masa_kerja_tahun = (new DateTime($tgl_gaji))->diff($tgl_awal_kerja)->y;
 
+    // Ambil gaji pokok berdasarkan jabatan dan masa kerja
     $stmt_gapok = $conn->prepare("SELECT Nominal FROM GAJI_POKOK WHERE Id_Jabatan = ? AND Masa_Kerja <= ? ORDER BY Masa_Kerja DESC LIMIT 1");
     $stmt_gapok->bind_param("si", $karyawan['Id_Jabatan'], $masa_kerja_tahun);
     $stmt_gapok->execute();
@@ -100,39 +113,62 @@ else if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['Id_Karyawan']) &
     $all_tunjangan = $conn->query("SELECT Nama_Tunjangan, Jumlah_Tunjangan FROM TUNJANGAN")->fetch_all(MYSQLI_ASSOC);
     $total_tunjangan = array_sum(array_column($all_tunjangan, 'Jumlah_Tunjangan'));
 
-    $jam_lembur = 5; // Contoh data lembur
-    $upah_per_jam_lembur = $conn->query("SELECT Upah_Lembur FROM LEMBUR LIMIT 1")->fetch_assoc()['Upah_Lembur'] ?? 0;
+    // PERBAIKAN: Ambil data lembur dari tabel PRESENSI berdasarkan karyawan dan periode
+    $stmt_lembur = $conn->prepare("SELECT Jam_Lembur FROM PRESENSI WHERE Id_Karyawan = ? AND Bulan = ? AND Tahun = ?");
+    $stmt_lembur->bind_param("ssi", $id_karyawan, $bulan_nama, $tahun);
+    $stmt_lembur->execute();
+    $jam_lembur = $stmt_lembur->get_result()->fetch_assoc()['Jam_Lembur'] ?? 0;
+    $stmt_lembur->close();
+
+    // Ambil tarif lembur tetap Rp 20.000 per jam
+    $upah_per_jam_lembur = 20000; // Tarif tetap sesuai permintaan
     $total_lembur = $jam_lembur * $upah_per_jam_lembur;
 
+    // PERBAIKAN LOGIKA PENGGAJIAN:
+    // Gaji Kotor = Gaji Pokok + Tunjangan + Lembur
     $gaji_kotor = $gaji_pokok + $total_tunjangan + $total_lembur;
 
+    // PERBAIKAN: Hitung potongan berdasarkan aturan yang benar
     $total_potongan = 0;
-    $potongan_list = $conn->query("SELECT Nama_Potongan, Tarif FROM POTONGAN");
     $detail_potongan = [];
-    while ($p = $potongan_list->fetch_assoc()) {
-        $jumlah_potongan_item = 0;
-        $label_potongan = $p['Nama_Potongan'];
 
-        if (stripos($p['Nama_Potongan'], 'bpjs') !== false) {
-            $jumlah_potongan_item = $gaji_kotor * ($p['Tarif'] / 100);
-            $label_potongan = "Potongan BPJS ({$p['Tarif']}%)";
-        } else if (stripos($p['Nama_Potongan'], 'absensi') !== false) {
-            $stmt_alpha = $conn->prepare("SELECT Alpha FROM PRESENSI WHERE Id_Karyawan = ? AND Bulan = ? AND Tahun = ?");
-            $stmt_alpha->bind_param("ssi", $id_karyawan, $bulan_nama, $tahun);
-            $stmt_alpha->execute();
-            $hari_alpha = $stmt_alpha->get_result()->fetch_assoc()['Alpha'] ?? 0;
-            $stmt_alpha->close();
-            $jumlah_potongan_item = $hari_alpha * $p['Tarif'];
-            $label_potongan = "Potongan Absensi ({$hari_alpha} hari)";
-        }
+    // 1. Potongan BPJS Ketenagakerjaan: 2% dari gaji pokok
+    $potongan_bpjs = $gaji_pokok * 0.02;
+    if ($potongan_bpjs > 0) {
+        $detail_potongan[] = [
+            'nama' => 'Potongan BPJS Ketenagakerjaan (2% dari gaji pokok)', 
+            'jumlah' => $potongan_bpjs
+        ];
+        $total_potongan += $potongan_bpjs;
+    }
 
-        if ($jumlah_potongan_item > 0) {
-            $detail_potongan[] = ['nama' => $label_potongan, 'jumlah' => $jumlah_potongan_item];
-            $total_potongan += $jumlah_potongan_item;
+    // 2. Potongan Absensi: 3% dari gaji pokok per hari untuk Sakit, Izin, dan Alpha
+    $stmt_absensi = $conn->prepare("SELECT Sakit, Izin, Alpha FROM PRESENSI WHERE Id_Karyawan = ? AND Bulan = ? AND Tahun = ?");
+    $stmt_absensi->bind_param("ssi", $id_karyawan, $bulan_nama, $tahun);
+    $stmt_absensi->execute();
+    $data_absensi = $stmt_absensi->get_result()->fetch_assoc();
+    $stmt_absensi->close();
+
+    if ($data_absensi) {
+        $total_hari_tidak_hadir = ($data_absensi['Sakit'] ?? 0) + ($data_absensi['Izin'] ?? 0) + ($data_absensi['Alpha'] ?? 0);
+        
+        if ($total_hari_tidak_hadir > 0) {
+            // Rumus: (3% x gaji pokok) x total absensi karyawan selama 1 bulan
+            $potongan_absensi = ($gaji_pokok * 0.03) * $total_hari_tidak_hadir;
+            $detail_potongan[] = [
+                'nama' => "Potongan Absensi ({$total_hari_tidak_hadir} hari x 3% gaji pokok)", 
+                'jumlah' => $potongan_absensi
+            ];
+            $total_potongan += $potongan_absensi;
         }
     }
     
+    // Gaji Bersih = Gaji Kotor - Potongan
     $gaji_bersih = $gaji_kotor - $total_potongan;
+    
+    // Gaji (untuk db_penggajian) = Gaji Pokok + Tunjangan + Lembur - Potongan
+    // Ini sama dengan Gaji Bersih
+    $gaji = $gaji_bersih;
 
     // --- TAMPILAN VIEW DETAIL YANG BARU ---
     generate_csrf_token();
@@ -150,11 +186,10 @@ else if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['Id_Karyawan']) &
             <input type="hidden" name="ajukan_gaji" value="1">
             <input type="hidden" name="Id_Karyawan" value="<?= e($id_karyawan) ?>">
             <input type="hidden" name="periode" value="<?= e($periode) ?>"> 
-            <input type="hidden" name="Gaji_Kotor" value="<?= e($gaji_kotor) ?>">
+            <input type="hidden" name="Gaji_Pokok" value="<?= e($gaji_pokok) ?>">
             <input type="hidden" name="Total_Tunjangan" value="<?= e($total_tunjangan) ?>">
             <input type="hidden" name="Total_Lembur" value="<?= e($total_lembur) ?>">
             <input type="hidden" name="Total_Potongan" value="<?= e($total_potongan) ?>">
-            <input type="hidden" name="Gaji_Bersih" value="<?= e($gaji_bersih) ?>">
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 border border-gray-200 rounded-lg p-4">
                 <div class="flex justify-between border-b pb-2">
@@ -189,10 +224,17 @@ else if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['Id_Karyawan']) &
                             <span class="text-sm font-semibold">Rp <?= number_format($t['Jumlah_Tunjangan'], 0, ',', '.') ?></span>
                         </div>
                         <?php endforeach; ?>
+                        <?php if ($jam_lembur > 0): ?>
                         <div class="flex justify-between py-2.5 px-3">
-                            <span class="text-sm">Lembur (<?= $jam_lembur ?> jam)</span>
+                            <span class="text-sm">Lembur (<?= $jam_lembur ?> jam × Rp <?= number_format($upah_per_jam_lembur, 0, ',', '.') ?>)</span>
                             <span class="text-sm font-semibold">Rp <?= number_format($total_lembur, 0, ',', '.') ?></span>
                         </div>
+                        <?php else: ?>
+                        <div class="flex justify-between py-2.5 px-3">
+                            <span class="text-sm">Lembur</span>
+                            <span class="text-sm font-semibold">Rp 0</span>
+                        </div>
+                        <?php endif; ?>
                     </div>
                     <div class="flex justify-between py-2.5 px-3 bg-gray-50 rounded-b-md">
                         <span class="text-sm font-bold">Total Pendapatan (Gaji Kotor)</span>
@@ -220,6 +262,26 @@ else if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['Id_Karyawan']) &
                     <div class="flex justify-between py-2.5 px-3 bg-gray-50 rounded-b-md">
                         <span class="text-sm font-bold">Total Potongan</span>
                         <span class="text-sm font-bold text-red-600">- Rp <?= number_format($total_potongan, 0, ',', '.') ?></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PERBAIKAN: Menampilkan rumus yang benar -->
+            <div class="bg-blue-50 border-l-4 border-blue-500 text-blue-800 p-4 rounded-lg">
+                <h4 class="font-bold mb-2">RUMUS PERHITUNGAN:</h4>
+                <div class="text-sm space-y-1">
+                    <div>• Gaji Kotor = Gaji Pokok + Tunjangan + Lembur</div>
+                    <div>• Gaji Bersih = Gaji Kotor - Potongan</div>
+                    <div>• Gaji (Final) = Gaji Pokok + Tunjangan + Lembur - Potongan</div>
+                    <div class="mt-2 pt-2 border-t border-blue-200">
+                        <div><strong>Ketentuan Potongan:</strong></div>
+                        <div>• BPJS: 2% dari gaji pokok</div>
+                        <div>• Absensi: 3% dari gaji pokok per hari (Sakit + Izin + Alpha)</div>
+                    </div>
+                    <div class="mt-2 pt-2 border-t border-blue-200">
+                        <div><strong>Ketentuan Lembur:</strong></div>
+                        <div>• Hanya untuk karyawan produksi</div>
+                        <div>• Tarif: Rp 20.000 per jam</div>
                     </div>
                 </div>
             </div>

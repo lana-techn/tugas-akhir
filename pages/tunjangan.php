@@ -62,7 +62,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $tunjangan_data = null;
 if ($action === 'edit' && $id) {
-    // ... Logika get data untuk edit tetap sama ...
+    $page_title = 'Edit Data Tunjangan';
+    $stmt = $conn->prepare("SELECT * FROM TUNJANGAN WHERE Id_Tunjangan = ?");
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $tunjangan_data = $result->fetch_assoc();
+    $stmt->close();
+    if (!$tunjangan_data) {
+        set_flash_message('error', 'Data tunjangan tidak ditemukan.');
+        header('Location: tunjangan.php?action=list');
+        exit;
+    }
 } elseif ($action === 'add') {
     $page_title = 'Tambah Data Tunjangan';
 }
@@ -148,7 +159,7 @@ require_once __DIR__ . '/../includes/header.php';
             </table>
         </div>
         
-        <?php echo generate_pagination_links($page, $total_pages, 'tunjangan.php', ['action' => 'list', 'search' => $search]); ?>
+        <?php echo generate_pagination_links($page, $total_pages, ['action' => 'list', 'search' => $search]); ?>
     </div>
 <?php endif; ?>
 

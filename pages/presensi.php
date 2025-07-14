@@ -46,13 +46,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $sakit = filter_input(INPUT_POST, 'Sakit', FILTER_VALIDATE_INT, ["options" => ["min_range"=>0]]);
     $izin = filter_input(INPUT_POST, 'Izin', FILTER_VALIDATE_INT, ["options" => ["min_range"=>0]]);
     $alpha = filter_input(INPUT_POST, 'Alpha', FILTER_VALIDATE_INT, ["options" => ["min_range"=>0]]);
+    $jam_lembur = filter_input(INPUT_POST, 'Jam_Lembur', FILTER_VALIDATE_INT, ["options" => ["min_range"=>0]]);
 
-    if (empty($id_karyawan) || empty($bulan) || $tahun === false || $hadir === false || $sakit === false || $izin === false || $alpha === false) {
+    if (empty($id_karyawan) || empty($bulan) || $tahun === false || $hadir === false || $sakit === false || $izin === false || $alpha === false || $jam_lembur === false) {
         set_flash_message('error', 'Semua kolom wajib diisi dengan format yang benar dan angka tidak boleh negatif.');
     } else {
         if ($id_presensi) { // Edit
-            $stmt = $conn->prepare("UPDATE PRESENSI SET Hadir=?, Sakit=?, Izin=?, Alpha=? WHERE Id_Presensi=?");
-            $stmt->bind_param("iiiii", $hadir, $sakit, $izin, $alpha, $id_presensi);
+            $stmt = $conn->prepare("UPDATE PRESENSI SET Hadir=?, Sakit=?, Izin=?, Alpha=?, Jam_Lembur=? WHERE Id_Presensi=?");
+            $stmt->bind_param("iiiiii", $hadir, $sakit, $izin, $alpha, $jam_lembur, $id_presensi);
             $action_text = 'diperbarui';
         } else { // Tambah
             $stmt_cek = $conn->prepare("SELECT Id_Presensi FROM PRESENSI WHERE Id_Karyawan = ? AND Bulan = ? AND Tahun = ?");
@@ -65,8 +66,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             $stmt_cek->close();
 
-            $stmt = $conn->prepare("INSERT INTO PRESENSI (Id_Karyawan, Bulan, Tahun, Hadir, Sakit, Izin, Alpha) VALUES (?, ?, ?, ?, ?, ?, ?)");
-            $stmt->bind_param("ssiiiii", $id_karyawan, $bulan, $tahun, $hadir, $sakit, $izin, $alpha);
+            $stmt = $conn->prepare("INSERT INTO PRESENSI (Id_Karyawan, Bulan, Tahun, Hadir, Sakit, Izin, Alpha, Jam_Lembur) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt->bind_param("ssiiiiiii", $id_karyawan, $bulan, $tahun, $hadir, $sakit, $izin, $alpha, $jam_lembur);
             $action_text = 'ditambahkan';
         }
 
@@ -81,7 +82,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $presensi_data = null;
 if ($action === 'edit' && $id) {
-    // ... Logika get data untuk edit tetap sama
+    $page_title = 'Edit Presensi';
+    $stmt = $conn->prepare("SELECT * FROM PRESENSI WHERE Id_Presensi = ?");
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
+    $presensi_data = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+    if (!$presensi_data) {
+        set_flash_message('error', 'Data presensi tidak ditemukan.');
+        header('Location: presensi.php?action=list');
+        exit;
+    }
 } elseif ($action === 'add') {
     $page_title = 'Tambah Presensi';
 }
@@ -99,7 +110,7 @@ require_once __DIR__ . '/../includes/header.php';
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
             <div>
                 <h2 class="text-2xl font-bold text-gray-800 font-poppins">Daftar Presensi</h2>
-                <p class="text-gray-500 text-sm">Kelola data kehadiran, sakit, izin, dan alpha karyawan.</p>
+                <p class="text-gray-500 text-sm">Kelola data kehadiran, sakit, izin, alpha, dan jam lembur karyawan.</p>
             </div>
             <a href="presensi.php?action=add" class="w-full sm:w-auto bg-green-600 text-white px-4 py-2.5 rounded-lg hover:bg-green-700 text-sm font-semibold shadow-md hover:shadow-lg transition-all flex items-center justify-center">
                 <i class="fa-solid fa-plus mr-2"></i>Tambah Presensi
@@ -131,12 +142,13 @@ require_once __DIR__ . '/../includes/header.php';
             <table class="w-full text-sm text-center text-gray-700">
                 <thead class="text-xs uppercase bg-gray-100 text-gray-600">
                     <tr>
-                        <th class="px-6 py-3 text-left">Nama Karyawan</th>
-                        <th class="px-4 py-3">Periode</th>
+                        <th class="px-4 py-3 text-left">Nama Karyawan</th>
+                        <th class="px-3 py-3">Periode</th>
                         <th class="px-2 py-3">Hadir</th>
                         <th class="px-2 py-3">Sakit</th>
                         <th class="px-2 py-3">Izin</th>
                         <th class="px-2 py-3">Alpha</th>
+                        <th class="px-2 py-3">Lembur (Jam)</th>
                         <th class="px-4 py-3 text-center">Aksi</th>
                     </tr>
                 </thead>
@@ -181,12 +193,19 @@ require_once __DIR__ . '/../includes/header.php';
                         while ($row = $result->fetch_assoc()):
                         ?>
                         <tr class="bg-white border-b hover:bg-gray-50 transition-colors">
-                            <td class="px-6 py-4 font-medium text-left text-gray-900"><?= e($row['Nama_Karyawan']) ?></td>
-                            <td class="px-4 py-3"><?= e($row['Bulan']) ?> <?= e($row['Tahun']) ?></td>
+                            <td class="px-4 py-4 font-medium text-left text-gray-900"><?= e($row['Nama_Karyawan']) ?></td>
+                            <td class="px-3 py-3"><?= e($row['Bulan']) ?> <?= e($row['Tahun']) ?></td>
                             <td class="px-2 py-3"><span class="font-bold text-green-600 bg-green-50 px-2 py-1 rounded"><?= e($row['Hadir']) ?></span></td>
                             <td class="px-2 py-3"><span class="font-bold text-yellow-600 bg-yellow-50 px-2 py-1 rounded"><?= e($row['Sakit']) ?></span></td>
                             <td class="px-2 py-3"><span class="font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded"><?= e($row['Izin']) ?></span></td>
                             <td class="px-2 py-3"><span class="font-bold text-red-600 bg-red-50 px-2 py-1 rounded"><?= e($row['Alpha']) ?></span></td>
+                            <td class="px-2 py-3">
+                                <?php if(isset($row['Jam_Lembur']) && $row['Jam_Lembur'] > 0): ?>
+                                    <span class="font-bold text-purple-600 bg-purple-50 px-2 py-1 rounded"><?= e($row['Jam_Lembur']) ?> jam</span>
+                                <?php else: ?>
+                                    <span class="text-gray-400">-</span>
+                                <?php endif; ?>
+                            </td>
                             <td class="px-4 py-3">
                                 <div class="flex items-center justify-center gap-4">
                                     <a href="presensi.php?action=edit&id=<?= e($row['Id_Presensi']) ?>" class="text-blue-600 hover:text-blue-800" title="Edit"><i class="fa-solid fa-pen-to-square"></i></a>
@@ -196,7 +215,7 @@ require_once __DIR__ . '/../includes/header.php';
                         </tr>
                         <?php endwhile;
                     else:
-                        echo '<tr><td colspan="7" class="text-center py-5 text-gray-500">Tidak ada data ditemukan.</td></tr>';
+                        echo '<tr><td colspan="8" class="text-center py-5 text-gray-500">Tidak ada data ditemukan.</td></tr>';
                     endif;
                     $stmt->close(); $conn->close();
                     ?>
@@ -211,9 +230,20 @@ require_once __DIR__ . '/../includes/header.php';
 <?php endif; ?>
 
 <?php if ($action === 'add' || $action === 'edit'): ?>
-    <div class="bg-white p-8 rounded-xl shadow-lg max-w-2xl mx-auto">
+    <div class="bg-white p-8 rounded-xl shadow-lg max-w-3xl mx-auto">
         <h2 class="text-2xl font-bold text-gray-800 text-center mb-2 font-poppins"><?= ucfirst($action) ?> Data Presensi</h2>
-        <p class="text-center text-gray-500 mb-8">Masukkan data kehadiran untuk karyawan.</p>
+        <p class="text-center text-gray-500 mb-8">Masukkan data kehadiran dan jam lembur untuk karyawan.</p>
+        
+        <!-- Informasi Kebijakan -->
+        <div class="bg-blue-50 border-l-4 border-blue-500 text-blue-800 p-4 rounded-lg mb-6">
+            <h4 class="font-bold mb-2">INFORMASI PENTING:</h4>
+            <div class="text-sm space-y-1">
+                <div>• <strong>Lembur:</strong> Hanya untuk karyawan bagian produksi</div>
+                <div>• <strong>Potongan Absensi:</strong> 3% dari gaji pokok per hari untuk Sakit, Izin, dan Alpha</div>
+                <div>• <strong>Upah Lembur:</strong> Rp 20.000 per jam</div>
+            </div>
+        </div>
+        
         <form method="POST" action="presensi.php">
             <?php csrf_input(); ?>
             <input type="hidden" name="Id_Presensi" value="<?= e($presensi_data['Id_Presensi'] ?? '') ?>">
@@ -246,22 +276,52 @@ require_once __DIR__ . '/../includes/header.php';
                     <label for="Tahun" class="block mb-2 text-sm font-medium text-gray-700">Tahun</label>
                     <input type="number" name="Tahun" id="Tahun" value="<?= e($presensi_data['Tahun'] ?? date('Y')) ?>" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" required <?= $action === 'edit' ? 'readonly' : '' ?>>
                 </div>
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:col-span-2">
+            </div>
+
+            <!-- Data Kehadiran -->
+            <div class="mt-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Data Kehadiran</h3>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div>
                        <label for="Hadir" class="block mb-2 text-sm font-medium text-gray-700">Hadir</label>
                         <input type="number" id="Hadir" name="Hadir" value="<?= e($presensi_data['Hadir'] ?? '0') ?>" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" required min="0">
                     </div>
                     <div>
-                        <label for="Sakit" class="block mb-2 text-sm font-medium text-gray-700">Sakit</label>
+                        <label for="Sakit" class="block mb-2 text-sm font-medium text-gray-700">Sakit <span class="text-red-500">*</span></label>
                         <input type="number" id="Sakit" name="Sakit" value="<?= e($presensi_data['Sakit'] ?? '0') ?>" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500" required min="0">
+                        <p class="text-xs text-red-500 mt-1">Dipotong 3% gaji pokok/hari</p>
                     </div>
                      <div>
-                        <label for="Izin" class="block mb-2 text-sm font-medium text-gray-700">Izin</label>
+                        <label for="Izin" class="block mb-2 text-sm font-medium text-gray-700">Izin <span class="text-red-500">*</span></label>
                         <input type="number" id="Izin" name="Izin" value="<?= e($presensi_data['Izin'] ?? '0') ?>" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required min="0">
+                        <p class="text-xs text-red-500 mt-1">Dipotong 3% gaji pokok/hari</p>
                     </div>
                      <div>
-                        <label for="Alpha" class="block mb-2 text-sm font-medium text-gray-700">Alpha</label>
+                        <label for="Alpha" class="block mb-2 text-sm font-medium text-gray-700">Alpha <span class="text-red-500">*</span></label>
                         <input type="number" id="Alpha" name="Alpha" value="<?= e($presensi_data['Alpha'] ?? '0') ?>" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500" required min="0">
+                        <p class="text-xs text-red-500 mt-1">Dipotong 3% gaji pokok/hari</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Data Lembur -->
+            <div class="mt-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Data Lembur</h3>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="Jam_Lembur" class="block mb-2 text-sm font-medium text-gray-700">Jam Lembur dalam Sebulan</label>
+                        <input type="number" id="Jam_Lembur" name="Jam_Lembur" value="<?= e($presensi_data['Jam_Lembur'] ?? '0') ?>" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500" required min="0" max="200">
+                        <p class="text-xs text-gray-500 mt-1">Maksimal 200 jam per bulan</p>
+                    </div>
+                    <div class="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                        <h4 class="font-bold text-purple-800 mb-2">Perhitungan Lembur:</h4>
+                        <div class="text-sm text-purple-700 space-y-1">
+                            <div>• Tarif: Rp 20.000 per jam</div>
+                            <div>• Hanya untuk karyawan produksi</div>
+                            <div id="lembur-calculation" class="font-semibold mt-2">
+                                Total: <span id="total-lembur">Rp 0</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -272,8 +332,29 @@ require_once __DIR__ . '/../includes/header.php';
             </div>
         </form>
     </div>
+
+    <script>
+    // Hitung otomatis total lembur
+    document.getElementById('Jam_Lembur').addEventListener('input', function() {
+        const jamLembur = parseInt(this.value) || 0;
+        const tarifLembur = 20000;
+        const totalLembur = jamLembur * tarifLembur;
+        
+        document.getElementById('total-lembur').textContent = 'Rp ' + totalLembur.toLocaleString('id-ID');
+    });
+
+    // Hitung saat halaman dimuat
+    document.addEventListener('DOMContentLoaded', function() {
+        const jamLembur = parseInt(document.getElementById('Jam_Lembur').value) || 0;
+        const tarifLembur = 20000;
+        const totalLembur = jamLembur * tarifLembur;
+        
+        document.getElementById('total-lembur').textContent = 'Rp ' + totalLembur.toLocaleString('id-ID');
+    });
+    </script>
 <?php endif; ?>
 
 <?php
 require_once __DIR__ . '/../includes/footer.php';
 ?>
+
