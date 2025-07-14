@@ -8,23 +8,24 @@ $conn = db_connect();
 $action = $_GET['action'] ?? 'list';
 $id_gaji = $_GET['id'] ?? null;
 
-// Logika Pagination & Pencarian
-$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-$search = $_GET['search'] ?? '';
-$records_per_page = 10;
-$offset = ($page - 1) * $records_per_page;
-
 // --- PROSES PERSETUJUAN ---
-if ($action === 'approve' && $id_gaji) {
+// PERBAIKAN: Logika diubah untuk lebih aman dan jelas
+if (in_array($action, ['approve', 'reject']) && $id_gaji) {
     if (isset($_GET['token']) && hash_equals($_SESSION['csrf_token'], $_GET['token'])) {
-        $stmt = $conn->prepare("UPDATE GAJI SET Status = 'Disetujui' WHERE Id_Gaji = ?");
-        $stmt->bind_param("s", $id_gaji);
-        if ($stmt->execute()) {
-            set_flash_message('success', 'Penggajian berhasil disetujui.');
+        
+        $new_status = ($action === 'approve') ? 'Disetujui' : 'Ditolak';
+        $message = ($action === 'approve') ? 'disetujui' : 'ditolak';
+
+        $stmt = $conn->prepare("UPDATE GAJI SET Status = ? WHERE Id_Gaji = ? AND Status = 'Diajukan'");
+        $stmt->bind_param("ss", $new_status, $id_gaji);
+        
+        if ($stmt->execute() && $stmt->affected_rows > 0) {
+            set_flash_message('success', "Penggajian berhasil {$message}.");
         } else {
-            set_flash_message('error', 'Gagal menyetujui penggajian.');
+            set_flash_message('error', "Gagal memproses penggajian. Mungkin sudah diproses sebelumnya.");
         }
         $stmt->close();
+
     } else {
         set_flash_message('error', 'Token keamanan tidak valid.');
     }
@@ -32,8 +33,13 @@ if ($action === 'approve' && $id_gaji) {
     exit;
 }
 
-generate_csrf_token();
+// Logika Pagination & Pencarian
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$search = $_GET['search'] ?? '';
+$records_per_page = 10;
+$offset = ($page - 1) * $records_per_page;
 
+generate_csrf_token();
 require_once __DIR__ . '/../../includes/header.php';
 ?>
 
@@ -41,7 +47,7 @@ require_once __DIR__ . '/../../includes/header.php';
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <div>
             <h2 class="text-2xl font-bold text-gray-800 font-poppins">Persetujuan Gaji Karyawan</h2>
-            <p class="text-gray-500 text-sm">Tinjau dan setujui pengajuan gaji yang masuk.</p>
+            <p class="text-gray-500 text-sm">Tinjau dan proses pengajuan gaji yang masuk dari admin.</p>
         </div>
     </div>
 
@@ -70,11 +76,7 @@ require_once __DIR__ . '/../../includes/header.php';
             </thead>
             <tbody>
                 <?php
-                // Query untuk count
-                $count_sql = "SELECT COUNT(g.Id_Gaji) as total 
-                              FROM GAJI g
-                              JOIN KARYAWAN k ON g.Id_Karyawan = k.Id_Karyawan
-                              WHERE g.Status = 'Diajukan' AND k.Nama_Karyawan LIKE ?";
+                $count_sql = "SELECT COUNT(g.Id_Gaji) as total FROM GAJI g JOIN KARYAWAN k ON g.Id_Karyawan = k.Id_Karyawan WHERE g.Status = 'Diajukan' AND k.Nama_Karyawan LIKE ?";
                 $stmt_count = $conn->prepare($count_sql);
                 $search_param = "%" . $search . "%";
                 $stmt_count->bind_param("s", $search_param);
@@ -83,14 +85,7 @@ require_once __DIR__ . '/../../includes/header.php';
                 $total_pages = ceil($total_records / $records_per_page);
                 $stmt_count->close();
 
-                // Query untuk data
-                $sql = "SELECT g.Id_Gaji, k.Nama_Karyawan, j.Nama_Jabatan, g.Tgl_Gaji, g.Gaji_Bersih
-                        FROM GAJI g
-                        JOIN KARYAWAN k ON g.Id_Karyawan = k.Id_Karyawan
-                        JOIN JABATAN j ON k.Id_Jabatan = j.Id_Jabatan
-                        WHERE g.Status = 'Diajukan' AND k.Nama_Karyawan LIKE ?
-                        ORDER BY g.Tgl_Gaji DESC
-                        LIMIT ? OFFSET ?";
+                $sql = "SELECT g.Id_Gaji, k.Nama_Karyawan, j.Nama_Jabatan, g.Tgl_Gaji, g.Gaji_Bersih FROM GAJI g JOIN KARYAWAN k ON g.Id_Karyawan = k.Id_Karyawan JOIN JABATAN j ON k.Id_Jabatan = j.Id_Jabatan WHERE g.Status = 'Diajukan' AND k.Nama_Karyawan LIKE ? ORDER BY g.Tgl_Gaji DESC LIMIT ? OFFSET ?";
                 $stmt = $conn->prepare($sql);
                 $stmt->bind_param("sii", $search_param, $records_per_page, $offset);
                 $stmt->execute();
@@ -104,13 +99,19 @@ require_once __DIR__ . '/../../includes/header.php';
                     <td class="px-6 py-4 font-medium text-gray-900"><?= e($row['Nama_Karyawan']) ?></td>
                     <td class="px-6 py-4"><?= e($row['Nama_Jabatan']) ?></td>
                     <td class="px-6 py-4"><?= e(date('F Y', strtotime($row['Tgl_Gaji']))) ?></td>
-                    <td class="px-6 py-4 text-right font-semibold text-green-700">Rp <?= number_format($row['Gaji_Bersih'], 0, ',', '.') ?></td>
+                    <td class="px-6 py-4 text-right font-semibold text-green-700">Rp <?= number_format($row['Gaji_Bersih'], 2, ',', '.') ?></td>
                     <td class="px-6 py-4 text-center">
-                        <a href="penggajian_pemilik.php?action=approve&id=<?= e($row['Id_Gaji']) ?>&token=<?= e($_SESSION['csrf_token']) ?>" 
-                           class="bg-green-100 text-green-800 text-xs font-semibold px-3 py-1.5 rounded-full hover:bg-green-200 transition-colors"
-                           onclick="return confirm('Apakah Anda yakin ingin menyetujui penggajian ini?')">
-                           <i class="fa-solid fa-check mr-1"></i> Setujui
-                        </a>
+                        <div class="flex items-center justify-center gap-2">
+                            <a href="detail_gaji_pemilik.php?id=<?= e($row['Id_Gaji']) ?>" class="text-sm text-gray-600 bg-gray-200 px-3 py-1 rounded-md hover:bg-gray-300">
+                                Detail
+                            </a>
+                            <a href="penggajian_pemilik.php?action=approve&id=<?= e($row['Id_Gaji']) ?>&token=<?= e($_SESSION['csrf_token']) ?>" class="text-sm text-white bg-green-500 px-3 py-1 rounded-md hover:bg-green-600" onclick="return confirm('Apakah Anda yakin ingin menyetujui penggajian ini?')">
+                                Setujui
+                            </a>
+                            <a href="penggajian_pemilik.php?action=reject&id=<?= e($row['Id_Gaji']) ?>&token=<?= e($_SESSION['csrf_token']) ?>" class="text-sm text-white bg-red-500 px-3 py-1 rounded-md hover:bg-red-600" onclick="return confirm('Apakah Anda yakin ingin menolak penggajian ini?')">
+                                Tolak
+                            </a>
+                        </div>
                     </td>
                 </tr>
                 <?php 
@@ -133,7 +134,6 @@ require_once __DIR__ . '/../../includes/header.php';
     </div>
 
     <?php 
-    // Menampilkan pagination
     echo generate_pagination_links($page, $total_pages, 'penggajian_pemilik.php', ['search' => $search]);
     ?>
 </div>

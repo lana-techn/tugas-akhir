@@ -9,7 +9,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajukan_gaji'])) {
 
     if (!validate_csrf_token()) die('Validasi CSRF gagal.');
 
-    // Ambil semua data yang sudah final dari hidden input
     $id_karyawan = $_POST['Id_Karyawan'] ?? null;
     $periode = $_POST['periode'] ?? null;
     $gaji_pokok = (float)($_POST['Gaji_Pokok'] ?? 0);
@@ -30,7 +29,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajukan_gaji'])) {
     $periode_id = date('Ym', strtotime($tgl_gaji));
     $id_gaji = "G-" . $periode_id . "-" . $id_karyawan;
 
-    // Cek duplikasi
     $stmt_cek = $conn->prepare("SELECT Id_Gaji FROM GAJI WHERE Id_Gaji = ?");
     $stmt_cek->bind_param("s", $id_gaji);
     $stmt_cek->execute();
@@ -43,7 +41,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajukan_gaji'])) {
 
     $conn->begin_transaction();
     try {
-        // 1. INSERT ke tabel GAJI (Ringkasan)
         $stmt_gaji = $conn->prepare(
             "INSERT INTO GAJI (Id_Gaji, Id_Karyawan, Tgl_Gaji, Total_Tunjangan, Total_Lembur, Total_Potongan, Gaji_Kotor, Gaji_Bersih, Status) 
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Diajukan')"
@@ -51,7 +48,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajukan_gaji'])) {
         $stmt_gaji->bind_param("sssdddds", $id_gaji, $id_karyawan, $tgl_gaji, $total_tunjangan, $total_lembur, $total_potongan, $gaji_kotor, $gaji_bersih);
         $stmt_gaji->execute();
 
-        // 2. INSERT ke tabel DETAIL_GAJI (Rincian)
         $stmt_detail = $conn->prepare(
             "INSERT INTO DETAIL_GAJI (Id_Gaji, Id_Karyawan, Id_Gapok, Nominal_Gapok, Jumlah_Tunjangan, Jumlah_Lembur, Jumlah_Potongan)
              VALUES (?, ?, ?, ?, ?, ?, ?)"
@@ -83,9 +79,13 @@ else if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['Id_Karyawan']) &
     $periode = $_POST['periode'];
     $sertakan_tunjangan = (bool)($_POST['sertakan_tunjangan'] ?? false);
 
-    $tgl_gaji = date('Y-m-t', strtotime($periode . '-01')); 
-    $bulan_nama = date('F', strtotime($tgl_gaji));
+    $tgl_gaji = date('Y-m-t', strtotime($periode . '-01'));
     $tahun = date('Y', strtotime($tgl_gaji));
+
+    // PERBAIKAN: Menggunakan array untuk mencocokkan nama bulan di database
+    $bulan_angka = (int)date('n', strtotime($tgl_gaji));
+    $bulan_map = [1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April', 5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus', 9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'];
+    $bulan_nama = $bulan_map[$bulan_angka];
 
     $stmt_karyawan = $conn->prepare("SELECT k.*, j.Nama_Jabatan FROM KARYAWAN k JOIN JABATAN j ON k.Id_Jabatan = j.Id_Jabatan WHERE k.Id_Karyawan = ?");
     $stmt_karyawan->bind_param("s", $id_karyawan);
@@ -114,6 +114,7 @@ else if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['Id_Karyawan']) &
         $total_tunjangan += $thr;
     }
 
+    // PERBAIKAN: Mengambil data presensi menggunakan nama bulan yang benar
     $stmt_presensi = $conn->prepare("SELECT Jam_Lembur, Sakit, Izin, Alpha FROM PRESENSI WHERE Id_Karyawan = ? AND Bulan = ? AND Tahun = ?");
     $stmt_presensi->bind_param("ssi", $id_karyawan, $bulan_nama, $tahun);
     $stmt_presensi->execute();
@@ -125,11 +126,12 @@ else if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['Id_Karyawan']) &
 
     $detail_potongan = [];
     $total_potongan = 0;
-    $potongan_bpjs = $gaji_pokok * 0.02; // Sesuai dokumen 2%
+    $potongan_bpjs = $gaji_pokok * 0.025; 
     if($potongan_bpjs > 0) {
-        $detail_potongan[] = ['nama' => 'Potongan BPJS Ketenagakerjaan (2%)', 'jumlah' => $potongan_bpjs];
+        $detail_potongan[] = ['nama' => 'Potongan BPJS Ketenagakerjaan (2,5%)', 'jumlah' => $potongan_bpjs];
         $total_potongan += $potongan_bpjs;
     }
+    
     $total_hari_tidak_hadir = ($presensi_data['Sakit'] ?? 0) + ($presensi_data['Izin'] ?? 0) + ($presensi_data['Alpha'] ?? 0);
     if ($total_hari_tidak_hadir > 0) {
         $potongan_absensi = ($gaji_pokok * 0.03) * $total_hari_tidak_hadir;
