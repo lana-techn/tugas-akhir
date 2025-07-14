@@ -1,6 +1,7 @@
 <?php
 // 1. SETUP & LOGIKA
-require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . 
+'/../includes/functions.php';
 requireLogin('admin');
 
 $conn = db_connect();
@@ -35,19 +36,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $id_tunjangan = $_POST['Id_Tunjangan'] ?? null;
     $nama_tunjangan = trim($_POST['Nama_Tunjangan']);
-    $jumlah = filter_input(INPUT_POST, 'Jumlah_Tunjangan', FILTER_VALIDATE_FLOAT);
     $keterangan = trim($_POST['Keterangan']);
 
-    if (empty($nama_tunjangan) || $jumlah === false) {
-        set_flash_message('error', 'Nama dan jumlah tunjangan wajib diisi dengan format yang benar.');
+    if (empty($nama_tunjangan)) {
+        set_flash_message('error', 'Nama tunjangan wajib diisi.');
     } else {
         if ($id_tunjangan) { // Edit
-            $stmt = $conn->prepare("UPDATE TUNJANGAN SET Nama_Tunjangan = ?, Jumlah_Tunjangan = ?, Keterangan = ? WHERE Id_Tunjangan = ?");
-            $stmt->bind_param("sdsi", $nama_tunjangan, $jumlah, $keterangan, $id_tunjangan);
+            $stmt = $conn->prepare("UPDATE TUNJANGAN SET Nama_Tunjangan = ?, Keterangan = ? WHERE Id_Tunjangan = ?");
+            $stmt->bind_param("ssi", $nama_tunjangan, $keterangan, $id_tunjangan);
             $action_text = 'diperbarui';
         } else { // Tambah
-            $stmt = $conn->prepare("INSERT INTO TUNJANGAN (Nama_Tunjangan, Jumlah_Tunjangan, Keterangan) VALUES (?, ?, ?)");
-            $stmt->bind_param("sds", $nama_tunjangan, $jumlah, $keterangan);
+            $stmt = $conn->prepare("INSERT INTO TUNJANGAN (Nama_Tunjangan, Keterangan) VALUES (?, ?)");
+            $stmt->bind_param("ss", $nama_tunjangan, $keterangan);
             $action_text = 'ditambahkan';
         }
 
@@ -62,7 +62,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $tunjangan_data = null;
 if ($action === 'edit' && $id) {
-    // ... Logika get data untuk edit tetap sama ...
+    $page_title = 'Edit Data Tunjangan';
+    $stmt = $conn->prepare("SELECT * FROM TUNJANGAN WHERE Id_Tunjangan = ?");
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
+    $tunjangan_data = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+    if (!$tunjangan_data) {
+        set_flash_message('error', 'Data tunjangan tidak ditemukan.');
+        header('Location: tunjangan.php?action=list');
+        exit;
+    }
 } elseif ($action === 'add') {
     $page_title = 'Tambah Data Tunjangan';
 }
@@ -70,7 +80,8 @@ if ($action === 'edit' && $id) {
 generate_csrf_token();
 
 // 2. MEMANGGIL TAMPILAN (VIEW)
-require_once __DIR__ . '/../includes/header.php';
+require_once __DIR__ . 
+'/../includes/header.php';
 ?>
 
 <?php display_flash_message(); ?>
@@ -102,7 +113,6 @@ require_once __DIR__ . '/../includes/header.php';
                 <thead class="text-xs uppercase bg-gray-100 text-gray-600">
                     <tr>
                         <th class="px-6 py-3">Nama Tunjangan</th>
-                        <th class="px-6 py-3 text-right">Jumlah</th>
                         <th class="px-6 py-3">Keterangan</th>
                         <th class="px-6 py-3 text-center">Aksi</th>
                     </tr>
@@ -129,7 +139,6 @@ require_once __DIR__ . '/../includes/header.php';
                         ?>
                         <tr class="bg-white border-b hover:bg-gray-50 transition-colors">
                             <td class="px-6 py-4 font-medium text-gray-900"><?= e($row['Nama_Tunjangan']) ?></td>
-                            <td class="px-6 py-4 text-right font-semibold text-green-700">Rp <?= number_format($row['Jumlah_Tunjangan'] ?? 0, 0, ',', '.') ?></td>
                             <td class="px-6 py-4 text-gray-500"><?= e($row['Keterangan']) ?: '-' ?></td>
                             <td class="px-6 py-4 text-center">
                                 <div class="flex items-center justify-center gap-4">
@@ -140,7 +149,7 @@ require_once __DIR__ . '/../includes/header.php';
                         </tr>
                         <?php endwhile;
                     } else {
-                        echo '<tr><td colspan="4" class="text-center py-5 text-gray-500">Tidak ada data ditemukan.</td></tr>';
+                        echo '<tr><td colspan="3" class="text-center py-5 text-gray-500">Tidak ada data ditemukan.</td></tr>';
                     }
                     $stmt->close(); $conn->close();
                     ?>
@@ -165,10 +174,7 @@ require_once __DIR__ . '/../includes/header.php';
                 <input type="text" id="Nama_Tunjangan" name="Nama_Tunjangan" value="<?= e($tunjangan_data['Nama_Tunjangan'] ?? '') ?>" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" required>
             </div>
             
-            <div class="mb-5">
-                <label for="Jumlah_Tunjangan" class="block mb-2 text-sm font-medium text-gray-700">Jumlah Tunjangan (Rp)</label>
-                <input type="number" id="Jumlah_Tunjangan" name="Jumlah_Tunjangan" value="<?= e($tunjangan_data['Jumlah_Tunjangan'] ?? '') ?>" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" required min="0">
-            </div>
+            <!-- Removed Jumlah_Tunjangan field as it's now dynamically calculated -->
 
             <div class="mb-8">
                 <label for="Keterangan" class="block mb-2 text-sm font-medium text-gray-700">Keterangan</label>
@@ -183,4 +189,6 @@ require_once __DIR__ . '/../includes/header.php';
     </div>
 <?php endif; ?>
 
-<?php require_once __DIR__ . '/../includes/footer.php'; ?>
+<?php require_once __DIR__ . 
+'/../includes/footer.php';
+?>

@@ -1,6 +1,7 @@
 <?php
 // 1. SETUP & LOGIKA
-require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . 
+'/../includes/functions.php';
 requireLogin('admin');
 
 $conn = db_connect();
@@ -46,13 +47,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $sakit = filter_input(INPUT_POST, 'Sakit', FILTER_VALIDATE_INT, ["options" => ["min_range"=>0]]);
     $izin = filter_input(INPUT_POST, 'Izin', FILTER_VALIDATE_INT, ["options" => ["min_range"=>0]]);
     $alpha = filter_input(INPUT_POST, 'Alpha', FILTER_VALIDATE_INT, ["options" => ["min_range"=>0]]);
+    $jam_lembur = filter_input(INPUT_POST, 'Jam_Lembur', FILTER_VALIDATE_INT, ["options" => ["min_range"=>0]]); // New field
 
-    if (empty($id_karyawan) || empty($bulan) || $tahun === false || $hadir === false || $sakit === false || $izin === false || $alpha === false) {
+    if (empty($id_karyawan) || empty($bulan) || $tahun === false || $hadir === false || $sakit === false || $izin === false || $alpha === false || $jam_lembur === false) {
         set_flash_message('error', 'Semua kolom wajib diisi dengan format yang benar dan angka tidak boleh negatif.');
     } else {
         if ($id_presensi) { // Edit
-            $stmt = $conn->prepare("UPDATE PRESENSI SET Hadir=?, Sakit=?, Izin=?, Alpha=? WHERE Id_Presensi=?");
-            $stmt->bind_param("iiiii", $hadir, $sakit, $izin, $alpha, $id_presensi);
+            $stmt = $conn->prepare("UPDATE PRESENSI SET Hadir=?, Sakit=?, Izin=?, Alpha=?, Jam_Lembur=? WHERE Id_Presensi=?"); // Added Jam_Lembur
+            $stmt->bind_param("iiiiii", $hadir, $sakit, $izin, $alpha, $jam_lembur, $id_presensi); // Added 'i' for Jam_Lembur
             $action_text = 'diperbarui';
         } else { // Tambah
             $stmt_cek = $conn->prepare("SELECT Id_Presensi FROM PRESENSI WHERE Id_Karyawan = ? AND Bulan = ? AND Tahun = ?");
@@ -65,8 +67,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             $stmt_cek->close();
 
-            $stmt = $conn->prepare("INSERT INTO PRESENSI (Id_Karyawan, Bulan, Tahun, Hadir, Sakit, Izin, Alpha) VALUES (?, ?, ?, ?, ?, ?, ?)");
-            $stmt->bind_param("ssiiiii", $id_karyawan, $bulan, $tahun, $hadir, $sakit, $izin, $alpha);
+            $stmt = $conn->prepare("INSERT INTO PRESENSI (Id_Karyawan, Bulan, Tahun, Hadir, Sakit, Izin, Alpha, Jam_Lembur) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"); // Added Jam_Lembur
+            $stmt->bind_param("ssiiiiii", $id_karyawan, $bulan, $tahun, $hadir, $sakit, $izin, $alpha, $jam_lembur); // Added 'i' for Jam_Lembur
             $action_text = 'ditambahkan';
         }
 
@@ -81,7 +83,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $presensi_data = null;
 if ($action === 'edit' && $id) {
-    // ... Logika get data untuk edit tetap sama
+    $page_title = 'Edit Data Presensi';
+    $stmt = $conn->prepare("SELECT * FROM PRESENSI WHERE Id_Presensi = ?");
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
+    $presensi_data = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+    if (!$presensi_data) {
+        set_flash_message('error', 'Data presensi tidak ditemukan.');
+        header('Location: presensi.php?action=list');
+        exit;
+    }
 } elseif ($action === 'add') {
     $page_title = 'Tambah Presensi';
 }
@@ -89,7 +101,8 @@ if ($action === 'edit' && $id) {
 generate_csrf_token();
 
 // 2. MEMANGGIL TAMPILAN (VIEW)
-require_once __DIR__ . '/../includes/header.php';
+require_once __DIR__ . 
+'/../includes/header.php';
 ?>
 
 <?php display_flash_message(); ?>
@@ -99,7 +112,7 @@ require_once __DIR__ . '/../includes/header.php';
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
             <div>
                 <h2 class="text-2xl font-bold text-gray-800 font-poppins">Daftar Presensi</h2>
-                <p class="text-gray-500 text-sm">Kelola data kehadiran, sakit, izin, dan alpha karyawan.</p>
+                <p class="text-gray-500 text-sm">Kelola data kehadiran, sakit, izin, alpha, dan jam lembur karyawan.</p>
             </div>
             <a href="presensi.php?action=add" class="w-full sm:w-auto bg-green-600 text-white px-4 py-2.5 rounded-lg hover:bg-green-700 text-sm font-semibold shadow-md hover:shadow-lg transition-all flex items-center justify-center">
                 <i class="fa-solid fa-plus mr-2"></i>Tambah Presensi
@@ -137,6 +150,7 @@ require_once __DIR__ . '/../includes/header.php';
                         <th class="px-2 py-3">Sakit</th>
                         <th class="px-2 py-3">Izin</th>
                         <th class="px-2 py-3">Alpha</th>
+                        <th class="px-2 py-3">Jam Lembur</th>
                         <th class="px-4 py-3 text-center">Aksi</th>
                     </tr>
                 </thead>
@@ -187,6 +201,7 @@ require_once __DIR__ . '/../includes/header.php';
                             <td class="px-2 py-3"><span class="font-bold text-yellow-600 bg-yellow-50 px-2 py-1 rounded"><?= e($row['Sakit']) ?></span></td>
                             <td class="px-2 py-3"><span class="font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded"><?= e($row['Izin']) ?></span></td>
                             <td class="px-2 py-3"><span class="font-bold text-red-600 bg-red-50 px-2 py-1 rounded"><?= e($row['Alpha']) ?></span></td>
+                            <td class="px-2 py-3"><span class="font-bold text-purple-600 bg-purple-50 px-2 py-1 rounded"><?= e($row['Jam_Lembur'] ?? '0') ?></span></td>
                             <td class="px-4 py-3">
                                 <div class="flex items-center justify-center gap-4">
                                     <a href="presensi.php?action=edit&id=<?= e($row['Id_Presensi']) ?>" class="text-blue-600 hover:text-blue-800" title="Edit"><i class="fa-solid fa-pen-to-square"></i></a>
@@ -196,7 +211,7 @@ require_once __DIR__ . '/../includes/header.php';
                         </tr>
                         <?php endwhile;
                     else:
-                        echo '<tr><td colspan="7" class="text-center py-5 text-gray-500">Tidak ada data ditemukan.</td></tr>';
+                        echo '<tr><td colspan="8" class="text-center py-5 text-gray-500">Tidak ada data ditemukan.</td></tr>';
                     endif;
                     $stmt->close(); $conn->close();
                     ?>
@@ -264,6 +279,10 @@ require_once __DIR__ . '/../includes/header.php';
                         <input type="number" id="Alpha" name="Alpha" value="<?= e($presensi_data['Alpha'] ?? '0') ?>" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500" required min="0">
                     </div>
                 </div>
+                <div class="md:col-span-2">
+                    <label for="Jam_Lembur" class="block mb-2 text-sm font-medium text-gray-700">Jam Lembur</label>
+                    <input type="number" id="Jam_Lembur" name="Jam_Lembur" value="<?= e($presensi_data['Jam_Lembur'] ?? '0') ?>" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500" required min="0">
+                </div>
             </div>
             
             <div class="flex items-center justify-end space-x-4 mt-8">
@@ -275,5 +294,7 @@ require_once __DIR__ . '/../includes/header.php';
 <?php endif; ?>
 
 <?php
-require_once __DIR__ . '/../includes/footer.php';
+require_once __DIR__ . 
+'/../includes/footer.php';
 ?>
+

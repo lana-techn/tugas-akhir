@@ -1,6 +1,7 @@
 <?php
 // 1. SETUP & LOGIKA
-require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . 
+'/../includes/functions.php';
 requireLogin('admin');
 
 $conn = db_connect();
@@ -38,19 +39,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $id_lembur = $_POST['Id_Lembur'] ?? null;
     $nama_lembur = trim($_POST['Nama_Lembur']);
-    $upah_lembur = filter_input(INPUT_POST, 'Upah_Lembur', FILTER_VALIDATE_INT);
+    $upah_lembur_per_jam = filter_input(INPUT_POST, 'Upah_Lembur_Per_Jam', FILTER_VALIDATE_INT); // Changed field name
     $keterangan = trim($_POST['Keterangan']);
 
-    if (empty($nama_lembur) || $upah_lembur === false) {
-        set_flash_message('error', 'Nama lembur dan upah lembur wajib diisi dengan format yang benar.');
+    if (empty($nama_lembur) || $upah_lembur_per_jam === false) {
+        set_flash_message('error', 'Nama lembur dan upah lembur per jam wajib diisi dengan format yang benar.');
     } else {
         if ($id_lembur) { // Edit
-            $stmt = $conn->prepare("UPDATE LEMBUR SET Nama_Lembur = ?, Upah_Lembur = ?, Keterangan = ? WHERE Id_Lembur = ?");
-            $stmt->bind_param("sisi", $nama_lembur, $upah_lembur, $keterangan, $id_lembur);
+            $stmt = $conn->prepare("UPDATE LEMBUR SET Nama_Lembur = ?, Upah_Lembur_Per_Jam = ?, Keterangan = ? WHERE Id_Lembur = ?"); // Changed field name
+            $stmt->bind_param("sisi", $nama_lembur, $upah_lembur_per_jam, $keterangan, $id_lembur);
             $action_text = 'diperbarui';
         } else { // Tambah
-            $stmt = $conn->prepare("INSERT INTO LEMBUR (Nama_Lembur, Upah_Lembur, Keterangan) VALUES (?, ?, ?)");
-            $stmt->bind_param("sis", $nama_lembur, $upah_lembur, $keterangan);
+            $stmt = $conn->prepare("INSERT INTO LEMBUR (Nama_Lembur, Upah_Lembur_Per_Jam, Keterangan) VALUES (?, ?, ?)"); // Changed field name
+            $stmt->bind_param("sis", $nama_lembur, $upah_lembur_per_jam, $keterangan);
             $action_text = 'ditambahkan';
         }
 
@@ -85,7 +86,8 @@ if ($action === 'edit' && $id) {
 generate_csrf_token();
 
 // 2. MEMANGGIL TAMPILAN (VIEW)
-require_once __DIR__ . '/../includes/header.php';
+require_once __DIR__ . 
+'/../includes/header.php';
 ?>
 
 <?php display_flash_message(); ?>
@@ -144,7 +146,7 @@ require_once __DIR__ . '/../includes/header.php';
                         ?>
                         <tr class="bg-white border-b hover:bg-gray-50 transition-colors">
                             <td class="px-6 py-4 font-medium text-gray-900"><?= e($row['Nama_Lembur']) ?></td>
-                            <td class="px-6 py-4 text-right font-semibold text-green-700">Rp <?= number_format($row['Upah_Lembur'] ?? 0, 0, ',', '.') ?></td>
+                            <td class="px-6 py-4 text-right font-semibold text-green-700">Rp <?= number_format($row['Upah_Lembur_Per_Jam'] ?? 0, 0, ',', '.') ?></td> <!-- Changed field name -->
                             <td class="px-6 py-4 text-gray-500"><?= e($row['Keterangan']) ?: '-' ?></td>
                             <td class="px-6 py-4 text-center">
                                 <div class="flex items-center justify-center gap-4">
@@ -181,8 +183,8 @@ require_once __DIR__ . '/../includes/header.php';
             </div>
             
             <div class="mb-5">
-                <label for="Upah_Lembur" class="block mb-2 text-sm font-medium text-gray-700">Upah Lembur per Jam (Rp)</label>
-                <input type="number" id="Upah_Lembur" name="Upah_Lembur" value="<?= e($lembur_data['Upah_Lembur'] ?? '') ?>" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" required min="0">
+                <label for="Upah_Lembur_Per_Jam" class="block mb-2 text-sm font-medium text-gray-700">Upah Lembur per Jam (Rp)</label> <!-- Changed label -->
+                <input type="number" id="Upah_Lembur_Per_Jam" name="Upah_Lembur_Per_Jam" value="<?= e($lembur_data['Upah_Lembur_Per_Jam'] ?? '') ?>" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" required min="0"> <!-- Changed name and id -->
             </div>
 
             <div class="mb-8">
@@ -198,4 +200,6 @@ require_once __DIR__ . '/../includes/header.php';
     </div>
 <?php endif; ?>
 
-<?php require_once __DIR__ . '/../includes/footer.php'; ?>
+<?php require_once __DIR__ . 
+'/../includes/footer.php';
+?>
