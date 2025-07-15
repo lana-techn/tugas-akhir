@@ -62,10 +62,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->bind_param("ssssssssss", $nama, $jk, $telepon, $alamat, $tgl_lahir, $tgl_masuk, $id_pengguna, $id_jabatan, $status, $id_karyawan);
             $action_text = 'diperbarui';
         } else { // Tambah
-            $prefix = "KR";
-            $result = $conn->query("SELECT Id_Karyawan FROM KARYAWAN WHERE Id_Karyawan LIKE 'KR%' ORDER BY Id_Karyawan DESC LIMIT 1");
-            $last_id_num = ($row = $result->fetch_assoc()) ? intval(substr($row['Id_Karyawan'], 2)) : 0;
-            $id_karyawan_new = $prefix . str_pad($last_id_num + 1, 3, '0', STR_PAD_LEFT);
+            // Membuat ID Karyawan Otomatis
+            $result = $conn->query("SELECT Id_Karyawan FROM KARYAWAN ORDER BY Id_Karyawan DESC LIMIT 1");
+            $last_id_num = 0;
+            if ($row = $result->fetch_assoc()) {
+                // Ekstrak angka dari ID terakhir, misal KR001 -> 1
+                $last_id_num = (int)substr($row['Id_Karyawan'], 2);
+            }
+            $id_karyawan_new = 'KR' . str_pad($last_id_num + 1, 3, '0', STR_PAD_LEFT);
+
 
             $stmt = $conn->prepare("INSERT INTO KARYAWAN (Id_Karyawan, Nama_Karyawan, Jenis_Kelamin, Telepon, Alamat, Tgl_Lahir, Tgl_Awal_Kerja, Id_Pengguna, Id_Jabatan, Status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
             $stmt->bind_param("ssssssssss", $id_karyawan_new, $nama, $jk, $telepon, $alamat, $tgl_lahir, $tgl_masuk, $id_pengguna, $id_jabatan, $status);
@@ -110,39 +115,15 @@ if ($action === 'edit' && $id) {
 }
 
 generate_csrf_token();
-
-// 2. MEMANGGIL TAMPILAN (VIEW)
 require_once __DIR__ . '/../includes/header.php';
 ?>
 
 <style>
 /* Style custom untuk input tanggal modern */
-.date-input-container {
-    position: relative;
-}
-input[type="date"] {
-    padding-right: 2.5rem; /* Ruang untuk ikon */
-}
-input[type="date"]::-webkit-calendar-picker-indicator {
-    position: absolute;
-    right: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    padding: 0;
-    margin: 0;
-    color: transparent;
-    background: transparent;
-    cursor: pointer;
-}
-.date-input-icon {
-    position: absolute;
-    right: 0.75rem;
-    top: 50%;
-    transform: translateY(-50%);
-    pointer-events: none;
-    color: #9ca3af; /* gray-400 */
-}
+.date-input-container { position: relative; }
+input[type="date"] { padding-right: 2.5rem; }
+input[type="date"]::-webkit-calendar-picker-indicator { position: absolute; right: 0; top: 0; width: 100%; height: 100%; padding: 0; margin: 0; color: transparent; background: transparent; cursor: pointer; }
+.date-input-icon { position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); pointer-events: none; color: #9ca3af; }
 </style>
 
 <?php display_flash_message(); ?>
@@ -155,7 +136,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
                 <p class="text-gray-500 text-sm">Kelola data, status, dan informasi kepegawaian.</p>
             </div>
             <a href="karyawan.php?action=add" class="w-full sm:w-auto bg-green-600 text-white px-4 py-2.5 rounded-lg hover:bg-green-700 text-sm font-semibold shadow-md hover:shadow-lg transition-all flex items-center justify-center">
-                <i class="fa-solid fa-plus mr-2"></i>Tambah Karyawan
+                <i class="fa-solid fa-plus mr-2"></i>Tambah
             </a>
         </div>
         
@@ -182,17 +163,21 @@ input[type="date"]::-webkit-calendar-picker-indicator {
             <table class="w-full text-sm text-left text-gray-700">
                 <thead class="text-xs uppercase bg-gray-100 text-gray-600">
                     <tr>
-                        <th class="px-6 py-3">ID</th>
+                        <th class="px-4 py-3">No</th>
+                        <th class="px-6 py-3">ID Karyawan</th>
                         <th class="px-6 py-3">Nama Karyawan</th>
                         <th class="px-6 py-3">Jabatan</th>
-                        <th class="px-6 py-3">Telepon</th>
+                        <th class="px-6 py-3">Jenis Kelamin</th>
+                        <th class="px-6 py-3">Tgl Awal Kerja</th>
+                        <th class="px-6 py-3">No Telepon</th>
+                        <th class="px-6 py-3">Alamat</th>
                         <th class="px-6 py-3">Status</th>
                         <th class="px-6 py-3 text-center">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php
-                    // Build query dinamis untuk count
+                    // Build query dinamis
                     $count_params = [];
                     $types_string_count = '';
                     $count_sql = "SELECT COUNT(k.Id_Karyawan) as total FROM KARYAWAN k WHERE (k.Nama_Karyawan LIKE ? OR k.Id_Karyawan LIKE ?)";
@@ -206,51 +191,53 @@ input[type="date"]::-webkit-calendar-picker-indicator {
                         $types_string_count .= 's';
                     }
                     $stmt_count = $conn->prepare($count_sql);
-                    $stmt_count->bind_param($types_string_count, ...$count_params);
+                    if(!empty($types_string_count)) $stmt_count->bind_param($types_string_count, ...$count_params);
                     $stmt_count->execute();
                     $total_records = $stmt_count->get_result()->fetch_assoc()['total'];
                     $total_pages = ceil($total_records / $records_per_page);
                     $stmt_count->close();
-
-                    // Build query dinamis untuk data
-                    $data_params = $count_params; // Copy params from count query
+                    
+                    $data_params = $count_params;
                     $types_string_data = $types_string_count;
                     $sql = "SELECT k.*, j.Nama_Jabatan FROM KARYAWAN k LEFT JOIN JABATAN j ON k.Id_Jabatan = j.Id_Jabatan WHERE (k.Nama_Karyawan LIKE ? OR k.Id_Karyawan LIKE ?)";
-                    if ($status_filter) {
-                        $sql .= " AND k.Status = ?";
-                    }
+                    if ($status_filter) { $sql .= " AND k.Status = ?"; }
                     $sql .= " ORDER BY k.Nama_Karyawan ASC LIMIT ? OFFSET ?";
                     array_push($data_params, $records_per_page, $offset);
                     $types_string_data .= 'ii';
                     
                     $stmt = $conn->prepare($sql);
-                    $stmt->bind_param($types_string_data, ...$data_params);
+                    if(!empty($types_string_data)) $stmt->bind_param($types_string_data, ...$data_params);
                     $stmt->execute();
                     $result = $stmt->get_result();
-
+                    
+                    $no = $offset + 1;
                     if($result->num_rows > 0) {
                         while ($row = $result->fetch_assoc()):
                         ?>
                         <tr class="bg-white border-b hover:bg-gray-50 transition-colors">
+                            <td class="px-4 py-4"><?= $no++ ?></td>
                             <td class="px-6 py-4 font-mono text-xs"><?= e($row['Id_Karyawan']) ?></td>
                             <td class="px-6 py-4 font-medium text-gray-900"><?= e($row['Nama_Karyawan']) ?></td>
                             <td class="px-6 py-4"><?= e($row['Nama_Jabatan']) ?? 'N/A' ?></td>
+                            <td class="px-6 py-4"><?= e($row['Jenis_Kelamin']) ?></td>
+                            <td class="px-6 py-4"><?= e(date('d M Y', strtotime($row['Tgl_Awal_Kerja']))) ?></td>
                             <td class="px-6 py-4"><?= e($row['Telepon']) ?></td>
+                            <td class="px-6 py-4 truncate max-w-xs" title="<?= e($row['Alamat']) ?>"><?= e($row['Alamat']) ?></td>
                             <td class="px-6 py-4">
                                 <span class="px-2.5 py-1 text-xs font-semibold rounded-full <?= $row['Status'] === 'Aktif' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' ?>">
                                     <?= e($row['Status']) ?>
                                 </span>
                             </td>
-                            <td class="px-6 py-4 text-center">
+                            <td class="px-4 py-3">
                                 <div class="flex items-center justify-center gap-4">
                                     <a href="karyawan.php?action=edit&id=<?= e($row['Id_Karyawan']) ?>" class="text-blue-600 hover:text-blue-800" title="Edit"><i class="fa-solid fa-pen-to-square"></i></a>
-                                    <a href="karyawan.php?action=delete&id=<?= e($row['Id_Karyawan']) ?>&token=<?= e($_SESSION['csrf_token']) ?>" class="text-red-600 hover:text-red-800" onclick="return confirm('Yakin ingin menghapus data ini?')" title="Hapus"><i class="fa-solid fa-trash-alt"></i></a>
+                                    <a href="karyawan.php?action=delete&id=<?= e($row['Id_Karyawan']) ?>&token=<?= e($_SESSION['csrf_token']) ?>" class="text-red-600 hover:text-red-800" onclick="return confirm('Yakin?')" title="Hapus"><i class="fa-solid fa-trash-alt"></i></a>
                                 </div>
                             </td>
                         </tr>
                         <?php endwhile;
                     } else {
-                         echo '<tr><td colspan="6" class="text-center py-5 text-gray-500">Tidak ada data ditemukan.</td></tr>';
+                         echo '<tr><td colspan="10" class="text-center py-5 text-gray-500">Tidak ada data ditemukan.</td></tr>';
                     }
                     $stmt->close(); $conn->close();
                     ?>
@@ -306,18 +293,14 @@ input[type="date"]::-webkit-calendar-picker-indicator {
                     <label for="Tgl_Lahir" class="block mb-2 text-sm font-medium text-gray-700">Tanggal Lahir</label>
                     <div class="date-input-container">
                         <input type="date" id="Tgl_Lahir" name="Tgl_Lahir" min="1960-01-01" max="<?= date('Y-m-d') ?>" value="<?= e($karyawan_data['Tgl_Lahir'] ?? '') ?>" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" required>
-                        <div class="date-input-icon">
-                           <i class="fa-solid fa-calendar-day"></i>
-                        </div>
+                        <div class="date-input-icon"><i class="fa-solid fa-calendar-day"></i></div>
                     </div>
                 </div>
                 <div>
                     <label for="Tgl_Awal_Kerja" class="block mb-2 text-sm font-medium text-gray-700">Tanggal Awal Kerja</label>
                     <div class="date-input-container">
                         <input type="date" id="Tgl_Awal_Kerja" name="Tgl_Awal_Kerja" min="1960-01-01" max="<?= date('Y-m-d') ?>" value="<?= e($karyawan_data['Tgl_Awal_Kerja'] ?? '') ?>" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" required>
-                         <div class="date-input-icon">
-                           <i class="fa-solid fa-calendar-alt"></i>
-                        </div>
+                         <div class="date-input-icon"><i class="fa-solid fa-calendar-alt"></i></div>
                     </div>
                 </div>
                 <div>
