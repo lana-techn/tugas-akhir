@@ -147,8 +147,8 @@ $html = '
             /* background-position: center; */
             
             /* Placeholder jika tidak ada gambar logo */
-            border: 1px solid #ddd;
-            background-color: #f9f9f9;
+            /* border: 1px solid #ddd; */
+            /* background-color: #f9f9f9; */
             display: inline-block;
             line-height: 60px;
             text-align: center;
@@ -243,9 +243,8 @@ $html = '
         <table class="header-table">
             <tr>
                 <td class="logo-cell">
-                    <div class="logo">LOGO</div>
-                    <!-- Jika Anda memiliki logo gambar, uncomment baris di bawah dan sesuaikan path -->
-                    <!-- <img src="path/to/your/logo.png" class="logo" alt="Logo Perusahaan"> -->
+                    <div class="logo" style="font-family: serif; font-size: 24px; font-weight: bold; color: #2e7d32; line-height: 1;">KWaS</div>
+                    <div style="font-family: sans-serif; font-size: 12px; color: #2e7d32;">Furniture manufacturer</div>
                 </td>
                 <td class="company-info-cell">
                     <div class="company-name">CV. KARYA WAHANA SENTOSA</div>
