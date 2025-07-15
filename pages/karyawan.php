@@ -228,10 +228,10 @@ input[type="date"]::-webkit-calendar-picker-indicator { position: absolute; righ
                                     <?= e($row['Status']) ?>
                                 </span>
                             </td>
-                            <td class="px-6 py-4 text-center">
-                                <div class="flex items-center justify-center gap-2">
-                                    <a href="karyawan.php?action=edit&id=<?= e($row['Id_Karyawan']) ?>" class="text-sm text-white bg-blue-500 px-3 py-1 rounded-md hover:bg-blue-600">Edit</a>
-                                    <a href="karyawan.php?action=delete&id=<?= e($row['Id_Karyawan']) ?>&token=<?= e($_SESSION['csrf_token']) ?>" class="text-sm text-white bg-red-500 px-3 py-1 rounded-md hover:bg-red-600" onclick="return confirm('Yakin ingin menghapus data ini?')">Hapus</a>
+                            <td class="px-4 py-3">
+                                <div class="flex items-center justify-center gap-4">
+                                    <a href="karyawan.php?action=edit&id=<?= e($row['Id_Karyawan']) ?>" class="text-blue-600 hover:text-blue-800" title="Edit"><i class="fa-solid fa-pen-to-square"></i></a>
+                                    <a href="karyawan.php?action=delete&id=<?= e($row['Id_Karyawan']) ?>&token=<?= e($_SESSION['csrf_token']) ?>" class="text-red-600 hover:text-red-800" onclick="return confirm('Yakin?')" title="Hapus"><i class="fa-solid fa-trash-alt"></i></a>
                                 </div>
                             </td>
                         </tr>
