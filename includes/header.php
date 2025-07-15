@@ -48,7 +48,7 @@ $page_title = $page_title ?? 'Dashboard';
     <style>
         body { font-family: 'Inter', sans-serif; }
         .font-poppins { font-family: 'Poppins', sans-serif; }
-        .notif { padding: 12px 15px; border-radius: 8px; font-size: 15px; color: #444; border-left-width: 5px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .notif { padding: 12px 15px; border-radius: 8px; font-size: 15px; color: #444; border-left-width: 5px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05 ); }
         .notif-success { background-color: #f0fdf4; border-left-color: #22c55e; color: #15803d; }
         .notif-error { background-color: #fef2f2; border-left-color: #ef4444; color: #b91c1c; }
         [x-cloak] { display: none !important; }
@@ -63,16 +63,22 @@ $page_title = $page_title ?? 'Dashboard';
 <body class="h-full">
     <div x-data="{ sidebarOpen: false }" class="min-h-full">
         <?php if (isset($_SESSION['user_id'])): ?>
+            <!-- Mobile sidebar -->
             <div x-show="sidebarOpen" class="relative z-50 lg:hidden" x-cloak>
+                <!-- Backdrop -->
                 <div x-show="sidebarOpen" x-transition:enter="transition-opacity ease-linear duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition-opacity ease-linear duration-300" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 bg-gray-900/80"></div>
+                
                 <div class="fixed inset-0 flex">
                     <div x-show="sidebarOpen" x-transition:enter="transition ease-in-out duration-300 transform" x-transition:enter-start="-translate-x-full" x-transition:enter-end="translate-x-0" x-transition:leave="transition ease-in-out duration-300 transform" x-transition:leave-start="translate-x-0" x-transition:leave-end="-translate-x-full" class="relative mr-16 flex w-full max-w-xs flex-1">
+                        
+                        <!-- PERBAIKAN: Tombol close dipindahkan ke sini dengan posisi yang benar -->
                         <div class="absolute left-full top-0 flex w-16 justify-center pt-5">
                             <button type="button" class="-m-2.5 p-2.5" @click="sidebarOpen = false">
                                 <span class="sr-only">Tutup sidebar</span>
                                 <i class="fa-solid fa-xmark h-6 w-6 text-white"></i>
                             </button>
                         </div>
+
                         <?php 
                             if (file_exists(__DIR__ . '/sidebar.php')) {
                                 include __DIR__ . '/sidebar.php';
@@ -82,6 +88,7 @@ $page_title = $page_title ?? 'Dashboard';
                 </div>
             </div>
 
+            <!-- Static sidebar for desktop -->
             <div class="hidden lg:fixed lg:inset-y-0 lg:z-40 lg:flex lg:w-64 lg:flex-col">
                  <?php 
                     if (file_exists(__DIR__ . '/sidebar.php')) {
@@ -91,6 +98,7 @@ $page_title = $page_title ?? 'Dashboard';
             </div>
 
             <div class="lg:pl-64">
+                <!-- Top bar -->
                 <div class="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8 no-print">
                     <button type="button" class="-m-2.5 p-2.5 text-gray-700 lg:hidden" @click="sidebarOpen = true">
                         <span class="sr-only">Buka sidebar</span>
@@ -142,4 +150,5 @@ $page_title = $page_title ?? 'Dashboard';
                 <main class="py-8">
                     <div class="px-4 sm:px-6 lg:px-8">
         <?php else: ?>
-             <main> <?php endif; ?>
+             <main>
+        <?php endif; ?>

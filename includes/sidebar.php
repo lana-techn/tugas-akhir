@@ -30,13 +30,11 @@ $navigation = [
 
     // Menu Pemilik
     ['group' => 'Manajemen Pemilik', 'roles' => ['pemilik']],
-    // PERBAIKAN: Pastikan href tidak diawali dengan '/' dan path-nya benar
     ['name' => 'Persetujuan Gaji', 'href' => 'pemilik/penggajian_pemilik.php', 'icon' => 'fa-solid fa-check-to-slot', 'roles' => ['pemilik']],
     ['name' => 'Laporan', 'href' => 'pemilik/laporan.php', 'icon' => 'fa-solid fa-chart-pie', 'roles' => ['pemilik']],
     
     // Menu Karyawan
     ['group' => 'Area Pegawai', 'roles' => ['karyawan']],
-    // PERBAIKAN: Pastikan href tidak diawali dengan '/' dan path-nya benar
     ['name' => 'Slip Gaji', 'href' => 'karyawan/slip_gaji.php', 'icon' => 'fa-solid fa-receipt', 'roles' => ['karyawan']]
 ];
 ?>
@@ -47,7 +45,8 @@ $navigation = [
         </a>
     </div>
 
-    <nav class="flex flex-1 flex-col mt-2">
+    <!-- PERBAIKAN: Tambahkan `overflow-y-auto` untuk mengaktifkan scroll -->
+    <nav class="flex flex-1 flex-col mt-2 overflow-y-auto">
         <ul role="list" class="flex flex-1 flex-col gap-y-7 px-4">
             <li>
                 <ul role="list" class="space-y-1.5">
@@ -74,7 +73,6 @@ $navigation = [
                                             $is_current = ($current_page_filename === 'index.php');
                                         }
                                     } else {
-                                        // Logika pembuatan URL yang benar
                                         $base_folder = '/pages/';
                                         $link_href = BASE_URL . $base_folder . $item['href'];
                                         
