@@ -8,11 +8,11 @@ $conn = db_connect();
 $action = $_GET['action'] ?? 'list';
 $id_gaji = $_GET['id'] ?? null;
 
-// --- PROSES PERSETUJUAN ---
-// PERBAIKAN: Logika diubah untuk lebih aman dan jelas
-if (in_array($action, ['approve', 'reject']) && $id_gaji) {
-    if (isset($_GET['token']) && hash_equals($_SESSION['csrf_token'], $_GET['token'])) {
-        
+// --- PROSES AKSI (SETUJUI, TOLAK, HAPUS) ---
+if (isset($_GET['token']) && hash_equals($_SESSION['csrf_token'], $_GET['token'])) {
+    
+    // Proses Setujui atau Tolak
+    if (in_array($action, ['approve', 'reject']) && $id_gaji) {
         $new_status = ($action === 'approve') ? 'Disetujui' : 'Ditolak';
         $message = ($action === 'approve') ? 'disetujui' : 'ditolak';
 
@@ -25,10 +25,36 @@ if (in_array($action, ['approve', 'reject']) && $id_gaji) {
             set_flash_message('error', "Gagal memproses penggajian. Mungkin sudah diproses sebelumnya.");
         }
         $stmt->close();
-
-    } else {
-        set_flash_message('error', 'Token keamanan tidak valid.');
     }
+
+    // PERUBAHAN: Proses Hapus untuk Gaji yang sudah Disetujui
+    if ($action === 'delete_approved' && $id_gaji) {
+        $conn->begin_transaction();
+        try {
+            // Hapus detailnya terlebih dahulu
+            $stmt_detail = $conn->prepare("DELETE FROM DETAIL_GAJI WHERE Id_Gaji = ?");
+            $stmt_detail->bind_param("s", $id_gaji);
+            $stmt_detail->execute();
+            $stmt_detail->close();
+
+            // Hapus data gaji utamanya
+            $stmt_gaji = $conn->prepare("DELETE FROM GAJI WHERE Id_Gaji = ? AND Status = 'Disetujui'");
+            $stmt_gaji->bind_param("s", $id_gaji);
+            $stmt_gaji->execute();
+            
+            if ($stmt_gaji->affected_rows > 0) {
+                set_flash_message('success', 'Data gaji yang disetujui berhasil dihapus.');
+            } else {
+                set_flash_message('error', 'Gagal menghapus data.');
+            }
+            $stmt_gaji->close();
+            $conn->commit();
+        } catch (mysqli_sql_exception $exception) {
+            $conn->rollback();
+            set_flash_message('error', 'Terjadi kesalahan database saat menghapus.');
+        }
+    }
+
     header('Location: penggajian_pemilik.php');
     exit;
 }
@@ -71,12 +97,16 @@ require_once __DIR__ . '/../../includes/header.php';
                     <th class="px-6 py-3">Jabatan</th>
                     <th class="px-6 py-3">Periode Gaji</th>
                     <th class="px-6 py-3 text-right">Gaji Bersih</th>
+                    <th class="px-6 py-3">Status</th>
                     <th class="px-6 py-3 text-center">Aksi</th>
                 </tr>
             </thead>
             <tbody>
                 <?php
-                $count_sql = "SELECT COUNT(g.Id_Gaji) as total FROM GAJI g JOIN KARYAWAN k ON g.Id_Karyawan = k.Id_Karyawan WHERE g.Status = 'Diajukan' AND k.Nama_Karyawan LIKE ?";
+                // PERUBAHAN: Query diubah untuk mengambil status 'Diajukan' DAN 'Disetujui'
+                $sql_base = "FROM GAJI g JOIN KARYAWAN k ON g.Id_Karyawan = k.Id_Karyawan JOIN JABATAN j ON k.Id_Jabatan = j.Id_Jabatan WHERE (g.Status = 'Diajukan' OR g.Status = 'Disetujui') AND k.Nama_Karyawan LIKE ?";
+                
+                $count_sql = "SELECT COUNT(g.Id_Gaji) as total " . $sql_base;
                 $stmt_count = $conn->prepare($count_sql);
                 $search_param = "%" . $search . "%";
                 $stmt_count->bind_param("s", $search_param);
@@ -85,7 +115,7 @@ require_once __DIR__ . '/../../includes/header.php';
                 $total_pages = ceil($total_records / $records_per_page);
                 $stmt_count->close();
 
-                $sql = "SELECT g.Id_Gaji, k.Nama_Karyawan, j.Nama_Jabatan, g.Tgl_Gaji, g.Gaji_Bersih FROM GAJI g JOIN KARYAWAN k ON g.Id_Karyawan = k.Id_Karyawan JOIN JABATAN j ON k.Id_Jabatan = j.Id_Jabatan WHERE g.Status = 'Diajukan' AND k.Nama_Karyawan LIKE ? ORDER BY g.Tgl_Gaji DESC LIMIT ? OFFSET ?";
+                $sql = "SELECT g.Id_Gaji, k.Nama_Karyawan, j.Nama_Jabatan, g.Tgl_Gaji, g.Gaji_Bersih, g.Status " . $sql_base . " ORDER BY FIELD(g.Status, 'Diajukan', 'Disetujui'), g.Tgl_Gaji DESC LIMIT ? OFFSET ?";
                 $stmt = $conn->prepare($sql);
                 $stmt->bind_param("sii", $search_param, $records_per_page, $offset);
                 $stmt->execute();
@@ -93,6 +123,10 @@ require_once __DIR__ . '/../../includes/header.php';
                 
                 if ($result->num_rows > 0):
                     while ($row = $result->fetch_assoc()):
+                        // Logika untuk warna status
+                        $status_class = '';
+                        if ($row['Status'] == 'Diajukan') $status_class = 'bg-yellow-100 text-yellow-800';
+                        if ($row['Status'] == 'Disetujui') $status_class = 'bg-blue-100 text-blue-800';
                 ?>
                 <tr class="bg-white border-b hover:bg-gray-50 transition-colors">
                     <td class="px-6 py-4 font-mono text-xs"><?= e($row['Id_Gaji']) ?></td>
@@ -100,17 +134,20 @@ require_once __DIR__ . '/../../includes/header.php';
                     <td class="px-6 py-4"><?= e($row['Nama_Jabatan']) ?></td>
                     <td class="px-6 py-4"><?= e(date('F Y', strtotime($row['Tgl_Gaji']))) ?></td>
                     <td class="px-6 py-4 text-right font-semibold text-green-700">Rp <?= number_format($row['Gaji_Bersih'], 2, ',', '.') ?></td>
+                    <td class="px-6 py-4">
+                        <span class="px-2.5 py-1 text-xs font-semibold rounded-full <?= $status_class ?>">
+                            <?= e($row['Status']) ?>
+                        </span>
+                    </td>
                     <td class="px-6 py-4 text-center">
                         <div class="flex items-center justify-center gap-2">
-                            <a href="detail_gaji_pemilik.php?id=<?= e($row['Id_Gaji']) ?>" class="text-sm text-gray-600 bg-gray-200 px-3 py-1 rounded-md hover:bg-gray-300">
-                                Detail
-                            </a>
-                            <a href="penggajian_pemilik.php?action=approve&id=<?= e($row['Id_Gaji']) ?>&token=<?= e($_SESSION['csrf_token']) ?>" class="text-sm text-white bg-green-500 px-3 py-1 rounded-md hover:bg-green-600" onclick="return confirm('Apakah Anda yakin ingin menyetujui penggajian ini?')">
-                                Setujui
-                            </a>
-                            <a href="penggajian_pemilik.php?action=reject&id=<?= e($row['Id_Gaji']) ?>&token=<?= e($_SESSION['csrf_token']) ?>" class="text-sm text-white bg-red-500 px-3 py-1 rounded-md hover:bg-red-600" onclick="return confirm('Apakah Anda yakin ingin menolak penggajian ini?')">
-                                Tolak
-                            </a>
+                            <a href="detail_gaji_pemilik.php?id=<?= e($row['Id_Gaji']) ?>" class="text-sm text-gray-600 bg-gray-200 px-3 py-1 rounded-md hover:bg-gray-300">Detail</a>
+                            <?php if ($row['Status'] == 'Diajukan'): ?>
+                                <a href="penggajian_pemilik.php?action=approve&id=<?= e($row['Id_Gaji']) ?>&token=<?= e($_SESSION['csrf_token']) ?>" class="text-sm text-white bg-green-500 px-3 py-1 rounded-md hover:bg-green-600" onclick="return confirm('Apakah Anda yakin ingin menyetujui penggajian ini?')">Setujui</a>
+                                <a href="penggajian_pemilik.php?action=reject&id=<?= e($row['Id_Gaji']) ?>&token=<?= e($_SESSION['csrf_token']) ?>" class="text-sm text-white bg-red-500 px-3 py-1 rounded-md hover:bg-red-600" onclick="return confirm('Apakah Anda yakin ingin menolak penggajian ini?')">Tolak</a>
+                            <?php elseif ($row['Status'] == 'Disetujui'): ?>
+                                <a href="penggajian_pemilik.php?action=delete_approved&id=<?= e($row['Id_Gaji']) ?>&token=<?= e($_SESSION['csrf_token']) ?>" class="text-sm text-white bg-red-500 px-3 py-1 rounded-md hover:bg-red-600" onclick="return confirm('Yakin ingin menghapus data yang sudah disetujui ini?')">Hapus</a>
+                            <?php endif; ?>
                         </div>
                     </td>
                 </tr>
@@ -119,9 +156,9 @@ require_once __DIR__ . '/../../includes/header.php';
                 else: 
                 ?>
                     <tr>
-                        <td colspan="6" class="text-center py-10 text-gray-500">
-                            <i class="fa-solid fa-check-double text-2xl text-green-400 mb-2"></i>
-                            <p>Tidak ada pengajuan gaji baru yang perlu disetujui saat ini.</p>
+                        <td colspan="7" class="text-center py-10 text-gray-500">
+                            <i class="fa-solid fa-folder-open text-2xl text-gray-400 mb-2"></i>
+                            <p>Tidak ada data gaji yang perlu diproses saat ini.</p>
                         </td>
                     </tr>
                 <?php 
