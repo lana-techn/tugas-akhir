@@ -11,9 +11,9 @@ if (!$id_gaji) {
     exit;
 }
 
-// Ambil data ringkasan dari tabel GAJI
+// 1. Ambil data ringkasan dari tabel GAJI dan data karyawan
 $stmt_gaji = $conn->prepare(
-    "SELECT g.*, k.Nama_Karyawan, j.Nama_Jabatan, k.Tgl_Awal_Kerja 
+    "SELECT g.*, k.Nama_Karyawan, k.Id_Karyawan, j.Nama_Jabatan, k.Tgl_Awal_Kerja 
      FROM GAJI g 
      JOIN KARYAWAN k ON g.Id_Karyawan = k.Id_Karyawan 
      JOIN JABATAN j ON k.Id_Jabatan = j.Id_Jabatan 
@@ -30,12 +30,42 @@ if (!$gaji_data) {
     exit;
 }
 
-// Ambil data rincian dari tabel DETAIL_GAJI
+// 2. Ambil data rincian dari tabel DETAIL_GAJI
 $stmt_detail = $conn->prepare("SELECT * FROM DETAIL_GAJI WHERE Id_Gaji = ?");
 $stmt_detail->bind_param("s", $id_gaji);
 $stmt_detail->execute();
 $detail_data = $stmt_detail->get_result()->fetch_assoc();
 $stmt_detail->close();
+
+// 3. Ambil data dari tabel PRESENSI untuk rincian kehadiran dan potongan
+$bulan_nama_db = date('F', strtotime($gaji_data['Tgl_Gaji']));
+$bulan_map = [ "January" => "Januari", "February" => "Februari", "March" => "Maret", "April" => "April", "May" => "Mei", "June" => "Juni", "July" => "Juli", "August" => "Agustus", "September" => "September", "October" => "Oktober", "November" => "November", "December" => "Desember" ];
+$bulan_gaji = $bulan_map[$bulan_nama_db];
+$tahun_gaji = date('Y', strtotime($gaji_data['Tgl_Gaji']));
+
+$stmt_presensi = $conn->prepare("SELECT Hadir, Sakit, Izin, Alpha, Jam_Lembur FROM PRESENSI WHERE Id_Karyawan = ? AND Bulan = ? AND Tahun = ?");
+$stmt_presensi->bind_param("ssi", $gaji_data['Id_Karyawan'], $bulan_gaji, $tahun_gaji);
+$stmt_presensi->execute();
+$presensi_data = $stmt_presensi->get_result()->fetch_assoc();
+$stmt_presensi->close();
+$conn->close();
+
+
+// 4. Hitung ulang komponen untuk ditampilkan di detail
+$gaji_pokok = $detail_data['Nominal_Gapok'] ?? 0;
+$jam_lembur = $presensi_data['Jam_Lembur'] ?? 0;
+
+// Rincian Potongan
+$detail_potongan_display = [];
+$potongan_bpjs = $gaji_pokok * 0.02;
+if ($potongan_bpjs > 0) {
+    $detail_potongan_display[] = ['nama' => 'Potongan BPJS Ketenagakerjaan (2%)', 'jumlah' => $potongan_bpjs];
+}
+$total_hari_tidak_hadir = ($presensi_data['Sakit'] ?? 0) + ($presensi_data['Izin'] ?? 0) + ($presensi_data['Alpha'] ?? 0);
+if ($total_hari_tidak_hadir > 0) {
+    $potongan_absensi = ($gaji_pokok * 0.03) * $total_hari_tidak_hadir;
+    $detail_potongan_display[] = ['nama' => "Potongan Absensi ({$total_hari_tidak_hadir} hari)", 'jumlah' => $potongan_absensi];
+}
 
 // Hitung masa kerja untuk ditampilkan
 $tgl_awal_kerja = new DateTime($gaji_data['Tgl_Awal_Kerja']);
@@ -64,9 +94,9 @@ require_once __DIR__ . '/../../includes/header.php';
             <div>
                 <h3 class="font-bold text-lg text-green-700 mb-2">PENDAPATAN</h3>
                 <div class="border rounded-md">
-                    <div class="flex justify-between py-2.5 px-4 border-b"><span class="text-sm">Gaji Pokok</span><span class="font-semibold">Rp <?= number_format($detail_data['Nominal_Gapok'] ?? 0, 2, ',', '.') ?></span></div>
+                    <div class="flex justify-between py-2.5 px-4 border-b"><span class="text-sm">Gaji Pokok</span><span class="font-semibold">Rp <?= number_format($gaji_pokok, 2, ',', '.') ?></span></div>
                     <div class="flex justify-between py-2.5 px-4 border-b"><span class="text-sm">Tunjangan</span><span class="font-semibold">Rp <?= number_format($gaji_data['Total_Tunjangan'], 2, ',', '.') ?></span></div>
-                    <div class="flex justify-between py-2.5 px-4"><span class="text-sm">Lembur</span><span class="font-semibold">Rp <?= number_format($gaji_data['Total_Lembur'], 2, ',', '.') ?></span></div>
+                    <div class="flex justify-between py-2.5 px-4"><span class="text-sm">Lembur (<?= e($jam_lembur) ?> jam)</span><span class="font-semibold">Rp <?= number_format($gaji_data['Total_Lembur'], 2, ',', '.') ?></span></div>
                 </div>
                 <div class="flex justify-between py-2.5 px-4 bg-gray-100 rounded-b-md font-bold"><span>Total Pendapatan (Gaji Kotor)</span><span>Rp <?= number_format($gaji_data['Gaji_Kotor'], 2, ',', '.') ?></span></div>
             </div>
@@ -74,7 +104,24 @@ require_once __DIR__ . '/../../includes/header.php';
             <div>
                 <h3 class="font-bold text-lg text-red-700 mb-2">POTONGAN</h3>
                 <div class="border rounded-md">
-                    <div class="flex justify-between py-2.5 px-4"><span class="text-sm">Total Potongan</span><span class="font-semibold text-red-600">- Rp <?= number_format($gaji_data['Total_Potongan'], 2, ',', '.') ?></span></div>
+                    <?php if(!empty($detail_potongan_display)): ?>
+                        <?php foreach($detail_potongan_display as $p): ?>
+                            <div class="flex justify-between py-2.5 px-4 border-b"><span class="text-sm"><?= e($p['nama']) ?></span><span class="text-sm font-semibold text-red-600">- Rp <?= number_format($p['jumlah'], 2, ',', '.') ?></span></div>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <div class="flex justify-between py-2.5 px-4"><span class="text-sm text-gray-500">Tidak ada potongan</span><span class="font-semibold text-red-600">- Rp 0</span></div>
+                    <?php endif; ?>
+                </div>
+                 <div class="flex justify-between py-2.5 px-4 bg-gray-100 rounded-b-md font-bold"><span class="text-red-600">Total Potongan</span><span class="text-red-600">- Rp <?= number_format($gaji_data['Total_Potongan'], 2, ',', '.') ?></span></div>
+            </div>
+            
+            <div>
+                <h3 class="font-bold text-lg text-blue-700 mb-2">RINCIAN KEHADIRAN</h3>
+                <div class="border rounded-md divide-y">
+                    <div class="flex justify-between py-2.5 px-4"><span class="text-sm">Hadir</span><span class="font-semibold"><?= e($presensi_data['Hadir'] ?? 0) ?> hari</span></div>
+                    <div class="flex justify-between py-2.5 px-4"><span class="text-sm">Sakit</span><span class="font-semibold"><?= e($presensi_data['Sakit'] ?? 0) ?> hari</span></div>
+                    <div class="flex justify-between py-2.5 px-4"><span class="text-sm">Izin</span><span class="font-semibold"><?= e($presensi_data['Izin'] ?? 0) ?> hari</span></div>
+                    <div class="flex justify-between py-2.5 px-4"><span class="text-sm">Alpha</span><span class="font-semibold"><?= e($presensi_data['Alpha'] ?? 0) ?> hari</span></div>
                 </div>
             </div>
         </div>
@@ -91,6 +138,5 @@ require_once __DIR__ . '/../../includes/header.php';
 </div>
 
 <?php
-$conn->close();
 require_once __DIR__ . '/../../includes/footer.php';
 ?>
