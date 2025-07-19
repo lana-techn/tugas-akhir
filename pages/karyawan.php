@@ -62,15 +62,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->bind_param("ssssssssss", $nama, $jk, $telepon, $alamat, $tgl_lahir, $tgl_masuk, $id_pengguna, $id_jabatan, $status, $id_karyawan);
             $action_text = 'diperbarui';
         } else { // Tambah
-            // Membuat ID Karyawan Otomatis
-            $result = $conn->query("SELECT Id_Karyawan FROM KARYAWAN ORDER BY Id_Karyawan DESC LIMIT 1");
-            $last_id_num = 0;
-            if ($row = $result->fetch_assoc()) {
-                // Ekstrak angka dari ID terakhir, misal KR001 -> 1
-                $last_id_num = (int)substr($row['Id_Karyawan'], 2);
-            }
+            
+            // PERBAIKAN: Logika pembuatan ID baru yang lebih aman untuk mencegah duplikasi
+            $result = $conn->query("SELECT MAX(CAST(SUBSTRING(Id_Karyawan, 3) AS UNSIGNED)) as max_id FROM KARYAWAN WHERE Id_Karyawan LIKE 'KR%'");
+            $row = $result->fetch_assoc();
+            $last_id_num = $row['max_id'] ?? 0;
             $id_karyawan_new = 'KR' . str_pad($last_id_num + 1, 3, '0', STR_PAD_LEFT);
-
 
             $stmt = $conn->prepare("INSERT INTO KARYAWAN (Id_Karyawan, Nama_Karyawan, Jenis_Kelamin, Telepon, Alamat, Tgl_Lahir, Tgl_Awal_Kerja, Id_Pengguna, Id_Jabatan, Status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
             $stmt->bind_param("ssssssssss", $id_karyawan_new, $nama, $jk, $telepon, $alamat, $tgl_lahir, $tgl_masuk, $id_pengguna, $id_jabatan, $status);
@@ -100,7 +97,6 @@ if ($action === 'edit' && $id) {
         exit;
     }
     
-    // Ambil data pengguna yang terpilih untuk mode edit agar tetap muncul di dropdown
     $stmt_pengguna_edit = $conn->prepare("SELECT Id_Pengguna, Email FROM PENGGUNA WHERE Id_Pengguna = ?");
     $stmt_pengguna_edit->bind_param("s", $karyawan_data['Id_Pengguna']);
     $stmt_pengguna_edit->execute();
