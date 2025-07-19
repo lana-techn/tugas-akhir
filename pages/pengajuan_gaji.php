@@ -179,7 +179,7 @@ require_once __DIR__ . '/../includes/header.php';
                                     echo "<a href='detail_gaji.php?id={$id_gaji_enc}' class='text-sm text-gray-600 bg-gray-200 px-3 py-1 rounded-md hover:bg-gray-300'>Detail</a>";
                                     break;
                                 case 'Dibayarkan':
-                                    echo "<a href='detail_gaji.php?id={$id_gaji_enc}' target='_blank' class='text-sm text-white bg-green-500 px-3 py-1 rounded-md hover:bg-green-600'>Slip Gaji</a>";
+                                    echo "<a href='cetak_slip.php?id={$id_gaji_enc}' target='_blank' class='text-sm text-white bg-green-500 px-3 py-1 rounded-md hover:bg-green-600'>Slip Gaji</a>";
                                     break;
                             }
                         ?>
