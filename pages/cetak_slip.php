@@ -77,7 +77,7 @@ $html = '
         body { font-family: "Helvetica", sans-serif; font-size: 11px; color: #333; }
         .container { border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 2rem; }
         .header-table { width: 100%; border-bottom: 2px solid #f1f5f9; padding-bottom: 1rem; margin-bottom: 1.5rem; }
-        .company-details { text-align: right; }
+        .company-details { text-align: center; }
         .company-name { font-size: 1.5rem; font-weight: bold; }
         .company-address { font-size: 0.875rem; color: #64748b; }
         .title-section { text-align: center; margin-bottom: 1.5rem; }
@@ -102,10 +102,6 @@ $html = '
     <div class="container">
         <table class="header-table">
             <tr>
-                <td style="text-align: left; vertical-align: middle;">
-                    <div style="font-family: serif; font-size: 28px; font-weight: bold; color: #166534; line-height: 1;">KWaS</div>
-                    <div style="font-size: 12px; color: #16a34a; margin-top: 2px;">Furniture manufacturer</div>
-                </td>
                 <td class="company-details" style="vertical-align: middle;">
                     <div class="company-name">CV. KARYA WAHANA SENTOSA</div>
                     <div class="company-address">Jl. Imogiri Barat Km.17, Bungas, Jetis, Bantul</div>
