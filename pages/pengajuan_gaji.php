@@ -179,7 +179,7 @@ require_once __DIR__ . '/../includes/header.php';
                                     echo "<a href='detail_gaji.php?id={$id_gaji_enc}' class='text-sm text-gray-600 bg-gray-200 px-3 py-1 rounded-md hover:bg-gray-300'>Detail</a>";
                                     break;
                                 case 'Dibayarkan':
-                                    echo "<a href='detail_gaji.php?id={$id_gaji_enc}' target='_blank' class='text-sm text-white bg-green-500 px-3 py-1 rounded-md hover:bg-green-600'>Slip Gaji</a>";
+                                    echo "<a href='cetak_slip.php?id={$id_gaji_enc}' target='_blank' class='text-sm text-white bg-green-500 px-3 py-1 rounded-md hover:bg-green-600'>Slip Gaji</a>";
                                     break;
                             }
                         ?>
@@ -198,7 +198,7 @@ require_once __DIR__ . '/../includes/header.php';
 </div>
 <?php endif; ?>
 
-<?php if ($action === 'add'): ?>
+<?php if ($action === 'Tambah'): ?>
 <div class="max-w-xl mx-auto bg-white p-8 rounded-xl shadow-lg">
     <div class="text-center">
         <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100"><i class="fa-solid fa-file-invoice-dollar text-2xl text-green-600"></i></div>

@@ -95,7 +95,7 @@ if ($action === 'edit' && $id) {
         header('Location: jabatan.php?action=list');
         exit;
     }
-} elseif ($action === 'add') {
+} elseif ($action === 'Tambah') {
     $page_title = 'Tambah Jabatan';
 }
 
@@ -189,9 +189,9 @@ require_once __DIR__ . '/../includes/header.php';
     </div>
 <?php endif; ?>
 
-<?php if ($action === 'add' || $action === 'edit'): ?>
+<?php if ($action === 'Tambah' || $action === 'edit'): ?>
     <div class="bg-white p-8 rounded-xl shadow-lg max-w-lg mx-auto">
-        <h2 class="text-2xl font-bold text-gray-800 text-center mb-2 font-poppins"><?= $action === 'add' ? 'Tambah' : 'Edit' ?> Jabatan</h2>
+        <h2 class="text-2xl font-bold text-gray-800 text-center mb-2 font-poppins"><?= $action === 'Tambah' ? 'Tambah' : 'Edit' ?> Jabatan</h2>
         <p class="text-center text-gray-500 mb-8">Isi detail jabatan pada form di bawah ini.</p>
         <form method="POST" action="jabatan.php">
             <?php csrf_input(); ?>

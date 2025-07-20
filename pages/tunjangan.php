@@ -73,7 +73,7 @@ if ($action === 'edit' && $id) {
         header('Location: tunjangan.php?action=list');
         exit;
     }
-} elseif ($action === 'add') {
+} elseif ($action === 'Tambah') {
     $page_title = 'Tambah Data Tunjangan';
 }
 
@@ -161,7 +161,7 @@ require_once __DIR__ .
     </div>
 <?php endif; ?>
 
-<?php if ($action === 'add' || $action === 'edit'): ?>
+<?php if ($action === 'Tambah' || $action === 'edit'): ?>
     <div class="bg-white p-8 rounded-xl shadow-lg max-w-lg mx-auto">
         <h2 class="text-2xl font-bold text-gray-800 text-center mb-2 font-poppins"><?= ucfirst($action) ?> Data Tunjangan</h2>
         <p class="text-center text-gray-500 mb-8">Isi detail tunjangan pada form di bawah ini.</p>
