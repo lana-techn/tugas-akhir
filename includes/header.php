@@ -45,6 +45,9 @@ $page_title = $page_title ?? 'Dashboard';
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
     <style>
         body { font-family: 'Inter', sans-serif; }
         .font-poppins { font-family: 'Poppins', sans-serif; }
