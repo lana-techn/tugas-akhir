@@ -94,7 +94,7 @@ if ($action === 'edit' && $id) {
         header('Location: presensi.php?action=list');
         exit;
     }
-} elseif ($action === 'add') {
+} elseif ($action === 'Tambah') {
     $page_title = 'Tambah Presensi';
 }
 
@@ -225,7 +225,7 @@ require_once __DIR__ .
     </div>
 <?php endif; ?>
 
-<?php if ($action === 'add' || $action === 'edit'): ?>
+<?php if ($action === 'Tambah' || $action === 'edit'): ?>
     <div class="bg-white p-8 rounded-xl shadow-lg max-w-2xl mx-auto">
         <h2 class="text-2xl font-bold text-gray-800 text-center mb-2 font-poppins"><?= ucfirst($action) ?> Data Presensi</h2>
         <p class="text-center text-gray-500 mb-8">Masukkan data kehadiran untuk karyawan.</p>

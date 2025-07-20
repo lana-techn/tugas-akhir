@@ -198,7 +198,7 @@ require_once __DIR__ . '/../includes/header.php';
 </div>
 <?php endif; ?>
 
-<?php if ($action === 'add'): ?>
+<?php if ($action === 'Tambah'): ?>
 <div class="max-w-xl mx-auto bg-white p-8 rounded-xl shadow-lg">
     <div class="text-center">
         <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100"><i class="fa-solid fa-file-invoice-dollar text-2xl text-green-600"></i></div>

@@ -7,26 +7,35 @@ requireLogin('karyawan');
 $conn = db_connect();
 
 // Ambil data karyawan yang login
-$id_pengguna = $_SESSION['user_id'];
-$stmt_karyawan = $conn->prepare("SELECT Nama_Karyawan, Id_Jabatan FROM KARYAWAN WHERE Id_Pengguna = ?");
-$stmt_karyawan->bind_param("i", $id_pengguna);
-$stmt_karyawan->execute();
-$karyawan_data = $stmt_karyawan->get_result()->fetch_assoc();
-$stmt_karyawan->close();
+$nama_karyawan = 'Karyawan'; // Default name
+$karyawan_id = null;
 
-$nama_karyawan = $karyawan_data['Nama_Karyawan'] ?? 'Karyawan';
+if (isset($_SESSION['user_id'])) {
+    $id_pengguna = $_SESSION['user_id'];
+
+    // PERBAIKAN: Mengambil data dari tabel KARYAWAN berdasarkan Id_Pengguna
+    $stmt_karyawan = $conn->prepare("SELECT Id_Karyawan, Nama_Karyawan FROM KARYAWAN WHERE Id_Pengguna = ?");
+    $stmt_karyawan->bind_param("s", $id_pengguna); // Tipe data 's' untuk Id_Pengguna (VARCHAR)
+    $stmt_karyawan->execute();
+    $karyawan_data = $stmt_karyawan->get_result()->fetch_assoc();
+    $stmt_karyawan->close();
+
+    if ($karyawan_data) {
+        $nama_karyawan = $karyawan_data['Nama_Karyawan'];
+        $karyawan_id = $karyawan_data['Id_Karyawan'];
+    }
+}
 
 // Ambil data gaji terakhir yang sudah disetujui
 $gaji_terakhir = null;
-if ($karyawan_data) {
+if ($karyawan_id) {
     $stmt_gaji = $conn->prepare(
-        "SELECT g.Tgl_Gaji, g.Gaji_Bersih 
-         FROM GAJI g 
-         JOIN KARYAWAN k ON g.Id_Karyawan = k.Id_Karyawan 
-         WHERE k.Id_Pengguna = ? AND g.Status = 'Disetujui'
-         ORDER BY g.Tgl_Gaji DESC LIMIT 1"
+        "SELECT Tgl_Gaji, Gaji_Bersih 
+         FROM GAJI 
+         WHERE Id_Karyawan = ? AND (Status = 'Disetujui' OR Status = 'Dibayarkan')
+         ORDER BY Tgl_Gaji DESC LIMIT 1"
     );
-    $stmt_gaji->bind_param("i", $id_pengguna);
+    $stmt_gaji->bind_param("s", $karyawan_id);
     $stmt_gaji->execute();
     $gaji_terakhir = $stmt_gaji->get_result()->fetch_assoc();
     $stmt_gaji->close();
@@ -55,7 +64,7 @@ require_once __DIR__ . '/includes/sidebar.php';
                 <div class="flex-1">
                     <p class="text-gray-500 text-sm font-medium">Gaji Terakhir Diterima</p>
                     <?php if ($gaji_terakhir): ?>
-                        <p class="text-3xl font-bold text-gray-800 mt-1">Rp <?= number_format($gaji_terakhir['Gaji_Bersih'], 0, ',', '.') ?></p>
+                        <p class="text-3xl font-bold text-gray-800 mt-1">Rp <?= number_format($gaji_terakhir['Gaji_Bersih'], 2, ',', '.') ?></p>
                         <p class="text-xs text-gray-500 mt-1">Periode: <?= e(date('F Y', strtotime($gaji_terakhir['Tgl_Gaji']))) ?></p>
                     <?php else: ?>
                         <p class="text-lg font-semibold text-gray-700 mt-2">Belum ada data gaji yang disetujui.</p>

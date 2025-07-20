@@ -106,7 +106,7 @@ if ($action === 'edit' && $id) {
     }
     $stmt_pengguna_edit->close();
 
-} elseif ($action === 'add') {
+} elseif ($action === 'Tambah') {
     $page_title = 'Tambah Karyawan';
 }
 
@@ -247,7 +247,7 @@ input[type="date"]::-webkit-calendar-picker-indicator { position: absolute; righ
     </div>
 <?php endif; ?>
 
-<?php if ($action === 'add' || $action === 'edit'): ?>
+<?php if ($action === 'Tambah' || $action === 'edit'): ?>
     <div class="bg-white p-8 rounded-xl shadow-lg max-w-4xl mx-auto">
         <h2 class="text-2xl font-bold text-gray-800 text-center mb-2 font-poppins"><?= ucfirst($action) ?> Data Karyawan</h2>
         <p class="text-center text-gray-500 mb-8">Lengkapi semua informasi yang diperlukan.</p>

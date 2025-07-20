@@ -134,7 +134,7 @@ if ($action === 'edit' && $id) {
         header('Location: pengguna.php?action=list');
         exit;
     }
-} elseif ($action === 'add') {
+} elseif ($action === 'Tambah') {
     $page_title = 'Tambah Pengguna';
 }
 
@@ -260,7 +260,7 @@ require_once __DIR__ . '/../includes/header.php';
     </div>
 <?php endif; ?>
 
-<?php if ($action === 'add' || $action === 'edit'): ?>
+<?php if ($action === 'Tambah' || $action === 'edit'): ?>
     <div class="bg-white p-8 rounded-xl shadow-lg max-w-lg mx-auto">
         <h2 class="text-2xl font-bold text-gray-800 text-center mb-2 font-poppins"><?= ucfirst($action) ?> Pengguna</h2>
         <p class="text-center text-gray-500 mb-8">Isi detail dan peran pengguna baru.</p>
@@ -284,7 +284,7 @@ require_once __DIR__ . '/../includes/header.php';
             
             <div class="mb-8">
                 <label for="Password" class="block mb-2 text-sm font-medium text-gray-700">Password</label>
-                <input type="password" id="Password" name="Password" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" <?= ($action === 'add') ? 'required' : '' ?>>
+                <input type="password" id="Password" name="Password" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" <?= ($action === 'Tambah') ? 'required' : '' ?>>
                 <?php if ($action === 'edit'): ?>
                 <p class="text-xs text-gray-500 mt-1">Kosongkan jika tidak ingin mengubah password.</p>
                 <?php endif; ?>

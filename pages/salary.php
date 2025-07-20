@@ -71,7 +71,7 @@ if ($action === 'edit' && $id) {
     $stmt->execute();
     $gapok_data = $stmt->get_result()->fetch_assoc();
     $stmt->close();
-} elseif ($action === 'add') {
+} elseif ($action === 'Tambah') {
     $page_title = 'Tambah Gaji Pokok';
 }
 
@@ -155,9 +155,9 @@ require_once __DIR__ . '/../includes/header.php';
 </div>
 <?php endif; ?>
 
-<?php if ($action === 'add' || $action === 'edit'): ?>
+<?php if ($action === 'Tambah' || $action === 'edit'): ?>
 <div class="max-w-lg mx-auto bg-white p-8 rounded-xl shadow-lg">
-    <h2 class="text-2xl font-bold text-gray-800 text-center mb-2 font-poppins"><?= $action === 'add' ? 'Tambah' : 'Edit' ?> Gaji Pokok</h2>
+    <h2 class="text-2xl font-bold text-gray-800 text-center mb-2 font-poppins"><?= $action === 'Tambah' ? 'Tambah' : 'Edit' ?> Gaji Pokok</h2>
     <p class="text-center text-gray-500 mb-8">Isi detail gaji pokok pada form di bawah ini.</p>
     <form method="POST" action="salary.php">
         <?php csrf_input(); ?>
