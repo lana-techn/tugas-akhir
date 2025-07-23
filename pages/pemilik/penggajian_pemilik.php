@@ -90,7 +90,7 @@ require_once __DIR__ . '/../../includes/header.php';
                     <th class="px-6 py-3">Nama Karyawan</th>
                     <th class="px-6 py-3">Jabatan</th>
                     <th class="px-6 py-3">Periode Gaji</th>
-                    <th class="px-6 py-3 text-center">Gaji Bersih</th>
+                    <th class="px-6 py-3 text-left">Gaji Bersih</th>
                     <th class="px-6 py-3">Status</th>
                     <th class="px-6 py-3 text-center">Aksi</th>
                 </tr>
@@ -128,7 +128,7 @@ require_once __DIR__ . '/../../includes/header.php';
                     <td class="px-6 py-4 font-medium text-gray-900"><?= e($row['Nama_Karyawan']) ?></td>
                     <td class="px-6 py-4"><?= e($row['Nama_Jabatan']) ?></td>
                     <td class="px-6 py-4"><?= e(date('F Y', strtotime($row['Tgl_Gaji']))) ?></td>
-                    <td class="px-6 py-4 text-right font-semibold text-green-700">Rp <?= number_format($row['Gaji_Bersih'], 2, ',', '.') ?></td>
+                    <td class="px-6 py-4 text-left font-semibold text-green-700">Rp <?= number_format($row['Gaji_Bersih'], 2, ',', '.') ?></td>
                     <td class="px-6 py-4">
                         <span class="px-2.5 py-1 text-xs font-semibold rounded-full <?= $status_class ?>">
                             <?= e($row['Status']) ?>

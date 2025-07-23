@@ -121,7 +121,7 @@ $html = '
             </tr>
             <tr>
                 <td class="label">Jabatan</td><td>: ' . e($gaji_data['Nama_Jabatan']) . '</td>
-                <td class="label">Status Gaji</td><td>: ' . e($gaji_data['Status']) . '</td>
+                <td class="label">Tanggal Pembayaran</td><td>: ' . e(date('d M Y', strtotime($gaji_data['Tgl_Gaji']))) . '</td>
             </tr>
         </table>
 
