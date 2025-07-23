@@ -114,7 +114,7 @@ require_once __DIR__ . '/../includes/header.php';
                 <h2 class="text-2xl font-bold text-gray-800 font-poppins">Daftar Jabatan</h2>
                 <p class="text-gray-500 text-sm">Kelola semua jabatan yang tersedia di perusahaan.</p>
             </div>
-            <a href="jabatan.php?action=add" class="w-full sm:w-auto bg-green-600 text-white px-4 py-2.5 rounded-lg hover:bg-green-700 text-sm font-semibold shadow-md hover:shadow-lg transition-all duration-300 flex items-center justify-center">
+            <a href="jabatan.php?action=Tambah" class="w-full sm:w-auto bg-green-600 text-white px-4 py-2.5 rounded-lg hover:bg-green-700 text-sm font-semibold shadow-md hover:shadow-lg transition-all duration-300 flex items-center justify-center">
                 <i class="fa-solid fa-plus mr-2"></i>Tambah Jabatan
             </a>
         </div>

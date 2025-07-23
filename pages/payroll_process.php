@@ -222,7 +222,7 @@ else if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['Id_Karyawan']) &
     require_once __DIR__ . '/../includes/footer.php';
 } else {
     // Jika halaman diakses langsung tanpa data POST, kembalikan ke form tambah
-    header('Location: pengajuan_gaji.php?action=add');
+    header('Location: pengajuan_gaji.php?action=Tambah');
     exit;
 }
 ?>

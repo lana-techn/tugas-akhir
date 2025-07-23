@@ -76,7 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else { // Tambah
             if (empty($password)) {
                 set_flash_message('error', 'Password wajib diisi untuk pengguna baru.');
-                header('Location: pengguna.php?action=add');
+                header('Location: pengguna.php?action=Tambah');
                 exit;
             }
             
@@ -85,7 +85,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt_cek->execute();
             if ($stmt_cek->rowCount() > 0) {
                  set_flash_message('error', 'Email sudah terdaftar. Gunakan email lain.');
-                 header('Location: pengguna.php?action=add');
+                 header('Location: pengguna.php?action=Tambah');
                  exit;
             }
 
@@ -153,7 +153,7 @@ require_once __DIR__ . '/../includes/header.php';
                 <h2 class="text-2xl font-bold text-gray-800 font-poppins">Daftar Pengguna</h2>
                 <p class="text-gray-500 text-sm">Kelola akses dan peran pengguna sistem.</p>
             </div>
-            <a href="pengguna.php?action=add" class="w-full sm:w-auto bg-green-600 text-white px-4 py-2.5 rounded-lg hover:bg-green-700 text-sm font-semibold shadow-md hover:shadow-lg transition-all flex items-center justify-center">
+            <a href="pengguna.php?action=Tambah" class="w-full sm:w-auto bg-green-600 text-white px-4 py-2.5 rounded-lg hover:bg-green-700 text-sm font-semibold shadow-md hover:shadow-lg transition-all flex items-center justify-center">
                 <i class="fa-solid fa-plus mr-2"></i>Tambah Pengguna
             </a>
         </div>

@@ -11,17 +11,14 @@ $page_title = 'Pengajuan Gaji';
 $token = $_GET['token'] ?? '';
 if (hash_equals($_SESSION['csrf_token'] ?? '', $token)) {
     
-    // PERBAIKAN: Logika Hapus dengan Transaksi Database
     if ($action === 'delete' && $id_gaji) {
         $conn->begin_transaction();
         try {
-            // Langkah 1: Hapus data dari tabel anak (DETAIL_GAJI) terlebih dahulu
             $stmt_detail = $conn->prepare("DELETE FROM DETAIL_GAJI WHERE Id_Gaji = ?");
             $stmt_detail->bind_param("s", $id_gaji);
             $stmt_detail->execute();
             $stmt_detail->close();
 
-            // Langkah 2: Hapus data dari tabel induk (GAJI)
             $stmt_gaji = $conn->prepare("DELETE FROM GAJI WHERE Id_Gaji = ? AND Status = 'Diajukan'");
             $stmt_gaji->bind_param("s", $id_gaji);
             $stmt_gaji->execute();
@@ -29,25 +26,18 @@ if (hash_equals($_SESSION['csrf_token'] ?? '', $token)) {
             if ($stmt_gaji->affected_rows > 0) {
                 set_flash_message('success', 'Data pengajuan gaji berhasil dihapus.');
             } else {
-                // Ini terjadi jika statusnya bukan 'Diajukan' atau ID tidak ditemukan
                 set_flash_message('error', 'Gagal menghapus data atau data tidak dalam status "Diajukan".');
             }
             $stmt_gaji->close();
-
-            // Jika semua berhasil, simpan perubahan
             $conn->commit();
-
         } catch (mysqli_sql_exception $exception) {
-            // Jika ada error, batalkan semua perubahan
             $conn->rollback();
             set_flash_message('error', 'Terjadi kesalahan pada database saat menghapus data.');
         }
-
         header('Location: pengajuan_gaji.php');
         exit;
     }
 
-    // Logika untuk aksi 'Bayar' (tidak berubah)
     if ($action === 'pay' && $id_gaji) {
         $stmt = $conn->prepare("UPDATE GAJI SET Status = 'Dibayarkan' WHERE Id_Gaji = ? AND Status = 'Disetujui'");
         $stmt->bind_param("s", $id_gaji);
@@ -84,7 +74,7 @@ require_once __DIR__ . '/../includes/header.php';
 
     <?php display_flash_message(); ?>
 
-    <form method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 items-end">
+    <form method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 items-end p-4 border rounded-lg bg-gray-50">
         <input type="hidden" name="action" value="list">
         <div>
             <label for="filter_karyawan" class="text-sm font-medium text-gray-600">Nama Karyawan</label>
@@ -116,7 +106,7 @@ require_once __DIR__ . '/../includes/header.php';
 
     <div class="overflow-x-auto">
         <table class="w-full text-sm text-left text-gray-700">
-            <thead class="text-xs uppercase bg-gray-100 text-gray-600">
+            <thead class="text-xs uppercase bg-gray-50 text-gray-500">
                 <tr>
                     <th class="px-6 py-3">ID Gaji</th>
                     <th class="px-6 py-3">Nama Karyawan</th>
@@ -153,11 +143,11 @@ require_once __DIR__ . '/../includes/header.php';
                             }
                 ?>
                 <tr class="bg-white border-b hover:bg-gray-50">
-                    <td class="px-6 py-4 font-mono text-xs"><?= e($row['Id_Gaji']) ?></td>
+                    <td class="px-6 py-4 font-mono text-xs text-gray-500"><?= e($row['Id_Gaji']) ?></td>
                     <td class="px-6 py-4 font-medium text-gray-900"><?= e($row['Nama_Karyawan']) ?></td>
-                    <td class="px-6 py-4"><?= date('d F Y', strtotime($row['Tgl_Gaji'])) ?></td>
+                    <td class="px-6 py-4 text-gray-600"><?= date('d F Y', strtotime($row['Tgl_Gaji'])) ?></td>
                     <td class="px-6 py-4">
-                        <span class="px-2.5 py-1 text-xs font-semibold rounded-full <?= $status_class ?>">
+                        <span class="px-3 py-1 text-xs font-semibold rounded-full <?= $status_class ?>">
                             <?= e($row['Status']) ?>
                         </span>
                     </td>
@@ -166,20 +156,29 @@ require_once __DIR__ . '/../includes/header.php';
                         <?php
                             $id_gaji_enc = e($row['Id_Gaji']);
                             $token_enc = e($_SESSION['csrf_token']);
+                            
+                            // PERBAIKAN: Menggunakan class untuk styling tombol agar seragam
+                            $base_class = "flex-1 text-center text-xs font-semibold px-3 py-1.5 rounded-md transition-colors";
+                            $detail_class = "bg-gray-200 text-gray-700 hover:bg-gray-300";
+                            $hapus_class = "bg-red-500 text-white hover:bg-red-600";
+                            $bayar_class = "bg-blue-500 text-white hover:bg-blue-600";
+                            $slip_class = "bg-green-500 text-white hover:bg-green-600";
+
                             switch ($row['Status']) {
                                 case 'Diajukan':
-                                    echo "<a href='detail_gaji.php?id={$id_gaji_enc}' class='text-sm text-gray-600 bg-gray-200 px-3 py-1 rounded-md hover:bg-gray-300'>Detail</a>";
-                                    echo "<a href='pengajuan_gaji.php?action=delete&id={$id_gaji_enc}&token={$token_enc}' onclick='return confirm(\"Yakin ingin menghapus pengajuan ini?\")' class='text-sm text-white bg-red-500 px-3 py-1 rounded-md hover:bg-red-600'>Hapus</a>";
+                                    echo "<a href='detail_gaji.php?id={$id_gaji_enc}' class='{$base_class} {$detail_class}'>Detail</a>";
+                                    echo "<a href='pengajuan_gaji.php?action=delete&id={$id_gaji_enc}&token={$token_enc}' onclick='return confirm(\"Yakin ingin menghapus pengajuan ini?\")' class='{$base_class} {$hapus_class}'>Hapus</a>";
                                     break;
                                 case 'Disetujui':
-                                    echo "<a href='detail_gaji.php?id={$id_gaji_enc}' class='text-sm text-gray-600 bg-gray-200 px-3 py-1 rounded-md hover:bg-gray-300'>Detail</a>";
-                                    echo "<a href='pengajuan_gaji.php?action=pay&id={$id_gaji_enc}&token={$token_enc}' onclick='return confirm(\"Konfirmasi pembayaran gaji ini?\")' class='text-sm text-white bg-blue-500 px-3 py-1 rounded-md hover:bg-blue-600'>Bayar</a>";
+                                    echo "<a href='detail_gaji.php?id={$id_gaji_enc}' class='{$base_class} {$detail_class}'>Detail</a>";
+                                    echo "<a href='pengajuan_gaji.php?action=pay&id={$id_gaji_enc}&token={$token_enc}' onclick='return confirm(\"Konfirmasi pembayaran gaji ini?\")' class='{$base_class} {$bayar_class}'>Bayar</a>";
                                     break;
                                 case 'Ditolak':
-                                    echo "<a href='detail_gaji.php?id={$id_gaji_enc}' class='text-sm text-gray-600 bg-gray-200 px-3 py-1 rounded-md hover:bg-gray-300'>Detail</a>";
+                                    echo "<a href='detail_gaji.php?id={$id_gaji_enc}' class='{$base_class} {$detail_class}'>Detail</a>";
                                     break;
                                 case 'Dibayarkan':
-                                    echo "<a href='cetak_slip.php?id={$id_gaji_enc}' target='_blank' class='text-sm text-white bg-green-500 px-3 py-1 rounded-md hover:bg-green-600'>Slip Gaji</a>";
+                                    // Tombol slip gaji sekarang akan mengikuti lebar yang sama
+                                    echo "<a href='cetak_slip.php?id={$id_gaji_enc}' target='_blank' class='{$base_class} {$slip_class}'>Slip Gaji</a>";
                                     break;
                             }
                         ?>
@@ -198,7 +197,7 @@ require_once __DIR__ . '/../includes/header.php';
 </div>
 <?php endif; ?>
 
-<?php if ($action === 'Tambah'): ?>
+<?php if ($action === 'add'): ?>
 <div class="max-w-xl mx-auto bg-white p-8 rounded-xl shadow-lg">
     <div class="text-center">
         <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100"><i class="fa-solid fa-file-invoice-dollar text-2xl text-green-600"></i></div>
@@ -220,7 +219,7 @@ require_once __DIR__ . '/../includes/header.php';
             </div>
             <div>
                 <label for="periode" class="block mb-2 text-sm font-medium text-gray-700">Periode Gaji</label>
-                <input type="month" name="periode" id="periode" value="<?= date("Y-m") ?>" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" required readonly>
+                <input type="month" name="periode" id="periode" value="<?= date("Y-m") ?>" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" required>
             </div>
             
             <div>

@@ -95,7 +95,7 @@ require_once __DIR__ . '/../includes/header.php';
                 <h2 class="text-2xl font-bold text-gray-800 font-poppins">Daftar Potongan Gaji</h2>
                 <p class="text-gray-500 text-sm">Kelola semua jenis potongan gaji berbasis persentase.</p>
             </div>
-            <a href="potongan.php?action=add" class="w-full sm:w-auto bg-green-600 text-white px-4 py-2.5 rounded-lg hover:bg-green-700 text-sm font-semibold shadow-md hover:shadow-lg transition-all flex items-center justify-center">
+            <a href="potongan.php?action=Tambah" class="w-full sm:w-auto bg-green-600 text-white px-4 py-2.5 rounded-lg hover:bg-green-700 text-sm font-semibold shadow-md hover:shadow-lg transition-all flex items-center justify-center">
                 <i class="fa-solid fa-plus mr-2"></i>Tambah Potongan
             </a>
         </div>

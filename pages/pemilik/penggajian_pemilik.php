@@ -27,21 +27,16 @@ if (isset($_GET['token']) && hash_equals($_SESSION['csrf_token'], $_GET['token']
         $stmt->close();
     }
 
-    // PERUBAHAN: Proses Hapus untuk Gaji yang sudah Disetujui
     if ($action === 'delete_approved' && $id_gaji) {
         $conn->begin_transaction();
         try {
-            // Hapus detailnya terlebih dahulu
             $stmt_detail = $conn->prepare("DELETE FROM DETAIL_GAJI WHERE Id_Gaji = ?");
             $stmt_detail->bind_param("s", $id_gaji);
             $stmt_detail->execute();
             $stmt_detail->close();
-
-            // Hapus data gaji utamanya
             $stmt_gaji = $conn->prepare("DELETE FROM GAJI WHERE Id_Gaji = ? AND Status = 'Disetujui'");
             $stmt_gaji->bind_param("s", $id_gaji);
             $stmt_gaji->execute();
-            
             if ($stmt_gaji->affected_rows > 0) {
                 set_flash_message('success', 'Data gaji yang disetujui berhasil dihapus.');
             } else {
@@ -59,7 +54,6 @@ if (isset($_GET['token']) && hash_equals($_SESSION['csrf_token'], $_GET['token']
     exit;
 }
 
-// Logika Pagination & Pencarian
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $search = $_GET['search'] ?? '';
 $records_per_page = 10;
@@ -103,8 +97,8 @@ require_once __DIR__ . '/../../includes/header.php';
             </thead>
             <tbody>
                 <?php
-                // PERUBAHAN: Query diubah untuk mengambil status 'Diajukan' DAN 'Disetujui'
-                $sql_base = "FROM GAJI g JOIN KARYAWAN k ON g.Id_Karyawan = k.Id_Karyawan JOIN JABATAN j ON k.Id_Jabatan = j.Id_Jabatan WHERE (g.Status = 'Diajukan' OR g.Status = 'Disetujui') AND k.Nama_Karyawan LIKE ?";
+                // PERUBAHAN: Query diubah untuk mengambil status 'Diajukan', 'Disetujui', DAN 'Ditolak'
+                $sql_base = "FROM GAJI g JOIN KARYAWAN k ON g.Id_Karyawan = k.Id_Karyawan JOIN JABATAN j ON k.Id_Jabatan = j.Id_Jabatan WHERE (g.Status = 'Diajukan' OR g.Status = 'Disetujui' OR g.Status = 'Ditolak') AND k.Nama_Karyawan LIKE ?";
                 
                 $count_sql = "SELECT COUNT(g.Id_Gaji) as total " . $sql_base;
                 $stmt_count = $conn->prepare($count_sql);
@@ -115,7 +109,7 @@ require_once __DIR__ . '/../../includes/header.php';
                 $total_pages = ceil($total_records / $records_per_page);
                 $stmt_count->close();
 
-                $sql = "SELECT g.Id_Gaji, k.Nama_Karyawan, j.Nama_Jabatan, g.Tgl_Gaji, g.Gaji_Bersih, g.Status " . $sql_base . " ORDER BY FIELD(g.Status, 'Diajukan', 'Disetujui'), g.Tgl_Gaji DESC LIMIT ? OFFSET ?";
+                $sql = "SELECT g.Id_Gaji, k.Nama_Karyawan, j.Nama_Jabatan, g.Tgl_Gaji, g.Gaji_Bersih, g.Status " . $sql_base . " ORDER BY FIELD(g.Status, 'Diajukan', 'Disetujui', 'Ditolak'), g.Tgl_Gaji DESC LIMIT ? OFFSET ?";
                 $stmt = $conn->prepare($sql);
                 $stmt->bind_param("sii", $search_param, $records_per_page, $offset);
                 $stmt->execute();
@@ -127,8 +121,9 @@ require_once __DIR__ . '/../../includes/header.php';
                         $status_class = '';
                         if ($row['Status'] == 'Diajukan') $status_class = 'bg-yellow-100 text-yellow-800';
                         if ($row['Status'] == 'Disetujui') $status_class = 'bg-blue-100 text-blue-800';
+                        if ($row['Status'] == 'Ditolak') $status_class = 'bg-red-100 text-red-800'; // Tambahan
                 ?>
-                <tr class="bg-white border-b hover:bg-gray-50 transition-colors">
+                <tr class="bg-white border-b hover:bg-gray-50">
                     <td class="px-6 py-4 font-mono text-xs"><?= e($row['Id_Gaji']) ?></td>
                     <td class="px-6 py-4 font-medium text-gray-900"><?= e($row['Nama_Karyawan']) ?></td>
                     <td class="px-6 py-4"><?= e($row['Nama_Jabatan']) ?></td>

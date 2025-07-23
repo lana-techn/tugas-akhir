@@ -62,7 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt_cek->execute();
             if ($stmt_cek->get_result()->num_rows > 0) {
                 set_flash_message('error', "Presensi untuk karyawan ini di bulan dan tahun yang sama sudah ada.");
-                header('Location: presensi.php?action=add');
+                header('Location: presensi.php?action=Tambah');
                 exit;
             }
             $stmt_cek->close();
@@ -114,7 +114,7 @@ require_once __DIR__ .
                 <h2 class="text-2xl font-bold text-gray-800 font-poppins">Daftar Presensi</h2>
                 <p class="text-gray-500 text-sm">Kelola data kehadiran, sakit, izin, alpha, dan jam lembur karyawan.</p>
             </div>
-            <a href="presensi.php?action=add" class="w-full sm:w-auto bg-green-600 text-white px-4 py-2.5 rounded-lg hover:bg-green-700 text-sm font-semibold shadow-md hover:shadow-lg transition-all flex items-center justify-center">
+            <a href="presensi.php?action=Tambah" class="w-full sm:w-auto bg-green-600 text-white px-4 py-2.5 rounded-lg hover:bg-green-700 text-sm font-semibold shadow-md hover:shadow-lg transition-all flex items-center justify-center">
                 <i class="fa-solid fa-plus mr-2"></i>Tambah Presensi
             </a>
         </div>
