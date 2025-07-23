@@ -51,27 +51,52 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (empty($nama) || empty($jk) || empty($telepon) || empty($alamat) || empty($tgl_lahir) || empty($tgl_masuk) || empty($id_pengguna) || empty($id_jabatan) || empty($status)) {
         set_flash_message('error', 'Semua kolom wajib diisi.');
-    } else {
-        if ($id_karyawan) {
-            $stmt = $conn->prepare("UPDATE KARYAWAN SET Nama_Karyawan=?, Jenis_Kelamin=?, Telepon=?, Alamat=?, Tgl_Lahir=?, Tgl_Awal_Kerja=?, Id_Pengguna=?, Id_Jabatan=?, Status=? WHERE Id_Karyawan=?");
-            $stmt->bind_param("ssssssssss", $nama, $jk, $telepon, $alamat, $tgl_lahir, $tgl_masuk, $id_pengguna, $id_jabatan, $status, $id_karyawan);
-            $action_text = 'diperbarui';
-        } else {
-            $result = $conn->query("SELECT MAX(CAST(SUBSTRING(Id_Karyawan, 3) AS UNSIGNED)) as max_id FROM KARYAWAN WHERE Id_Karyawan LIKE 'KR%'");
-            $row = $result->fetch_assoc();
-            $last_id_num = $row['max_id'] ?? 0;
-            $id_karyawan_new = 'KR' . str_pad($last_id_num + 1, 3, '0', STR_PAD_LEFT);
-            $stmt = $conn->prepare("INSERT INTO KARYAWAN (Id_Karyawan, Nama_Karyawan, Jenis_Kelamin, Telepon, Alamat, Tgl_Lahir, Tgl_Awal_Kerja, Id_Pengguna, Id_Jabatan, Status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-            $stmt->bind_param("ssssssssss", $id_karyawan_new, $nama, $jk, $telepon, $alamat, $tgl_lahir, $tgl_masuk, $id_pengguna, $id_jabatan, $status);
-            $action_text = 'ditambahkan';
-        }
-        if ($stmt->execute()) set_flash_message('success', "Data karyawan berhasil {$action_text}.");
-        else set_flash_message('error', "Gagal memproses data karyawan: " . $stmt->error);
-        $stmt->close();
-        header('Location: karyawan.php?action=list');
+        header('Location: ' . $_SERVER['REQUEST_URI']);
         exit;
     }
+
+    // Validasi Tanggal Lahir (usia antara 18 dan 55 tahun)
+    $tgl_lahir_obj = new DateTime($tgl_lahir);
+    $today = new DateTime();
+    $umur = $today->diff($tgl_lahir_obj)->y;
+
+    if ($umur > 55 || $umur < 18) {
+        set_flash_message('error', 'Umur karyawan harus di antara 18 hingga 55 tahun.');
+        header('Location: ' . $_SERVER['REQUEST_URI']);
+        exit;
+    }
+    
+    if (strtotime($tgl_masuk) < strtotime($tgl_lahir)) {
+        set_flash_message('error', 'Tanggal awal kerja tidak boleh lebih awal dari tanggal lahir.');
+        header('Location: ' . $_SERVER['REQUEST_URI']);
+        exit;
+    }
+
+    // Jika validasi lolos, lanjutkan proses
+    if ($id_karyawan) {
+        $stmt = $conn->prepare("UPDATE KARYAWAN SET Nama_Karyawan=?, Jenis_Kelamin=?, Telepon=?, Alamat=?, Tgl_Lahir=?, Tgl_Awal_Kerja=?, Id_Pengguna=?, Id_Jabatan=?, Status=? WHERE Id_Karyawan=?");
+        $stmt->bind_param("ssssssssss", $nama, $jk, $telepon, $alamat, $tgl_lahir, $tgl_masuk, $id_pengguna, $id_jabatan, $status, $id_karyawan);
+        $action_text = 'diperbarui';
+    } else {
+        $result = $conn->query("SELECT MAX(CAST(SUBSTRING(Id_Karyawan, 3) AS UNSIGNED)) as max_id FROM KARYAWAN WHERE Id_Karyawan LIKE 'KR%'");
+        $row = $result->fetch_assoc();
+        $last_id_num = $row['max_id'] ?? 0;
+        $id_karyawan_new = 'KR' . str_pad($last_id_num + 1, 3, '0', STR_PAD_LEFT);
+        $stmt = $conn->prepare("INSERT INTO KARYAWAN (Id_Karyawan, Nama_Karyawan, Jenis_Kelamin, Telepon, Alamat, Tgl_Lahir, Tgl_Awal_Kerja, Id_Pengguna, Id_Jabatan, Status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt->bind_param("ssssssssss", $id_karyawan_new, $nama, $jk, $telepon, $alamat, $tgl_lahir, $tgl_masuk, $id_pengguna, $id_jabatan, $status);
+        $action_text = 'ditambahkan';
+    }
+
+    if ($stmt->execute()) {
+        set_flash_message('success', "Data karyawan berhasil {$action_text}.");
+    } else {
+        set_flash_message('error', "Gagal memproses data karyawan: " . $stmt->error);
+    }
+    $stmt->close();
+    header('Location: karyawan.php?action=list');
+    exit;
 }
+
 
 $karyawan_data = null;
 if ($action === 'edit' && $id) {
@@ -94,7 +119,7 @@ if ($action === 'edit' && $id) {
         array_unshift($pengguna_list, $pengguna_terpilih);
     }
     $stmt_pengguna_edit->close();
-} elseif ($action === 'add') {
+} elseif ($action === 'Tambah') {
     $page_title = 'Tambah Karyawan';
 }
 
@@ -111,7 +136,7 @@ require_once __DIR__ . '/../includes/header.php';
                 <h2 class="text-2xl font-bold text-gray-800 font-poppins">Daftar Karyawan</h2>
                 <p class="text-gray-500 text-sm">Kelola data, status, dan informasi kepegawaian.</p>
             </div>
-            <a href="karyawan.php?action=add" class="w-full sm:w-auto bg-green-600 text-white px-4 py-2.5 rounded-lg hover:bg-green-700 text-sm font-semibold shadow-md hover:shadow-lg transition-all flex items-center justify-center">
+            <a href="karyawan.php?action=Tambah" class="w-full sm:w-auto bg-green-600 text-white px-4 py-2.5 rounded-lg hover:bg-green-700 text-sm font-semibold shadow-md hover:shadow-lg transition-all flex items-center justify-center">
                 <i class="fa-solid fa-plus mr-2"></i>Tambah
             </a>
         </div>
@@ -139,7 +164,6 @@ require_once __DIR__ . '/../includes/header.php';
                 </thead>
                 <tbody>
                     <?php
-                    // ... (Logika PHP untuk menampilkan tabel tidak berubah) ...
                     $count_params = []; $types_string_count = ''; $count_sql = "SELECT COUNT(k.Id_Karyawan) as total FROM KARYAWAN k WHERE (k.Nama_Karyawan LIKE ? OR k.Id_Karyawan LIKE ?)"; $search_param = "%" . $search . "%"; array_push($count_params, $search_param, $search_param); $types_string_count .= 'ss'; if ($status_filter) { $count_sql .= " AND k.Status = ?"; array_push($count_params, $status_filter); $types_string_count .= 's'; } $stmt_count = $conn->prepare($count_sql); if(!empty($types_string_count)) $stmt_count->bind_param($types_string_count, ...$count_params); $stmt_count->execute(); $total_records = $stmt_count->get_result()->fetch_assoc()['total']; $total_pages = ceil($total_records / $records_per_page); $stmt_count->close(); $data_params = $count_params; $types_string_data = $types_string_count; $sql = "SELECT k.*, j.Nama_Jabatan FROM KARYAWAN k LEFT JOIN JABATAN j ON k.Id_Jabatan = j.Id_Jabatan WHERE (k.Nama_Karyawan LIKE ? OR k.Id_Karyawan LIKE ?)"; if ($status_filter) { $sql .= " AND k.Status = ?"; } $sql .= " ORDER BY k.Nama_Karyawan ASC LIMIT ? OFFSET ?"; array_push($data_params, $records_per_page, $offset); $types_string_data .= 'ii'; $stmt = $conn->prepare($sql); if(!empty($types_string_data)) $stmt->bind_param($types_string_data, ...$data_params); $stmt->execute(); $result = $stmt->get_result(); $no = $offset + 1; if($result->num_rows > 0) { while ($row = $result->fetch_assoc()): ?> <tr class="bg-white border-b hover:bg-gray-50 transition-colors"> <td class="px-4 py-4"><?= $no++ ?></td> <td class="px-6 py-4 font-mono text-xs"><?= e($row['Id_Karyawan']) ?></td> <td class="px-6 py-4 font-medium text-gray-900"><?= e($row['Nama_Karyawan']) ?></td> <td class="px-6 py-4"><?= e($row['Nama_Jabatan']) ?? 'N/A' ?></td> <td class="px-6 py-4"><?= e($row['Jenis_Kelamin']) ?></td> <td class="px-6 py-4"><?= e(date('d M Y', strtotime($row['Tgl_Awal_Kerja']))) ?></td> <td class="px-6 py-4"><?= e($row['Telepon']) ?></td> <td class="px-6 py-4 truncate max-w-xs" title="<?= e($row['Alamat']) ?>"><?= e($row['Alamat']) ?></td> <td class="px-6 py-4"> <span class="px-2.5 py-1 text-xs font-semibold rounded-full <?= $row['Status'] === 'Aktif' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' ?>"> <?= e($row['Status']) ?> </span> </td> <td class="px-4 py-3"> <div class="flex items-center justify-center gap-4"> <a href="karyawan.php?action=edit&id=<?= e($row['Id_Karyawan']) ?>" class="text-blue-600 hover:text-blue-800" title="Edit"><i class="fa-solid fa-pen-to-square"></i></a> <a href="karyawan.php?action=delete&id=<?= e($row['Id_Karyawan']) ?>&token=<?= e($_SESSION['csrf_token']) ?>" class="text-red-600 hover:text-red-800" onclick="return confirm('Yakin?')" title="Hapus"><i class="fa-solid fa-trash-alt"></i></a> </div> </td> </tr> <?php endwhile; } else { echo '<tr><td colspan="10" class="text-center py-5 text-gray-500">Tidak ada data ditemukan.</td></tr>'; } $stmt->close(); $conn->close();
                     ?>
                 </tbody>
@@ -152,7 +176,7 @@ require_once __DIR__ . '/../includes/header.php';
     </div>
 <?php endif; ?>
 
-<?php if ($action === 'add' || $action === 'edit'): ?>
+<?php if ($action === 'Tambah' || $action === 'edit'): ?>
     <div class="bg-white p-8 rounded-xl shadow-lg max-w-4xl mx-auto">
         <h2 class="text-2xl font-bold text-gray-800 text-center mb-2 font-poppins"><?= ucfirst($action) ?> Data Karyawan</h2>
         <p class="text-center text-gray-500 mb-8">Lengkapi semua informasi yang diperlukan.</p>
@@ -239,28 +263,26 @@ require_once __DIR__ . '/../includes/header.php';
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Fungsi untuk menginisialisasi Flatpickr
             const initPicker = (inputId, iconWrapperId) => {
                 const dateInput = document.getElementById(inputId);
                 const iconWrapper = document.getElementById(iconWrapperId);
 
                 const fp = flatpickr(dateInput, {
-                    // PERBAIKAN: Opsi untuk format dan input manual
-                    dateFormat: "Y-m-d", // Format yang dikirim ke database
+                    dateFormat: "Y-m-d", // Format yang dikirim ke database (wajib)
                     altInput: true,      // Tampilkan format alternatif yang mudah dibaca
                     altFormat: "d-m-Y",  // Format dd-mm-yyyy untuk TAMPILAN
                     allowInput: true,    // IZINKAN input manual
-                    clickOpens: false    // Jangan buka kalender saat input diklik
+                    clickOpens: false,   // Jangan buka kalender saat input diklik
+                    maxDate: "today"
                 });
 
                 // Buka/tutup kalender saat ikon diklik
-                iconWrapper.addEventListener('click', (e) => {
+                iconWrapper.addEventListener("click", (e) => {
                     e.stopPropagation();
                     fp.toggle();
                 });
             };
 
-            // Inisialisasi untuk kedua date picker
             initPicker("Tgl_Lahir", "tgl_lahir_icon_wrapper");
             initPicker("Tgl_Awal_Kerja", "tgl_awal_kerja_icon_wrapper");
         });

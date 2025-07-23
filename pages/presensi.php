@@ -248,18 +248,20 @@ require_once __DIR__ .
                 </div>
                 <div>
                     <label for="Bulan" class="block mb-2 text-sm font-medium text-gray-700">Bulan</label>
-                    <select name="Bulan" id="Bulan" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" required <?= $action === 'edit' ? 'disabled' : '' ?>>
-                        <?php foreach($bulan_list as $b): ?>
-                        <option value="<?= e($b) ?>" <?= (isset($presensi_data) && $presensi_data['Bulan'] == $b) ? 'selected' : '' ?>><?= e($b) ?></option>
+                    <select name="Bulan" id="Bulan" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" required disabled>
+                        <?php 
+                        $current_month_numeric = date("n"); // Numeric month (1-12)
+                        $current_month_name = $bulan_list[$current_month_numeric - 1]; // Get month name from array
+                        foreach($bulan_list as $b): 
+                        ?>
+                        <option value="<?= e($b) ?>" <?= ($b == $current_month_name) ? 'selected' : '' ?>><?= e($b) ?></option>
                         <?php endforeach; ?>
                     </select>
-                     <?php if($action === 'edit'): ?>
-                    <input type="hidden" name="Bulan" value="<?= e($presensi_data['Bulan']) ?>">
-                    <?php endif; ?>
+                     <input type="hidden" name="Bulan" value="<?= e($current_month_name) ?>">
                 </div>
                 <div>
                     <label for="Tahun" class="block mb-2 text-sm font-medium text-gray-700">Tahun</label>
-                    <input type="number" name="Tahun" id="Tahun" value="<?= e($presensi_data['Tahun'] ?? date('Y')) ?>" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" required <?= $action === 'edit' ? 'readonly' : '' ?>>
+                    <input type="number" name="Tahun" id="Tahun" value="<?= date("Y") ?>" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" required readonly>
                 </div>
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:col-span-2">
                     <div>
@@ -297,4 +299,3 @@ require_once __DIR__ .
 require_once __DIR__ . 
 '/../includes/footer.php';
 ?>
-

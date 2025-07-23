@@ -220,7 +220,7 @@ require_once __DIR__ . '/../includes/header.php';
             </div>
             <div>
                 <label for="periode" class="block mb-2 text-sm font-medium text-gray-700">Periode Gaji</label>
-                <input type="month" name="periode" id="periode" value="<?= date('Y-m') ?>" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" required>
+                <input type="month" name="periode" id="periode" value="<?= date("Y-m") ?>" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" required readonly>
             </div>
             
             <div>
