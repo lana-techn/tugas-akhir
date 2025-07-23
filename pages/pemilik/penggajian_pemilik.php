@@ -90,7 +90,7 @@ require_once __DIR__ . '/../../includes/header.php';
                     <th class="px-6 py-3">Nama Karyawan</th>
                     <th class="px-6 py-3">Jabatan</th>
                     <th class="px-6 py-3">Periode Gaji</th>
-                    <th class="px-6 py-3 text-right">Gaji Bersih</th>
+                    <th class="px-6 py-3 text-center">Gaji Bersih</th>
                     <th class="px-6 py-3">Status</th>
                     <th class="px-6 py-3 text-center">Aksi</th>
                 </tr>
