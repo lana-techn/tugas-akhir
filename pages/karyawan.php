@@ -217,22 +217,12 @@ require_once __DIR__ . '/../includes/header.php';
                 
                 <div>
                     <label for="Tgl_Lahir" class="block mb-2 text-sm font-medium text-gray-700">Tanggal Lahir</label>
-                    <div class="relative">
-                        <input type="text" id="Tgl_Lahir" name="Tgl_Lahir" value="<?= e($karyawan_data['Tgl_Lahir'] ?? '') ?>" class="w-full pl-4 pr-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" required placeholder="hh-bb-tttt">
-                        <span id="tgl_lahir_icon_wrapper" class="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer">
-                           <i class="fa-solid fa-calendar-day text-gray-400"></i>
-                        </span>
-                    </div>
+                    <input type="date" id="Tgl_Lahir" name="Tgl_Lahir" value="<?= e($karyawan_data['Tgl_Lahir'] ?? '') ?>" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" required>
                 </div>
 
                 <div>
                     <label for="Tgl_Awal_Kerja" class="block mb-2 text-sm font-medium text-gray-700">Tanggal Awal Kerja</label>
-                    <div class="relative">
-                        <input type="text" id="Tgl_Awal_Kerja" name="Tgl_Awal_Kerja" value="<?= e($karyawan_data['Tgl_Awal_Kerja'] ?? '') ?>" class="w-full pl-4 pr-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" required placeholder="hh-bb-tttt">
-                         <span id="tgl_awal_kerja_icon_wrapper" class="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer">
-                           <i class="fa-solid fa-calendar-alt text-gray-400"></i>
-                        </span>
-                    </div>
+                    <input type="date" id="Tgl_Awal_Kerja" name="Tgl_Awal_Kerja" value="<?= e($karyawan_data['Tgl_Awal_Kerja'] ?? '') ?>" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" required>
                 </div>
 
                 <div>
@@ -261,32 +251,6 @@ require_once __DIR__ . '/../includes/header.php';
         </form>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const initPicker = (inputId, iconWrapperId) => {
-                const dateInput = document.getElementById(inputId);
-                const iconWrapper = document.getElementById(iconWrapperId);
-
-                const fp = flatpickr(dateInput, {
-                    dateFormat: "Y-m-d", // Format yang dikirim ke database (wajib)
-                    altInput: true,      // Tampilkan format alternatif yang mudah dibaca
-                    altFormat: "d-m-Y",  // Format dd-mm-yyyy untuk TAMPILAN
-                    allowInput: true,    // IZINKAN input manual
-                    clickOpens: false,   // Jangan buka kalender saat input diklik
-                    maxDate: "today"
-                });
-
-                // Buka/tutup kalender saat ikon diklik
-                iconWrapper.addEventListener("click", (e) => {
-                    e.stopPropagation();
-                    fp.toggle();
-                });
-            };
-
-            initPicker("Tgl_Lahir", "tgl_lahir_icon_wrapper");
-            initPicker("Tgl_Awal_Kerja", "tgl_awal_kerja_icon_wrapper");
-        });
-    </script>
 <?php endif; ?>
 
 <?php

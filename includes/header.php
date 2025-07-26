@@ -56,6 +56,25 @@ $page_title = $page_title ?? 'Dashboard';
         .notif-error { background-color: #fef2f2; border-left-color: #ef4444; color: #b91c1c; }
         [x-cloak] { display: none !important; }
 
+        /* Sticky Footer CSS */
+        html, body {
+            height: 100%;
+        }
+        
+        body {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .main-wrapper {
+            flex: 1;
+        }
+        
+        /* Ensure footer is always at bottom */
+        footer {
+            margin-top: auto;
+        }
+
         @media print {
             .no-print { display: none !important; }
             main { padding: 0 !important; }
@@ -63,8 +82,8 @@ $page_title = $page_title ?? 'Dashboard';
         }
     </style>
 </head>
-<body class="h-full">
-    <div x-data="{ sidebarOpen: false }" class="min-h-full">
+<body class="min-h-screen flex flex-col">
+    <div x-data="{ sidebarOpen: false }" class="flex-1 flex flex-col">
         <?php if (isset($_SESSION['user_id'])): ?>
             <!-- Mobile sidebar -->
             <div x-show="sidebarOpen" class="relative z-50 lg:hidden" x-cloak>
@@ -100,7 +119,7 @@ $page_title = $page_title ?? 'Dashboard';
                 ?>
             </div>
 
-            <div class="lg:pl-64">
+            <div class="lg:pl-64 flex flex-col flex-1">
                 <!-- Top bar -->
                 <div class="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8 no-print">
                     <button type="button" class="-m-2.5 p-2.5 text-gray-700 lg:hidden" @click="sidebarOpen = true">
@@ -150,8 +169,9 @@ $page_title = $page_title ?? 'Dashboard';
                     </div>
                 </div>
 
-                <main class="py-8">
+                <main class="py-8 flex-1">
                     <div class="px-4 sm:px-6 lg:px-8">
         <?php else: ?>
-             <main>
+            <div class="flex-1 flex flex-col">
+                <main class="flex-1">
         <?php endif; ?>

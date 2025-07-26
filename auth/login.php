@@ -59,58 +59,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // 3. VIEW
 $page_title = 'Login';
 generate_csrf_token();
+require_once __DIR__ . '/../includes/header.php';
 ?>
-<!DOCTYPE html>
-<html lang="id" class="h-full">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= e($page_title) ?> - <?= e(APP_NAME) ?></title>
-    
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-    
-    <style>
-        body { font-family: 'Poppins', sans-serif; }
-        .gradient-bg {
-            background-color: #10B981;
-            background-image: linear-gradient(135deg, #059669, #10B981, #34D399 );
-        }
-        .form-input {
-            background-color: #F3F4F6;
-            border-radius: 9999px;
-            border: 2px solid transparent;
-            padding: 0.75rem 3rem; /* Disesuaikan untuk ikon di kedua sisi */
-            width: 100%;
-            transition: all 0.3s ease;
-        }
-        .form-input:focus {
-            background-color: white;
-            border-color: #10B981;
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
-        }
-        .login-button {
-            background-color: #059669;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px 0 rgba(16, 185, 129, 0.3);
-        }
-        .login-button:hover {
-            background-color: #047857;
-            transform: translateY(-2px);
-            box-shadow: 0 7px 20px 0 rgba(16, 185, 129, 0.4);
-        }
-        .notif { padding: 1rem; border-radius: 0.5rem; margin-bottom: 1.5rem; border-left-width: 4px; }
-        .notif-error { background-color: #fef2f2; border-color: #ef4444; color: #b91c1c; }
-        [x-cloak] { display: none !important; }
-    </style>
-</head>
-<body class="bg-gray-100">
+
+<style>
+    body { font-family: 'Poppins', sans-serif; }
+    .gradient-bg {
+        background-color: #10B981;
+        background-image: linear-gradient(135deg, #059669, #10B981, #34D399 );
+    }
+    .form-input {
+        background-color: #F3F4F6;
+        border-radius: 9999px;
+        border: 2px solid transparent;
+        padding: 0.75rem 3rem; /* Disesuaikan untuk ikon di kedua sisi */
+        width: 100%;
+        transition: all 0.3s ease;
+    }
+    .form-input:focus {
+        background-color: white;
+        border-color: #10B981;
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+    }
+    .login-button {
+        background-color: #059669;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px 0 rgba(16, 185, 129, 0.3);
+    }
+    .login-button:hover {
+        background-color: #047857;
+        transform: translateY(-2px);
+        box-shadow: 0 7px 20px 0 rgba(16, 185, 129, 0.4);
+    }
+    .notif { padding: 1rem; border-radius: 0.5rem; margin-bottom: 1.5rem; border-left-width: 4px; }
+    .notif-error { background-color: #fef2f2; border-color: #ef4444; color: #b91c1c; }
+    [x-cloak] { display: none !important; }
+</style>
 
     <div class="flex min-h-screen items-center justify-center p-4">
         <div class="relative w-full max-w-5xl min-h-[600px] bg-white shadow-2xl rounded-3xl overflow-hidden lg:grid lg:grid-cols-2">
@@ -122,7 +107,7 @@ generate_csrf_token();
                 <a href="#" class="mb-8"><img src="../assets/images/logo.png" alt="Logo" class="h-12"></a>
                 <h1 class="text-4xl font-bold leading-tight">Sistem Informasi Penggajian Karyawan</h1>
                 <p class="mt-4 text-lg text-white/80">Manajemen penggajian menjadi lebih mudah, efisien, dan akurat.</p>
-                <div class="mt-auto text-sm text-white/60">&copy; <?= date('Y') ?> <?= e(APP_NAME) ?>. All rights reserved.</div>
+                <div class="mt-auto text-sm text-white/60">&copy; <?= date('Y') ?> Nanda Amalia Hastuti. All rights reserved.</div>
             </div>
 
             <!-- Kolom Kanan (Form Login) -->
@@ -165,5 +150,4 @@ generate_csrf_token();
         </div>
     </div>
 
-</body>
-</html>
+<?php require_once __DIR__ . '/../includes/footer.php'; ?>
