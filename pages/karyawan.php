@@ -55,19 +55,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    // Validasi Tanggal Lahir (usia antara 18 dan 55 tahun)
+    // Validasi Tanggal Lahir (minimal tahun 1970)
     $tgl_lahir_obj = new DateTime($tgl_lahir);
-    $today = new DateTime();
-    $umur = $today->diff($tgl_lahir_obj)->y;
-
-    if ($umur > 55 || $umur < 18) {
-        set_flash_message('error', 'Umur karyawan harus di antara 18 hingga 55 tahun.');
+    $birth_year = (int)$tgl_lahir_obj->format('Y');
+    
+    if ($birth_year < 1970) {
+        set_flash_message('error', 'Tahun kelahiran tidak boleh kurang dari 1970.');
         header('Location: ' . $_SERVER['REQUEST_URI']);
         exit;
     }
     
-    if (strtotime($tgl_masuk) < strtotime($tgl_lahir)) {
-        set_flash_message('error', 'Tanggal awal kerja tidak boleh lebih awal dari tanggal lahir.');
+    // Validasi Tanggal Awal Kerja (harus lebih dari tanggal lahir, tidak boleh sama)
+    if (strtotime($tgl_masuk) <= strtotime($tgl_lahir)) {
+        set_flash_message('error', 'Tanggal awal kerja harus lebih dari tanggal lahir (minimal 1 hari setelah tanggal lahir).');
         header('Location: ' . $_SERVER['REQUEST_URI']);
         exit;
     }
@@ -250,6 +250,119 @@ require_once __DIR__ . '/../includes/header.php';
             </div>
         </form>
     </div>
+
+    <!-- JavaScript validasi tanggal -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const birthDateInput = document.getElementById('Tgl_Lahir');
+        const workStartInput = document.getElementById('Tgl_Awal_Kerja');
+        const form = document.querySelector('form[method="POST"]');
+        
+        if (!birthDateInput || !workStartInput) return;
+        
+        // Set minimum birth date (1970-01-01)
+        birthDateInput.setAttribute('min', '1970-01-01');
+        
+        function validateBirthDate() {
+            const birthDate = birthDateInput.value;
+            if (!birthDate) return true;
+            
+            const birthYear = new Date(birthDate).getFullYear();
+            if (birthYear < 1970) {
+                showError(birthDateInput, 'Tahun kelahiran tidak boleh kurang dari 1970.');
+                return false;
+            }
+            
+            clearError(birthDateInput);
+            return true;
+        }
+        
+        function validateWorkStartDate() {
+            const birthDate = birthDateInput.value;
+            const workStartDate = workStartInput.value;
+            
+            if (!birthDate || !workStartDate) return true;
+            
+            const birthDateObj = new Date(birthDate);
+            const workStartDateObj = new Date(workStartDate);
+            
+            if (workStartDateObj <= birthDateObj) {
+                showError(workStartInput, 'Tanggal awal kerja harus lebih dari tanggal lahir (minimal 1 hari setelah tanggal lahir).');
+                return false;
+            }
+            
+            clearError(workStartInput);
+            return true;
+        }
+        
+        function showError(input, message) {
+            clearError(input);
+            input.classList.add('border-red-500');
+            
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'date-error-message text-red-500 text-xs mt-1';
+            errorDiv.textContent = message;
+            
+            input.parentNode.appendChild(errorDiv);
+        }
+        
+        function clearError(input) {
+            input.classList.remove('border-red-500');
+            const existingError = input.parentNode.querySelector('.date-error-message');
+            if (existingError) {
+                existingError.remove();
+            }
+        }
+        
+        function updateWorkStartMinDate() {
+            const birthDate = birthDateInput.value;
+            if (birthDate) {
+                const birthDateObj = new Date(birthDate);
+                birthDateObj.setDate(birthDateObj.getDate() + 1);
+                const minWorkDate = birthDateObj.toISOString().split('T')[0];
+                workStartInput.setAttribute('min', minWorkDate);
+                
+                // Clear work start date if it's now invalid
+                if (workStartInput.value && new Date(workStartInput.value) <= new Date(birthDate)) {
+                    workStartInput.value = '';
+                }
+            }
+        }
+        
+        // Event listeners
+        birthDateInput.addEventListener('change', function() {
+            validateBirthDate();
+            updateWorkStartMinDate();
+            validateWorkStartDate();
+        });
+        
+        workStartInput.addEventListener('change', function() {
+            validateWorkStartDate();
+        });
+        
+        // Form submission validation
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                const birthValid = validateBirthDate();
+                const workValid = validateWorkStartDate();
+                
+                if (!birthValid || !workValid) {
+                    e.preventDefault();
+                    
+                    // Scroll to first error
+                    const firstError = form.querySelector('.border-red-500');
+                    if (firstError) {
+                        firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        firstError.focus();
+                    }
+                }
+            });
+        }
+        
+        // Initialize on page load
+        updateWorkStartMinDate();
+    });
+    </script>
 
 <?php endif; ?>
 
