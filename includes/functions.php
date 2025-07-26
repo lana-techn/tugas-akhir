@@ -71,13 +71,24 @@ function isLoggedIn()
 }
 
 /**
- * Mengharuskan pengguna untuk login.
+ * Mengharuskan pengguna untuk login dan memeriksa level akses.
+ * @param string|null $required_level Level yang diperlukan ('admin', 'karyawan', dll.)
  */
-function requireLogin()
+function requireLogin($required_level = null)
 {
     if (!isLoggedIn()) {
         header('Location: ../auth/login.php');
         exit();
+    }
+    
+    if ($required_level !== null) {
+        $current_user = getCurrentUser();
+        if (!$current_user || strtolower($current_user['jabatan']) !== strtolower($required_level)) {
+            // Redirect to unauthorized page or show error
+            set_flash_message('error', 'Anda tidak memiliki akses ke halaman ini.');
+            header('Location: ../auth/login.php');
+            exit();
+        }
     }
 }
 
@@ -219,8 +230,16 @@ function generate_pagination_links($current_page, $total_pages, $base_url, $para
         return '';
     }
 
-    $query_string = http_build_query($params);
-    $base_url .= '?' . $query_string;
+    // Filter out empty values and ensure all values are strings
+    $filtered_params = [];
+    foreach ($params as $key => $value) {
+        if ($value !== '' && $value !== null && !is_array($value)) {
+            $filtered_params[$key] = (string)$value;
+        }
+    }
+    
+    $query_string = http_build_query($filtered_params);
+    $base_url .= ($query_string ? '?' . $query_string : '');
 
     $html = '<nav class="flex items-center justify-between mt-6">';
     $html .= '<span class="text-sm text-gray-500">Halaman <strong>' . $current_page . '</strong> dari <strong>' . $total_pages . '</strong></span>';
@@ -230,7 +249,8 @@ function generate_pagination_links($current_page, $total_pages, $base_url, $para
     $prev_class = ($current_page > 1) 
         ? 'text-gray-500 bg-white hover:bg-gray-100 hover:text-gray-700' 
         : 'text-gray-400 bg-gray-50 cursor-not-allowed';
-    $prev_href = ($current_page > 1) ? 'href="' . $base_url . '&page=' . ($current_page - 1) . '"' : '';
+    $separator = strpos($base_url, '?') !== false ? '&' : '?';
+    $prev_href = ($current_page > 1) ? 'href="' . $base_url . $separator . 'page=' . ($current_page - 1) . '"' : '';
     $html .= '<li><a ' . $prev_href . ' class="px-3 py-2 ml-0 leading-tight border border-gray-300 rounded-l-lg ' . $prev_class . '"><i class="fa-solid fa-chevron-left text-xs"></i></a></li>';
 
     // Nomor halaman
@@ -261,7 +281,7 @@ function generate_pagination_links($current_page, $total_pages, $base_url, $para
     $next_class = ($current_page < $total_pages) 
         ? 'text-gray-500 bg-white hover:bg-gray-100 hover:text-gray-700' 
         : 'text-gray-400 bg-gray-50 cursor-not-allowed';
-    $next_href = ($current_page < $total_pages) ? 'href="' . $base_url . '&page=' . ($current_page + 1) . '"' : '';
+    $next_href = ($current_page < $total_pages) ? 'href="' . $base_url . $separator . 'page=' . ($current_page + 1) . '"' : '';
     $html .= '<li><a ' . $next_href . ' class="px-3 py-2 leading-tight border border-gray-300 rounded-r-lg ' . $next_class . '"><i class="fa-solid fa-chevron-right text-xs"></i></a></li>';
 
     $html .= '</ul></nav>';
@@ -279,7 +299,8 @@ function render_page_number($page_num, $current_page, $base_url) {
     if ($page_num == $current_page) {
         return '<li><span aria-current="page" class="z-10 px-3 py-2 leading-tight text-white bg-green-600 border border-green-600">' . $page_num . '</span></li>';
     } else {
-        return '<li><a href="' . $base_url . '&page=' . $page_num . '" class="px-3 py-2 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700">' . $page_num . '</a></li>';
+        $separator = strpos($base_url, '?') !== false ? '&' : '?';
+        return '<li><a href="' . $base_url . $separator . 'page=' . $page_num . '" class="px-3 py-2 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700">' . $page_num . '</a></li>';
     }
 }
 ?>

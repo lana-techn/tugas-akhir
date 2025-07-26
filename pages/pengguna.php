@@ -255,7 +255,7 @@ require_once __DIR__ . '/../includes/header.php';
         </div>
         
         <?php 
-        echo generate_pagination_links($page, $total_pages, ['action' => 'list', 'search' => $search, 'level' => $level_filter]);
+        echo generate_pagination_links($page, $total_pages, 'pengguna.php', ['action' => 'list', 'search' => $search, 'level' => $level_filter]);
         ?>
     </div>
 <?php endif; ?>

@@ -163,7 +163,7 @@ require_once __DIR__ . '/../includes/header.php';
             </table>
         </div>
         
-        <?php echo generate_pagination_links($page, $total_pages, ['action' => 'list', 'search' => $search]); ?>
+        <?php echo generate_pagination_links($page, $total_pages, 'potongan.php', ['action' => 'list', 'search' => $search]); ?>
     </div>
 <?php endif; ?>
 
