@@ -119,24 +119,20 @@ require_once __DIR__ .
             </a>
         </div>
         
-        <form method="get" action="presensi.php" class="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+        <form method="get" action="presensi.php" class="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
             <input type="hidden" name="action" value="list">
             <div>
-                <label for="id_karyawan_filter" class="sr-only">Nama Karyawan</label>
+                <label for="id_karyawan_filter" class="block text-sm font-medium text-gray-600 mb-1">Nama Karyawan</label>
                 <select id="id_karyawan_filter" name="id_karyawan" onchange="this.form.submit()" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
-                    <option value="">-- Semua Karyawan --</option>
+                    <option value="">Semua Karyawan</option>
                     <?php foreach($karyawan_list as $k): ?>
                         <option value="<?= e($k['Id_Karyawan']) ?>" <?= $id_karyawan_filter == $k['Id_Karyawan'] ? 'selected' : '' ?>><?= e($k['Nama_Karyawan']) ?></option>
                     <?php endforeach; ?>
                 </select>
             </div>
             <div>
-                <label for="filter_tahun" class="sr-only">Tahun</label>
-                <input type="number" name="tahun" id="filter_tahun" placeholder="Filter Tahun..." value="<?= e($tahun_filter) ?>" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
-            </div>
-            <div class="flex space-x-2">
-                <button type="submit" class="w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 font-semibold">Terapkan</button>
-                <a href="presensi.php?action=list" class="w-full text-center bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 font-semibold">Reset</a>
+                <label for="filter_tahun" class="block text-sm font-medium text-gray-600 mb-1">Tahun</label>
+                <input type="number" name="tahun" id="filter_tahun" placeholder="Cth: <?= date('Y') ?>" value="<?= e($tahun_filter) ?>" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" onchange="this.form.submit()">
             </div>
         </form>
 

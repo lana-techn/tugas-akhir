@@ -55,9 +55,12 @@ if (isset($_GET['token']) && hash_equals($_SESSION['csrf_token'], $_GET['token']
 }
 
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-$search = $_GET['search'] ?? '';
 $records_per_page = 10;
 $offset = ($page - 1) * $records_per_page;
+
+// Ambil data untuk filter
+$karyawan_list = $conn->query("SELECT Id_Karyawan, Nama_Karyawan FROM KARYAWAN ORDER BY Nama_Karyawan ASC")->fetch_all(MYSQLI_ASSOC);
+$bulan_list = [1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April', 5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus', 9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'];
 
 generate_csrf_token();
 require_once __DIR__ . '/../../includes/header.php';
@@ -73,12 +76,33 @@ require_once __DIR__ . '/../../includes/header.php';
 
     <?php display_flash_message(); ?>
 
-    <form method="get" action="penggajian_pemilik.php" class="mb-6">
-        <div class="relative">
-            <input type="text" name="search" value="<?= e($search) ?>" placeholder="Cari berdasarkan nama karyawan..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
-            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <i class="fa-solid fa-search text-gray-400"></i>
-            </div>
+    <form method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 items-end">
+        <input type="hidden" name="action" value="list">
+        <div>
+            <label for="filter_karyawan" class="text-sm font-medium text-gray-600">Nama Karyawan</label>
+            <select name="karyawan" id="filter_karyawan" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500">
+                <option value="">Semua Karyawan</option>
+                <?php foreach($karyawan_list as $k): ?>
+                <option value="<?= e($k['Id_Karyawan']) ?>" <?= ($_GET['karyawan'] ?? '') == $k['Id_Karyawan'] ? 'selected' : '' ?>><?= e($k['Nama_Karyawan']) ?></option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+        <div>
+            <label for="filter_bulan" class="text-sm font-medium text-gray-600">Bulan</label>
+            <select name="bulan" id="filter_bulan" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500">
+                <option value="">Semua Bulan</option>
+                <?php foreach($bulan_list as $num => $name): ?>
+                <option value="<?= $num ?>" <?= ($_GET['bulan'] ?? '') == $num ? 'selected' : '' ?>><?= $name ?></option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+        <div>
+            <label for="filter_tahun" class="text-sm font-medium text-gray-600">Tahun</label>
+            <input type="number" name="tahun" id="filter_tahun" value="<?= e($_GET['tahun'] ?? date('Y')) ?>" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500">
+        </div>
+        <div class="flex space-x-2">
+            <button type="submit" class="w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 font-semibold">Tampilkan</button>
+            <a href="penggajian_pemilik.php" class="w-full text-center bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 font-semibold">Reset</a>
         </div>
     </form>
 
@@ -97,21 +121,74 @@ require_once __DIR__ . '/../../includes/header.php';
             </thead>
             <tbody>
                 <?php
-                // PERUBAHAN: Query diubah untuk mengambil status 'Diajukan', 'Disetujui', DAN 'Ditolak'
-                $sql_base = "FROM GAJI g JOIN KARYAWAN k ON g.Id_Karyawan = k.Id_Karyawan JOIN JABATAN j ON k.Id_Jabatan = j.Id_Jabatan WHERE (g.Status = 'Diajukan' OR g.Status = 'Disetujui' OR g.Status = 'Ditolak') AND k.Nama_Karyawan LIKE ?";
+                // Query count untuk pagination
+                $count_sql = "SELECT COUNT(g.Id_Gaji) as total 
+                              FROM GAJI g 
+                              JOIN KARYAWAN k ON g.Id_Karyawan = k.Id_Karyawan 
+                              JOIN JABATAN j ON k.Id_Jabatan = j.Id_Jabatan 
+                              WHERE (g.Status = 'Diajukan' OR g.Status = 'Disetujui' OR g.Status = 'Ditolak')";
+                $count_params = [];
+                $count_types = '';
                 
-                $count_sql = "SELECT COUNT(g.Id_Gaji) as total " . $sql_base;
+                if (!empty($_GET['karyawan'])) { 
+                    $count_sql .= " AND g.Id_Karyawan = ?"; 
+                    $count_params[] = $_GET['karyawan']; 
+                    $count_types .= 's'; 
+                }
+                if (!empty($_GET['bulan'])) { 
+                    $count_sql .= " AND MONTH(g.Tgl_Gaji) = ?"; 
+                    $count_params[] = $_GET['bulan']; 
+                    $count_types .= 'i'; 
+                }
+                if (!empty($_GET['tahun'])) { 
+                    $count_sql .= " AND YEAR(g.Tgl_Gaji) = ?"; 
+                    $count_params[] = $_GET['tahun']; 
+                    $count_types .= 'i'; 
+                }
+                
                 $stmt_count = $conn->prepare($count_sql);
-                $search_param = "%" . $search . "%";
-                $stmt_count->bind_param("s", $search_param);
+                if (!empty($count_types)) { 
+                    $stmt_count->bind_param($count_types, ...$count_params); 
+                }
                 $stmt_count->execute();
                 $total_records = $stmt_count->get_result()->fetch_assoc()['total'];
                 $total_pages = ceil($total_records / $records_per_page);
                 $stmt_count->close();
 
-                $sql = "SELECT g.Id_Gaji, k.Nama_Karyawan, j.Nama_Jabatan, g.Tgl_Gaji, g.Gaji_Bersih, g.Status " . $sql_base . " ORDER BY FIELD(g.Status, 'Diajukan', 'Disetujui', 'Ditolak'), g.Tgl_Gaji DESC LIMIT ? OFFSET ?";
+                // Query dinamis berdasarkan filter
+                $sql = "SELECT g.Id_Gaji, k.Nama_Karyawan, j.Nama_Jabatan, g.Tgl_Gaji, g.Gaji_Bersih, g.Status 
+                        FROM GAJI g 
+                        JOIN KARYAWAN k ON g.Id_Karyawan = k.Id_Karyawan 
+                        JOIN JABATAN j ON k.Id_Jabatan = j.Id_Jabatan 
+                        WHERE (g.Status = 'Diajukan' OR g.Status = 'Disetujui' OR g.Status = 'Ditolak')";
+                $params = [];
+                $types = '';
+                
+                if (!empty($_GET['karyawan'])) { 
+                    $sql .= " AND g.Id_Karyawan = ?"; 
+                    $params[] = $_GET['karyawan']; 
+                    $types .= 's'; 
+                }
+                if (!empty($_GET['bulan'])) { 
+                    $sql .= " AND MONTH(g.Tgl_Gaji) = ?"; 
+                    $params[] = $_GET['bulan']; 
+                    $types .= 'i'; 
+                }
+                if (!empty($_GET['tahun'])) { 
+                    $sql .= " AND YEAR(g.Tgl_Gaji) = ?"; 
+                    $params[] = $_GET['tahun']; 
+                    $types .= 'i'; 
+                }
+                
+                $sql .= " ORDER BY FIELD(g.Status, 'Diajukan', 'Disetujui', 'Ditolak'), g.Tgl_Gaji DESC LIMIT ? OFFSET ?";
+                $params[] = $records_per_page;
+                $params[] = $offset;
+                $types .= 'ii';
+                
                 $stmt = $conn->prepare($sql);
-                $stmt->bind_param("sii", $search_param, $records_per_page, $offset);
+                if (!empty($types)) { 
+                    $stmt->bind_param($types, ...$params); 
+                }
                 $stmt->execute();
                 $result = $stmt->get_result();
                 
@@ -121,7 +198,7 @@ require_once __DIR__ . '/../../includes/header.php';
                         $status_class = '';
                         if ($row['Status'] == 'Diajukan') $status_class = 'bg-yellow-100 text-yellow-800';
                         if ($row['Status'] == 'Disetujui') $status_class = 'bg-blue-100 text-blue-800';
-                        if ($row['Status'] == 'Ditolak') $status_class = 'bg-red-100 text-red-800'; // Tambahan
+                        if ($row['Status'] == 'Ditolak') $status_class = 'bg-red-100 text-red-800';
                 ?>
                 <tr class="bg-white border-b hover:bg-gray-50">
                     <td class="px-6 py-4 font-mono text-xs"><?= e($row['Id_Gaji']) ?></td>
@@ -166,7 +243,13 @@ require_once __DIR__ . '/../../includes/header.php';
     </div>
 
     <?php 
-    echo generate_pagination_links($page, $total_pages, 'penggajian_pemilik.php', ['search' => $search]);
+    // Generate pagination links with filter parameters
+    $pagination_params = [];
+    if (!empty($_GET['karyawan'])) $pagination_params['karyawan'] = $_GET['karyawan'];
+    if (!empty($_GET['bulan'])) $pagination_params['bulan'] = $_GET['bulan'];
+    if (!empty($_GET['tahun'])) $pagination_params['tahun'] = $_GET['tahun'];
+    
+    echo generate_pagination_links($page, $total_pages, 'penggajian_pemilik.php', $pagination_params);
     ?>
 </div>
 
