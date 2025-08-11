@@ -65,6 +65,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
     
+    // Validasi umur minimal 18 tahun
+    $today = new DateTime();
+    $age = $today->diff($tgl_lahir_obj)->y;
+    
+    if ($age < 18) {
+        set_flash_message('error', 'Umur karyawan minimal harus 18 tahun.');
+        header('Location: ' . $_SERVER['REQUEST_URI']);
+        exit;
+    }
+    
     // Validasi Tanggal Awal Kerja (harus lebih dari tanggal lahir, tidak boleh sama)
     if (strtotime($tgl_masuk) <= strtotime($tgl_lahir)) {
         set_flash_message('error', 'Tanggal awal kerja harus lebih dari tanggal lahir (minimal 1 hari setelah tanggal lahir).');
@@ -270,6 +280,23 @@ require_once __DIR__ . '/../includes/header.php';
             const birthYear = new Date(birthDate).getFullYear();
             if (birthYear < 1970) {
                 showError(birthDateInput, 'Tahun kelahiran tidak boleh kurang dari 1970.');
+                return false;
+            }
+            
+            // Validasi umur minimal 18 tahun
+            const today = new Date();
+            const birthDateObj = new Date(birthDate);
+            
+            // Hitung umur
+            let age = today.getFullYear() - birthDateObj.getFullYear();
+            const monthDiff = today.getMonth() - birthDateObj.getMonth();
+            
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDateObj.getDate())) {
+                age--;
+            }
+            
+            if (age < 18) {
+                showError(birthDateInput, 'Umur karyawan minimal harus 18 tahun.');
                 return false;
             }
             
