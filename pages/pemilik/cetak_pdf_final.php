@@ -69,16 +69,16 @@ $stmt->close();
 $conn->close();
 
 // Tentukan judul dan periode
-$judul_laporan = 'LAPORAN GAJI ';
-if ($filter_jabatan) {
+$judul_laporan = 'LAPORAN GAJI';
+if (!empty($filter_jabatan)) {
     $nama_jabatan_terfilter = '';
     foreach ($jabatan_list as $j) { 
         if ($j['Id_Jabatan'] === $filter_jabatan) 
             $nama_jabatan_terfilter = $j['Nama_Jabatan']; 
     }
-    $judul_laporan .= "PER JABATAN: " . strtoupper($nama_jabatan_terfilter);
-} else {
-    $judul_laporan .= "PER BULAN";
+    $judul_laporan .= " PER JABATAN: " . strtoupper($nama_jabatan_terfilter);
+} elseif (!empty($filter_bulan)) {
+    $judul_laporan .= " PER BULAN";
 }
 
 $periode = '';
