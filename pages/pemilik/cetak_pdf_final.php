@@ -35,7 +35,7 @@ $sql = "
     FROM GAJI g
     JOIN KARYAWAN k ON g.Id_Karyawan = k.Id_Karyawan
     JOIN JABATAN j ON k.Id_Jabatan = j.Id_Jabatan
-    WHERE g.Status = 'Disetujui'
+    WHERE g.Status = 'Dibayarkan'
 ";
 $params = [];
 $types = '';
