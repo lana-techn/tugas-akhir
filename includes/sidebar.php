@@ -24,7 +24,6 @@ $navigation = [
     ['group' => 'Penggajian', 'roles' => ['admin']],
     ['name' => 'Gaji Pokok', 'href' => 'salary.php', 'icon' => 'fa-solid fa-money-check-dollar', 'roles' => ['admin']],
     ['name' => 'Tunjangan', 'href' => 'tunjangan.php', 'icon' => 'fa-solid fa-gift', 'roles' => ['admin']],
-    ['name' => 'Lembur', 'href' => 'lembur.php', 'icon' => 'fa-solid fa-clock', 'roles' => ['admin']],
     ['name' => 'Potongan', 'href' => 'potongan.php', 'icon' => 'fa-solid fa-scissors', 'roles' => ['admin']],
     ['name' => 'Pengajuan Gaji', 'href' => 'pengajuan_gaji.php', 'icon' => 'fa-solid fa-file-invoice-dollar', 'roles' => ['admin']],
 
