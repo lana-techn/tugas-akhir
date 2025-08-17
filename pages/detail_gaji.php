@@ -48,7 +48,7 @@ $bulan_map = [ "January" => "Januari", "February" => "Februari", "March" => "Mar
 $bulan_gaji = $bulan_map[$bulan_nama_db];
 $tahun_gaji = date('Y', strtotime($gaji_data['Tgl_Gaji']));
 
-$stmt_presensi = $conn->prepare("SELECT Hadir, Sakit, Izin, Alpha, Jam_Lembur FROM PRESENSI WHERE Id_Karyawan = ? AND Bulan = ? AND Tahun = ?");
+$stmt_presensi = $conn->prepare("SELECT Hadir, Sakit, Izin, Alpha, Jam_Lembur, Uang_Lembur FROM PRESENSI WHERE Id_Karyawan = ? AND Bulan = ? AND Tahun = ?");
 $stmt_presensi->bind_param("ssi", $gaji_data['Id_Karyawan'], $bulan_gaji, $tahun_gaji);
 $stmt_presensi->execute();
 $presensi_data = $stmt_presensi->get_result()->fetch_assoc();
@@ -101,7 +101,7 @@ require_once __DIR__ . '/../includes/header.php';
                 <div class="border rounded-md">
                     <div class="flex justify-between py-2.5 px-4 border-b"><span class="text-sm">Gaji Pokok</span><span class="font-semibold">Rp <?= number_format($gaji_pokok, 2, ',', '.') ?></span></div>
                     <div class="flex justify-between py-2.5 px-4 border-b"><span class="text-sm">Tunjangan</span><span class="font-semibold">Rp <?= number_format($gaji_data['Total_Tunjangan'], 2, ',', '.') ?></span></div>
-                    <div class="flex justify-between py-2.5 px-4"><span class="text-sm">Lembur (<?= e($jam_lembur) ?> jam)</span><span class="font-semibold">Rp <?= number_format($gaji_data['Total_Lembur'], 2, ',', '.') ?></span></div>
+                    <div class="flex justify-between py-2.5 px-4"><span class="text-sm">Lembur (<?= e($jam_lembur) ?> jam)</span><span class="font-semibold">Rp <?= number_format($presensi_data['Uang_Lembur'], 2, ',', '.') ?></span></div>
                 </div>
                 <div class="flex justify-between py-2.5 px-4 bg-gray-100 rounded-b-md font-bold"><span>Total Pendapatan (Gaji Kotor)</span><span>Rp <?= number_format($gaji_data['Gaji_Kotor'], 2, ',', '.') ?></span></div>
             </div>
