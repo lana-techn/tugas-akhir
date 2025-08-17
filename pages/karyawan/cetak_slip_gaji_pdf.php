@@ -39,7 +39,7 @@ $bulan_map = [ "January" => "Januari", "February" => "Februari", "March" => "Mar
 $bulan_gaji = $bulan_map[$bulan_nama_db];
 $tahun_gaji = date('Y', strtotime($slip_data['Tgl_Gaji']));
 
-$stmt_presensi = $conn->prepare("SELECT Hadir, Sakit, Izin, Alpha, Jam_Lembur FROM PRESENSI WHERE Id_Karyawan = ? AND Bulan = ? AND Tahun = ?");
+$stmt_presensi = $conn->prepare("SELECT Hadir, Sakit, Izin, Alpha, Jam_Lembur, Uang_Lembur FROM PRESENSI WHERE Id_Karyawan = ? AND Bulan = ? AND Tahun = ?");
 $stmt_presensi->bind_param("ssi", $slip_data['id_karyawan_db'], $bulan_gaji, $tahun_gaji);
 $stmt_presensi->execute();
 $presensi_data = $stmt_presensi->get_result()->fetch_assoc();
@@ -134,18 +134,20 @@ $html = '
 
         <table width="100%">
             <tr>
-                <td width="50%" style="padding-right: 1rem;">
+                <td>
                     <div class="section">
                         <div class="section-title">PENDAPATAN</div>
                         <table class="item-table">
                             <tr><td>Gaji Pokok</td><td class="amount">Rp ' . number_format($slip_data['Nominal_Gapok'] ?? 0, 2, ',', '.') . '</td></tr>
                             <tr><td>Tunjangan</td><td class="amount">Rp ' . number_format($slip_data['Total_Tunjangan'], 2, ',', '.') . '</td></tr>
-                            <tr><td>Lembur (' . e($jam_lembur) . ' jam)</td><td class="amount">Rp ' . number_format($slip_data['Total_Lembur'], 2, ',', '.') . '</td></tr>
+                            <tr><td>Lembur (' . e($jam_lembur) . ' jam)</td><td class="amount">Rp ' . number_format($presensi_data['Uang_Lembur'], 2, ',', '.') . '</td></tr>
                             <tr class="total-row"><td>Total Pendapatan</td><td class="amount">Rp ' . number_format($slip_data['Gaji_Kotor'], 2, ',', '.') . '</td></tr>
                         </table>
                     </div>
                 </td>
-                <td width="50%" style="padding-left: 1rem;">
+            </tr>
+            <tr>
+                <td>
                     <div class="section">
                         <div class="section-title">POTONGAN</div>
                         <table class="item-table">';

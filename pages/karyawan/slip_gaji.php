@@ -43,7 +43,7 @@ if (isset($_SESSION['user_id'])) {
             $bulan_gaji = $bulan_map[$bulan_nama_db];
             $tahun_gaji = date('Y', strtotime($slip_data['Tgl_Gaji']));
 
-            $stmt_presensi = $conn->prepare("SELECT Hadir, Sakit, Izin, Alpha, Jam_Lembur FROM PRESENSI WHERE Id_Karyawan = ? AND Bulan = ? AND Tahun = ?");
+            $stmt_presensi = $conn->prepare("SELECT Hadir, Sakit, Izin, Alpha, Jam_Lembur, Uang_Lembur FROM PRESENSI WHERE Id_Karyawan = ? AND Bulan = ? AND Tahun = ?");
             $stmt_presensi->bind_param("ssi", $id_karyawan_login, $bulan_gaji, $tahun_gaji);
             $stmt_presensi->execute();
             $presensi_data = $stmt_presensi->get_result()->fetch_assoc();
@@ -111,7 +111,7 @@ require_once __DIR__ . '/../../includes/header.php';
             <hr class="my-6">
 
             <!-- Rincian Gaji -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
+            <div class="grid grid-cols-1 gap-y-8">
                 <!-- PENDAPATAN -->
                 <div>
                     <h3 class="text-lg font-bold text-green-700 mb-3 flex items-center gap-2">
@@ -128,7 +128,7 @@ require_once __DIR__ . '/../../includes/header.php';
                         </div>
                         <div class="flex justify-between">
                             <span class="text-gray-600">Lembur (<?= e($presensi_data['Jam_Lembur'] ?? 0) ?> jam)</span>
-                            <span class="font-semibold text-gray-800">Rp <?= number_format($slip_data['Total_Lembur'], 2, ',', '.') ?></span>
+                            <span class="font-semibold text-gray-800">Rp <?= number_format($presensi_data['Uang_Lembur'], 2, ',', '.') ?></span>
                         </div>
                     </div>
                     <div class="flex justify-between mt-3 pt-3 border-t-2 font-bold">

@@ -46,6 +46,7 @@ CREATE TABLE PRESENSI (
     Izin INT,
     Alpha INT,
     Jam_Lembur INT, -- Penambahan jam lembur
+    Uang_Lembur DECIMAL(12,2) DEFAULT 0,
     FOREIGN KEY (Id_Karyawan) REFERENCES KARYAWAN(Id_Karyawan) ON DELETE CASCADE
 );
 
@@ -55,12 +56,7 @@ CREATE TABLE TUNJANGAN (
     Keterangan TEXT
 );
 
-CREATE TABLE LEMBUR (
-    Id_Lembur INT AUTO_INCREMENT PRIMARY KEY,
-    Nama_Lembur VARCHAR(50),
-    Upah_Lembur_Per_Jam DECIMAL(12,2), -- Mengganti Upah_Lembur menjadi per jam
-    Keterangan TEXT
-);
+
 
 CREATE TABLE POTONGAN (
     Id_Potongan INT AUTO_INCREMENT PRIMARY KEY,
@@ -74,7 +70,7 @@ CREATE TABLE GAJI (
     Id_Karyawan VARCHAR(15),
     Tgl_Gaji DATE,
     Total_Tunjangan DECIMAL(12,2),
-    Total_Lembur DECIMAL(12,2),
+    
     Total_Potongan DECIMAL(12,2),
     Gaji_Kotor DECIMAL(12,2),
     Gaji_Bersih DECIMAL(12,2),
@@ -88,17 +84,17 @@ CREATE TABLE DETAIL_GAJI (
     Id_Karyawan VARCHAR(15),
     Id_Gapok INT,
     Id_Tunjangan INT,
-    Id_Lembur INT,
+    
     Id_Potongan INT,
     Nominal_Gapok DECIMAL(12,2),
     Jumlah_Tunjangan DECIMAL(12,2),
     Jumlah_Potongan DECIMAL(12,2),
-    Jumlah_Lembur DECIMAL(12,2),
+    
     FOREIGN KEY (Id_Gaji) REFERENCES GAJI(Id_Gaji),
     FOREIGN KEY (Id_Karyawan) REFERENCES KARYAWAN(Id_Karyawan),
     FOREIGN KEY (Id_Gapok) REFERENCES GAJI_POKOK(Id_Gapok),
     FOREIGN KEY (Id_Tunjangan) REFERENCES TUNJANGAN(Id_Tunjangan),
-    FOREIGN KEY (Id_Lembur) REFERENCES LEMBUR(Id_Lembur),
+    
     FOREIGN KEY (Id_Potongan) REFERENCES POTONGAN(Id_Potongan)
 );
 

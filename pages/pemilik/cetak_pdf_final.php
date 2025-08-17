@@ -28,13 +28,21 @@ $sql = "
         j.Nama_Jabatan, 
         g.Tgl_Gaji, 
         g.Total_Tunjangan,
-        g.Total_Lembur,
-        (g.Gaji_Kotor - g.Total_Tunjangan - g.Total_Lembur) as Gaji_Pokok,
+        dg.Nominal_Gapok as Gaji_Pokok,
+        COALESCE(p.Uang_Lembur, 0) as Total_Lembur,
         g.Total_Potongan, 
         g.Gaji_Bersih
     FROM GAJI g
     JOIN KARYAWAN k ON g.Id_Karyawan = k.Id_Karyawan
     JOIN JABATAN j ON k.Id_Jabatan = j.Id_Jabatan
+    LEFT JOIN DETAIL_GAJI dg ON g.Id_Gaji = dg.Id_Gaji
+    LEFT JOIN PRESENSI p ON (k.Id_Karyawan = p.Id_Karyawan 
+        AND MONTH(g.Tgl_Gaji) = CASE p.Bulan 
+            WHEN 'Januari' THEN 1 WHEN 'Februari' THEN 2 WHEN 'Maret' THEN 3 
+            WHEN 'April' THEN 4 WHEN 'Mei' THEN 5 WHEN 'Juni' THEN 6 
+            WHEN 'Juli' THEN 7 WHEN 'Agustus' THEN 8 WHEN 'September' THEN 9 
+            WHEN 'Oktober' THEN 10 WHEN 'November' THEN 11 WHEN 'Desember' THEN 12 END 
+        AND YEAR(g.Tgl_Gaji) = p.Tahun)
     WHERE g.Status = 'Dibayarkan'
 ";
 $params = [];
@@ -307,7 +315,7 @@ if (!empty($laporan_data)) {
 } else {
     $html .= '
             <tr>
-                <td colspan="10" class="no-data">Tidak ada data yang cocok dengan kriteria filter.</td>
+                <td colspan="9" class="no-data">Tidak ada data yang cocok dengan kriteria filter.</td>
             </tr>';
 }
 

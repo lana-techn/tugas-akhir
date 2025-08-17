@@ -48,13 +48,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $izin = filter_input(INPUT_POST, 'Izin', FILTER_VALIDATE_INT, ["options" => ["min_range"=>0]]);
     $alpha = filter_input(INPUT_POST, 'Alpha', FILTER_VALIDATE_INT, ["options" => ["min_range"=>0]]);
     $jam_lembur = filter_input(INPUT_POST, 'Jam_Lembur', FILTER_VALIDATE_INT, ["options" => ["min_range"=>0]]); // New field
+    $uang_lembur = $jam_lembur * 20000;
 
     if (empty($id_karyawan) || empty($bulan) || $tahun === false || $hadir === false || $sakit === false || $izin === false || $alpha === false || $jam_lembur === false) {
         set_flash_message('error', 'Semua kolom wajib diisi dengan format yang benar dan angka tidak boleh negatif.');
     } else {
         if ($id_presensi) { // Edit
-            $stmt = $conn->prepare("UPDATE PRESENSI SET Hadir=?, Sakit=?, Izin=?, Alpha=?, Jam_Lembur=? WHERE Id_Presensi=?"); // Added Jam_Lembur
-            $stmt->bind_param("iiiiii", $hadir, $sakit, $izin, $alpha, $jam_lembur, $id_presensi); // Added 'i' for Jam_Lembur
+            $stmt = $conn->prepare("UPDATE PRESENSI SET Hadir=?, Sakit=?, Izin=?, Alpha=?, Jam_Lembur=?, Uang_Lembur=? WHERE Id_Presensi=?"); // Added Jam_Lembur
+            $stmt->bind_param("iiiiidi", $hadir, $sakit, $izin, $alpha, $jam_lembur, $uang_lembur, $id_presensi); // Added 'i' for Jam_Lembur
             $action_text = 'diperbarui';
         } else { // Tambah
             $stmt_cek = $conn->prepare("SELECT Id_Presensi FROM PRESENSI WHERE Id_Karyawan = ? AND Bulan = ? AND Tahun = ?");
@@ -67,8 +68,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             $stmt_cek->close();
 
-            $stmt = $conn->prepare("INSERT INTO PRESENSI (Id_Karyawan, Bulan, Tahun, Hadir, Sakit, Izin, Alpha, Jam_Lembur) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"); // Added Jam_Lembur
-            $stmt->bind_param("ssiiiiii", $id_karyawan, $bulan, $tahun, $hadir, $sakit, $izin, $alpha, $jam_lembur); // Added 'i' for Jam_Lembur
+            $stmt = $conn->prepare("INSERT INTO PRESENSI (Id_Karyawan, Bulan, Tahun, Hadir, Sakit, Izin, Alpha, Jam_Lembur, Uang_Lembur) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"); // Added Jam_Lembur
+            $stmt->bind_param("ssiiiiiid", $id_karyawan, $bulan, $tahun, $hadir, $sakit, $izin, $alpha, $jam_lembur, $uang_lembur); // Added 'i' for Jam_Lembur
             $action_text = 'ditambahkan';
         }
 
@@ -147,6 +148,7 @@ require_once __DIR__ .
                         <th class="px-2 py-3">Izin</th>
                         <th class="px-2 py-3">Alpha</th>
                         <th class="px-2 py-3">Jam Lembur</th>
+                        <th class="px-2 py-3">Uang Lembur</th>
                         <th class="px-4 py-3 text-center">Aksi</th>
                     </tr>
                 </thead>
@@ -198,6 +200,7 @@ require_once __DIR__ .
                             <td class="px-2 py-3"><span class="font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded"><?= e($row['Izin']) ?></span></td>
                             <td class="px-2 py-3"><span class="font-bold text-red-600 bg-red-50 px-2 py-1 rounded"><?= e($row['Alpha']) ?></span></td>
                             <td class="px-2 py-3"><span class="font-bold text-purple-600 bg-purple-50 px-2 py-1 rounded"><?= e($row['Jam_Lembur'] ?? '0') ?></span></td>
+                            <td class="px-2 py-3"><span class="font-bold text-gray-600 bg-gray-50 px-2 py-1 rounded"><?= e(number_format($row['Uang_Lembur'] ?? 0, 0, ',', '.')) ?></span></td>
                             <td class="px-4 py-3">
                                 <div class="flex items-center justify-center gap-4">
                                     <a href="presensi.php?action=edit&id=<?= e($row['Id_Presensi']) ?>" class="text-blue-600 hover:text-blue-800" title="Edit"><i class="fa-solid fa-pen-to-square"></i></a>

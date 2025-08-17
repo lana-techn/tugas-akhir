@@ -45,23 +45,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajukan_gaji'])) {
     try {
         // 1. INSERT ke tabel GAJI (Ringkasan)
         $stmt_gaji = $conn->prepare(
-            "INSERT INTO GAJI (Id_Gaji, Id_Karyawan, Tgl_Gaji, Total_Tunjangan, Total_Lembur, Total_Potongan, Gaji_Kotor, Gaji_Bersih, Status) 
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Diajukan')"
+            "INSERT INTO GAJI (Id_Gaji, Id_Karyawan, Tgl_Gaji, Total_Tunjangan, Total_Potongan, Gaji_Kotor, Gaji_Bersih, Status) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, 'Diajukan')"
         );
-        $stmt_gaji->bind_param("sssdddds", $id_gaji, $id_karyawan, $tgl_gaji, $total_tunjangan, $total_lembur, $total_potongan, $gaji_kotor, $gaji_bersih);
+        $stmt_gaji->bind_param("sssdddd", $id_gaji, $id_karyawan, $tgl_gaji, $total_tunjangan, $total_potongan, $gaji_kotor, $gaji_bersih);
         $stmt_gaji->execute();
 
         // Ambil ID tunjangan, potongan, dan lembur yang sesuai
         $id_tunjangan = (int)($_POST['Id_Tunjangan'] ?? 1); // Default 1 jika tidak ada
         $id_potongan = (int)($_POST['Id_Potongan'] ?? 1);   // Default 1 jika tidak ada
-        $id_lembur = (int)($_POST['Id_Lembur'] ?? 1);       // Default 1 jika tidak ada
+        // Overtime is now handled in PRESENSI table, no need for Id_Lembur
 
         // 2. INSERT ke tabel DETAIL_GAJI (Rincian)
         $stmt_detail = $conn->prepare(
-            "INSERT INTO DETAIL_GAJI (Id_Gaji, Id_Karyawan, Id_Gapok, Id_Tunjangan, Id_Potongan, Id_Lembur, Nominal_Gapok, Jumlah_Tunjangan, Jumlah_Lembur, Jumlah_Potongan)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+            "INSERT INTO DETAIL_GAJI (Id_Gaji, Id_Karyawan, Id_Gapok, Id_Tunjangan, Id_Potongan, Nominal_Gapok, Jumlah_Tunjangan, Jumlah_Potongan)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
         );
-        $stmt_detail->bind_param("ssiiiiiddd", $id_gaji, $id_karyawan, $id_gapok, $id_tunjangan, $id_potongan, $id_lembur, $gaji_pokok, $total_tunjangan, $total_lembur, $total_potongan);
+        $stmt_detail->bind_param("ssiiiddd", $id_gaji, $id_karyawan, $id_gapok, $id_tunjangan, $id_potongan, $gaji_pokok, $total_tunjangan, $total_potongan);
         $stmt_detail->execute();
 
         $conn->commit();
@@ -130,33 +130,17 @@ else if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['Id_Karyawan']) &
         $total_tunjangan += $thr;
     }
 
-    $stmt_presensi = $conn->prepare("SELECT Jam_Lembur, Sakit, Izin, Alpha FROM PRESENSI WHERE Id_Karyawan = ? AND Bulan = ? AND Tahun = ?");
+    $stmt_presensi = $conn->prepare("SELECT Jam_Lembur, Uang_Lembur, Sakit, Izin, Alpha FROM PRESENSI WHERE Id_Karyawan = ? AND Bulan = ? AND Tahun = ?");
     $stmt_presensi->bind_param("ssi", $id_karyawan, $bulan_nama, $tahun);
     $stmt_presensi->execute();
     $presensi_data = $stmt_presensi->get_result()->fetch_assoc();
     $stmt_presensi->close();
 
     $jam_lembur = $presensi_data['Jam_Lembur'] ?? 0;
-    $total_lembur = $jam_lembur * 20000;
-    $id_lembur = 1; // Default: tidak ada lembur
+    $total_lembur = $presensi_data['Uang_Lembur'] ?? 0;
     
-    if ($jam_lembur > 0) {
-        // Cari ID lembur yang sesuai dari database
-        $stmt_lembur = $conn->prepare("SELECT Id_Lembur FROM LEMBUR WHERE Upah_Lembur_Per_Jam = 20000 LIMIT 1");
-        $stmt_lembur->execute();
-        $lembur_data = $stmt_lembur->get_result()->fetch_assoc();
-        if ($lembur_data) {
-            $id_lembur = $lembur_data['Id_Lembur'];
-        } else {
-            // Jika tidak ada, ambil lembur pertama yang ada
-            $stmt_lembur2 = $conn->prepare("SELECT Id_Lembur FROM LEMBUR WHERE Id_Lembur != 1 LIMIT 1");
-            $stmt_lembur2->execute();
-            $lembur_data2 = $stmt_lembur2->get_result()->fetch_assoc();
-            $id_lembur = $lembur_data2['Id_Lembur'] ?? 1;
-            $stmt_lembur2->close();
-        }
-        $stmt_lembur->close();
-    }
+    
+    
 
     $detail_potongan = [];
     $total_potongan = 0;
@@ -212,13 +196,14 @@ else if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['Id_Karyawan']) &
             <input type="hidden" name="Id_Gapok" value="<?= e($id_gapok) ?>">
             <input type="hidden" name="Gaji_Pokok" value="<?= e($gaji_pokok) ?>">
             <input type="hidden" name="Total_Tunjangan" value="<?= e($total_tunjangan) ?>">
+            
             <input type="hidden" name="Total_Lembur" value="<?= e($total_lembur) ?>">
             <input type="hidden" name="Total_Potongan" value="<?= e($total_potongan) ?>">
             <input type="hidden" name="Gaji_Kotor" value="<?= e($gaji_kotor) ?>">
             <input type="hidden" name="Gaji_Bersih" value="<?= e($gaji_bersih) ?>">
             <input type="hidden" name="Id_Tunjangan" value="<?= e($id_tunjangan) ?>">
             <input type="hidden" name="Id_Potongan" value="<?= e($id_potongan) ?>">
-            <input type="hidden" name="Id_Lembur" value="<?= e($id_lembur) ?>">
+            
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 border border-gray-200 rounded-lg p-4">
                 <div class="flex justify-between border-b pb-2"><span class="text-sm font-medium text-gray-500">Nama Karyawan</span><span class="text-sm font-semibold text-gray-800"><?= e($karyawan['Nama_Karyawan']) ?></span></div>

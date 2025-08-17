@@ -14,12 +14,7 @@ INSERT INTO POTONGAN (Nama_Potongan, Tarif, Keterangan) VALUES
 ('Potongan Keterlambatan', 50000, 'Potongan untuk keterlambatan'),
 ('Potongan Lainnya', 0, 'Potongan lain-lain');
 
--- Data Lembur
-INSERT INTO LEMBUR (Nama_Lembur, Upah_Lembur_Per_Jam, Keterangan) VALUES
-('Lembur Regular', 20000, 'Lembur hari kerja normal'),
-('Lembur Weekend', 25000, 'Lembur hari Sabtu/Minggu'), 
-('Lembur Hari Libur', 30000, 'Lembur hari libur nasional'),
-('Lembur Malam', 22000, 'Lembur shift malam');
+
 
 -- Verifikasi data telah masuk
 SELECT 'Data Tunjangan:' as Info;
@@ -28,5 +23,4 @@ SELECT * FROM TUNJANGAN;
 SELECT 'Data Potongan:' as Info;
 SELECT * FROM POTONGAN;
 
-SELECT 'Data Lembur:' as Info;
-SELECT * FROM LEMBUR;
+
