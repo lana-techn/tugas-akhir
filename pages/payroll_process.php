@@ -58,10 +58,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajukan_gaji'])) {
 
         // 2. INSERT ke tabel DETAIL_GAJI (Rincian)
         $stmt_detail = $conn->prepare(
-            "INSERT INTO DETAIL_GAJI (Id_Gaji, Id_Karyawan, Id_Gapok, Id_Tunjangan, Id_Potongan, Nominal_Gapok, Jumlah_Tunjangan, Jumlah_Potongan)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+            "INSERT INTO DETAIL_GAJI (Id_Gaji, Id_Karyawan, Id_Gapok, Id_Tunjangan, Id_Potongan, Jumlah_Tunjangan, Jumlah_Potongan)
+             VALUES (?, ?, ?, ?, ?, ?, ?)"
         );
-        $stmt_detail->bind_param("ssiiiddd", $id_gaji, $id_karyawan, $id_gapok, $id_tunjangan, $id_potongan, $gaji_pokok, $total_tunjangan, $total_potongan);
+        $stmt_detail->bind_param("ssiiidd", $id_gaji, $id_karyawan, $id_gapok, $id_tunjangan, $id_potongan, $total_tunjangan, $total_potongan);
         $stmt_detail->execute();
 
         $conn->commit();
@@ -130,14 +130,15 @@ else if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['Id_Karyawan']) &
         $total_tunjangan += $thr;
     }
 
-    $stmt_presensi = $conn->prepare("SELECT Jam_Lembur, Uang_Lembur, Sakit, Izin, Alpha FROM PRESENSI WHERE Id_Karyawan = ? AND Bulan = ? AND Tahun = ?");
+    $stmt_presensi = $conn->prepare("SELECT Jam_Lembur, Sakit, Izin, Alpha FROM PRESENSI WHERE Id_Karyawan = ? AND Bulan = ? AND Tahun = ?");
     $stmt_presensi->bind_param("ssi", $id_karyawan, $bulan_nama, $tahun);
     $stmt_presensi->execute();
     $presensi_data = $stmt_presensi->get_result()->fetch_assoc();
     $stmt_presensi->close();
 
     $jam_lembur = $presensi_data['Jam_Lembur'] ?? 0;
-    $total_lembur = $presensi_data['Uang_Lembur'] ?? 0;
+    // Calculate overtime pay at 20,000 per hour
+    $total_lembur = $jam_lembur * 20000;
     
     
     
