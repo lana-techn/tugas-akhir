@@ -77,7 +77,7 @@ function isLoggedIn()
 function requireLogin($required_level = null)
 {
     if (!isLoggedIn()) {
-        header('Location: ../auth/login.php');
+        header('Location: ' . BASE_URL . '/auth/login.php');
         exit();
     }
     
@@ -86,7 +86,7 @@ function requireLogin($required_level = null)
         if (!$current_user || strtolower($current_user['jabatan']) !== strtolower($required_level)) {
             // Redirect to unauthorized page or show error
             set_flash_message('error', 'Anda tidak memiliki akses ke halaman ini.');
-            header('Location: ../auth/login.php');
+            header('Location: ' . BASE_URL . '/auth/login.php');
             exit();
         }
     }
@@ -129,7 +129,7 @@ function logout()
     }
 
     session_destroy();
-    header('Location: login.php');
+    header('Location: ' . BASE_URL . '/auth/login.php');
     exit();
 }
 
