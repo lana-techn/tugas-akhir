@@ -35,8 +35,13 @@ if (!$gaji_data) {
     exit;
 }
 
-// 2. Ambil data rincian dari tabel DETAIL_GAJI
-$stmt_detail = $conn->prepare("SELECT * FROM DETAIL_GAJI WHERE Id_Gaji = ?");
+// 2. Ambil data rincian dari tabel DETAIL_GAJI dengan JOIN ke GAJI_POKOK
+$stmt_detail = $conn->prepare(
+    "SELECT dg.*, gp.Nominal as Gaji_Pokok 
+     FROM DETAIL_GAJI dg 
+     JOIN GAJI_POKOK gp ON dg.Id_Gapok = gp.Id_Gapok 
+     WHERE dg.Id_Gaji = ?"
+);
 $stmt_detail->bind_param("s", $id_gaji);
 $stmt_detail->execute();
 $detail_data = $stmt_detail->get_result()->fetch_assoc();
@@ -53,12 +58,18 @@ $stmt_presensi->bind_param("ssi", $gaji_data['Id_Karyawan'], $bulan_gaji, $tahun
 $stmt_presensi->execute();
 $presensi_data = $stmt_presensi->get_result()->fetch_assoc();
 $stmt_presensi->close();
+
+// Calculate overtime pay if not set
+if ($presensi_data && ($presensi_data['Uang_Lembur'] == 0 || $presensi_data['Uang_Lembur'] === null) && $presensi_data['Jam_Lembur'] > 0) {
+    $presensi_data['Uang_Lembur'] = $presensi_data['Jam_Lembur'] * 20000;
+}
 $conn->close();
 
 
 // 4. Hitung ulang komponen untuk ditampilkan di detail
-$gaji_pokok = $detail_data['Nominal_Gapok'] ?? 0;
+$gaji_pokok = $detail_data['Gaji_Pokok'] ?? 0;
 $jam_lembur = $presensi_data['Jam_Lembur'] ?? 0;
+$uang_lembur = $presensi_data['Uang_Lembur'] ?? 0;
 
 // Rincian Potongan
 $detail_potongan_display = [];
@@ -101,7 +112,7 @@ require_once __DIR__ . '/../includes/header.php';
                 <div class="border rounded-md">
                     <div class="flex justify-between py-2.5 px-4 border-b"><span class="text-sm">Gaji Pokok</span><span class="font-semibold">Rp <?= number_format($gaji_pokok, 2, ',', '.') ?></span></div>
                     <div class="flex justify-between py-2.5 px-4 border-b"><span class="text-sm">Tunjangan</span><span class="font-semibold">Rp <?= number_format($gaji_data['Total_Tunjangan'], 2, ',', '.') ?></span></div>
-                    <div class="flex justify-between py-2.5 px-4"><span class="text-sm">Lembur (<?= e($jam_lembur) ?> jam)</span><span class="font-semibold">Rp <?= number_format($presensi_data['Uang_Lembur'], 2, ',', '.') ?></span></div>
+                    <div class="flex justify-between py-2.5 px-4"><span class="text-sm">Lembur (<?= e($jam_lembur) ?> jam)</span><span class="font-semibold">Rp <?= number_format($uang_lembur, 2, ',', '.') ?></span></div>
                 </div>
                 <div class="flex justify-between py-2.5 px-4 bg-gray-100 rounded-b-md font-bold"><span>Total Pendapatan (Gaji Kotor)</span><span>Rp <?= number_format($gaji_data['Gaji_Kotor'], 2, ',', '.') ?></span></div>
             </div>
