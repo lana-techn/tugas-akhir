@@ -28,7 +28,8 @@ $sql = "
         j.Nama_Jabatan, 
         g.Tgl_Gaji, 
         g.Total_Tunjangan,
-        dg.Nominal_Gapok as Gaji_Pokok,
+        dg.Id_Gapok,
+        gp.Nominal as Gaji_Pokok,
         COALESCE(p.Uang_Lembur, 0) as Total_Lembur,
         g.Total_Potongan, 
         g.Gaji_Bersih
@@ -36,6 +37,7 @@ $sql = "
     JOIN KARYAWAN k ON g.Id_Karyawan = k.Id_Karyawan
     JOIN JABATAN j ON k.Id_Jabatan = j.Id_Jabatan
     LEFT JOIN DETAIL_GAJI dg ON g.Id_Gaji = dg.Id_Gaji
+    LEFT JOIN GAJI_POKOK gp ON dg.Id_Gapok = gp.Id_Gapok
     LEFT JOIN PRESENSI p ON (k.Id_Karyawan = p.Id_Karyawan 
         AND MONTH(g.Tgl_Gaji) = CASE p.Bulan 
             WHEN 'Januari' THEN 1 WHEN 'Februari' THEN 2 WHEN 'Maret' THEN 3 
