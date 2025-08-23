@@ -4,12 +4,12 @@ require_once __DIR__ . '/../includes/functions.php';
 
 // Jika sudah login, arahkan ke dashboard yang sesuai
 if (isset($_SESSION['user_id'])) {
-    $redirect_url = '../index.php'; // Default
+    $redirect_url = BASE_URL . '/index.php'; // Default
     if (isset($_SESSION['level'])) {
         if (strtolower($_SESSION['level']) === 'pemilik') {
-            $redirect_url = '../index_pemilik.php';
+            $redirect_url = BASE_URL . '/index_pemilik.php';
         } elseif (strtolower($_SESSION['level']) === 'karyawan') {
-            $redirect_url = '../index_karyawan.php';
+            $redirect_url = BASE_URL . '/index_karyawan.php';
         }
     }
     header('Location: ' . $redirect_url);
@@ -38,11 +38,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['email'] = $user['Email'];
                 $_SESSION['level'] = $user['Level'];
                 
-                $redirect_url = '../index.php'; // Default
+                $redirect_url = BASE_URL . '/index.php'; // Default
                 if (strtolower($user['Level']) === 'pemilik') {
-                    $redirect_url = '../index_pemilik.php';
+                    $redirect_url = BASE_URL . '/index_pemilik.php';
                 } elseif (strtolower($user['Level']) === 'karyawan') {
-                    $redirect_url = '../index_karyawan.php';
+                    $redirect_url = BASE_URL . '/index_karyawan.php';
                 }
                 
                 header('Location: ' . $redirect_url);
