@@ -55,8 +55,12 @@ if (isset($_SESSION['user_id'])) {
                 $presensi_data['Uang_Lembur'] = $presensi_data['Jam_Lembur'] * 20000;
             }
             
-            // Set overtime pay variable with null handling
-            $uang_lembur = $presensi_data['Uang_Lembur'] ?? 0;
+            // Set overtime pay variable with null handling - prioritize GAJI table data
+            $uang_lembur = $slip_data['Total_Lembur'] ?? 0;
+            if ($uang_lembur == 0 && $presensi_data && $presensi_data['Jam_Lembur'] > 0) {
+                // Fallback to PRESENSI calculation if GAJI table doesn't have overtime data
+                $uang_lembur = $presensi_data['Uang_Lembur'] ?? ($presensi_data['Jam_Lembur'] * 20000);
+            }
         }
     }
 }

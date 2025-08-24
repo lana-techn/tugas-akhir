@@ -59,7 +59,14 @@ $jam_lembur = $presensi_data['Jam_Lembur'] ?? 0;
 
 // Siapkan detail potongan
 $gaji_pokok = $slip_data['Gaji_Pokok'] ?? 0;
-$uang_lembur = $presensi_data['Uang_Lembur'] ?? 0;
+
+// Prioritize Total_Lembur from GAJI table, fallback to PRESENSI calculation
+$uang_lembur = $slip_data['Total_Lembur'] ?? 0;
+if ($uang_lembur == 0 && $jam_lembur > 0) {
+    // Fallback calculation if not stored in GAJI table
+    $uang_lembur = $presensi_data['Uang_Lembur'] ?? ($jam_lembur * 20000);
+}
+
 $detail_potongan_display = [];
 
 // Potongan BPJS Ketenagakerjaan (2%)
