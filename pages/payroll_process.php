@@ -45,10 +45,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajukan_gaji'])) {
     try {
         // 1. INSERT ke tabel GAJI (Ringkasan)
         $stmt_gaji = $conn->prepare(
-            "INSERT INTO GAJI (Id_Gaji, Id_Karyawan, Tgl_Gaji, Total_Tunjangan, Total_Potongan, Gaji_Kotor, Gaji_Bersih, Status) 
-             VALUES (?, ?, ?, ?, ?, ?, ?, 'Diajukan')"
+            "INSERT INTO GAJI (Id_Gaji, Id_Karyawan, Tgl_Gaji, Total_Tunjangan, Total_Lembur, Total_Potongan, Gaji_Kotor, Gaji_Bersih, Status) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Diajukan')"
         );
-        $stmt_gaji->bind_param("sssdddd", $id_gaji, $id_karyawan, $tgl_gaji, $total_tunjangan, $total_potongan, $gaji_kotor, $gaji_bersih);
+        $stmt_gaji->bind_param("sssddddd", $id_gaji, $id_karyawan, $tgl_gaji, $total_tunjangan, $total_lembur, $total_potongan, $gaji_kotor, $gaji_bersih);
         $stmt_gaji->execute();
 
         // Ambil ID tunjangan, potongan, dan lembur yang sesuai
@@ -58,10 +58,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajukan_gaji'])) {
 
         // 2. INSERT ke tabel DETAIL_GAJI (Rincian)
         $stmt_detail = $conn->prepare(
-            "INSERT INTO DETAIL_GAJI (Id_Gaji, Id_Karyawan, Id_Gapok, Id_Tunjangan, Id_Potongan, Jumlah_Tunjangan, Jumlah_Potongan)
-             VALUES (?, ?, ?, ?, ?, ?, ?)"
+            "INSERT INTO DETAIL_GAJI (Id_Gaji, Id_Karyawan, Id_Gapok, Id_Tunjangan, Id_Potongan, Jumlah_Tunjangan, Jumlah_Potongan, Jumlah_Lembur)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
         );
-        $stmt_detail->bind_param("ssiiidd", $id_gaji, $id_karyawan, $id_gapok, $id_tunjangan, $id_potongan, $total_tunjangan, $total_potongan);
+        $stmt_detail->bind_param("ssiiiddd", $id_gaji, $id_karyawan, $id_gapok, $id_tunjangan, $id_potongan, $total_tunjangan, $total_potongan, $total_lembur);
         $stmt_detail->execute();
 
         $conn->commit();
@@ -130,11 +130,34 @@ else if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['Id_Karyawan']) &
         $total_tunjangan += $thr;
     }
 
+    // Get attendance data for the payroll period with multiple fallback strategies
     $stmt_presensi = $conn->prepare("SELECT Jam_Lembur, Sakit, Izin, Alpha FROM PRESENSI WHERE Id_Karyawan = ? AND Bulan = ? AND Tahun = ?");
     $stmt_presensi->bind_param("ssi", $id_karyawan, $bulan_nama, $tahun);
     $stmt_presensi->execute();
     $presensi_data = $stmt_presensi->get_result()->fetch_assoc();
     $stmt_presensi->close();
+
+    // Strategy 1: If no exact match, try current month (most common case)
+    if (!$presensi_data) {
+        $current_year = date('Y');
+        $current_month = date('n');
+        $current_month_name = $bulan_map[$current_month];
+        
+        $stmt_current = $conn->prepare("SELECT Jam_Lembur, Sakit, Izin, Alpha FROM PRESENSI WHERE Id_Karyawan = ? AND Bulan = ? AND Tahun = ?");
+        $stmt_current->bind_param("ssi", $id_karyawan, $current_month_name, $current_year);
+        $stmt_current->execute();
+        $presensi_data = $stmt_current->get_result()->fetch_assoc();
+        $stmt_current->close();
+    }
+    
+    // Strategy 2: If still no data, try the latest available attendance record for this employee
+    if (!$presensi_data) {
+        $stmt_latest = $conn->prepare("SELECT Jam_Lembur, Sakit, Izin, Alpha FROM PRESENSI WHERE Id_Karyawan = ? ORDER BY Tahun DESC, FIELD(Bulan, 'Desember', 'November', 'Oktober', 'September', 'Agustus', 'Juli', 'Juni', 'Mei', 'April', 'Maret', 'Februari', 'Januari') DESC LIMIT 1");
+        $stmt_latest->bind_param("s", $id_karyawan);
+        $stmt_latest->execute();
+        $presensi_data = $stmt_latest->get_result()->fetch_assoc();
+        $stmt_latest->close();
+    }
 
     $jam_lembur = $presensi_data['Jam_Lembur'] ?? 0;
     // Calculate overtime pay at 20,000 per hour

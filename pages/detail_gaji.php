@@ -69,7 +69,13 @@ $conn->close();
 // 4. Hitung ulang komponen untuk ditampilkan di detail
 $gaji_pokok = $detail_data['Gaji_Pokok'] ?? 0;
 $jam_lembur = $presensi_data['Jam_Lembur'] ?? 0;
-$uang_lembur = $presensi_data['Uang_Lembur'] ?? 0;
+
+// Use Jumlah_Lembur from DETAIL_GAJI table if available, otherwise fallback to PRESENSI calculation
+$uang_lembur = $detail_data['Jumlah_Lembur'] ?? 0;
+if ($uang_lembur == 0 && $jam_lembur > 0) {
+    // Fallback calculation if not stored in DETAIL_GAJI
+    $uang_lembur = $presensi_data['Uang_Lembur'] ?? ($jam_lembur * 20000);
+}
 
 // Rincian Potongan
 $detail_potongan_display = [];
@@ -112,7 +118,7 @@ require_once __DIR__ . '/../includes/header.php';
                 <div class="border rounded-md">
                     <div class="flex justify-between py-2.5 px-4 border-b"><span class="text-sm">Gaji Pokok</span><span class="font-semibold">Rp <?= number_format($gaji_pokok, 2, ',', '.') ?></span></div>
                     <div class="flex justify-between py-2.5 px-4 border-b"><span class="text-sm">Tunjangan</span><span class="font-semibold">Rp <?= number_format($gaji_data['Total_Tunjangan'], 2, ',', '.') ?></span></div>
-                    <div class="flex justify-between py-2.5 px-4"><span class="text-sm">Lembur (<?= e($jam_lembur) ?> jam)</span><span class="font-semibold">Rp <?= number_format($uang_lembur, 2, ',', '.') ?></span></div>
+                    <div class="flex justify-between py-2.5 px-4"><span class="text-sm">Lembur (<?= e($jam_lembur) ?> jam)</span><span class="font-semibold">Rp <?= number_format($gaji_data['Total_Lembur'] ?? $uang_lembur, 2, ',', '.') ?></span></div>
                 </div>
                 <div class="flex justify-between py-2.5 px-4 bg-gray-100 rounded-b-md font-bold"><span>Total Pendapatan (Gaji Kotor)</span><span>Rp <?= number_format($gaji_data['Gaji_Kotor'], 2, ',', '.') ?></span></div>
             </div>
