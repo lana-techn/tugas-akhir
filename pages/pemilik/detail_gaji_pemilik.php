@@ -88,208 +88,63 @@ $page_title = 'Detail Gaji: ' . e($gaji_data['Nama_Karyawan']);
 require_once __DIR__ . '/../../includes/header.php';
 ?>
 
-<div class="bg-gradient-to-r from-indigo-50 to-blue-50 min-h-screen py-8">
-    <div class="max-w-4xl mx-auto px-4">
-        <!-- Header Section -->
-        <div class="bg-white rounded-2xl shadow-xl p-8 mb-8 border border-gray-200">
-            <div class="text-center mb-6">
-                <div class="inline-flex items-center justify-center w-16 h-16 bg-indigo-100 rounded-full mb-4">
-                    <i class="fas fa-file-invoice-dollar text-indigo-600 text-2xl"></i>
-                </div>
-                <h1 class="text-3xl font-bold text-gray-800 mb-2">Detail Gaji Karyawan</h1>
-                <p class="text-gray-600">Rincian perhitungan gaji untuk periode <?= date('F Y', strtotime($gaji_data['Tgl_Gaji'])) ?></p>
-            </div>
-            
-            <!-- Employee Information Card -->
-            <div class="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-6 border-l-4 border-indigo-500">
-                <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                    <i class="fas fa-user-circle text-indigo-500"></i>
-                    <span>Informasi Karyawan</span>
-                </h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="space-y-4">
-                        <div class="flex items-start gap-3">
-                            <div class="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
-                            <div>
-                                <span class="text-sm text-gray-600 block">Nama Karyawan</span>
-                                <span class="font-bold text-gray-800 text-lg"><?= e($gaji_data['Nama_Karyawan']) ?></span>
-                            </div>
-                        </div>
-                        <div class="flex items-start gap-3">
-                            <div class="w-2 h-2 bg-green-500 rounded-full mt-2"></div>
-                            <div>
-                                <span class="text-sm text-gray-600 block">Jabatan</span>
-                                <span class="font-bold text-gray-800"><?= e($gaji_data['Nama_Jabatan']) ?></span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="space-y-4">
-                        <div class="flex items-start gap-3">
-                            <div class="w-2 h-2 bg-purple-500 rounded-full mt-2"></div>
-                            <div>
-                                <span class="text-sm text-gray-600 block">Tanggal Gaji</span>
-                                <span class="font-bold text-gray-800"><?= date('d F Y', strtotime($gaji_data['Tgl_Gaji'])) ?></span>
-                            </div>
-                        </div>
-                        <div class="flex items-start gap-3">
-                            <div class="w-2 h-2 bg-orange-500 rounded-full mt-2"></div>
-                            <div>
-                                <span class="text-sm text-gray-600 block">Masa Kerja</span>
-                                <span class="font-bold text-gray-800"><?= e($masa_kerja_text) ?></span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+<div class="bg-white p-8 rounded-xl shadow-lg max-w-3xl mx-auto border border-gray-200">
+    <div class="text-center mb-8">
+        <h2 class="text-3xl font-bold font-poppins text-gray-800">DETAIL GAJI</h2>
+        <p class="text-gray-500 mt-1">Rincian perhitungan gaji untuk periode <?= date('F Y', strtotime($gaji_data['Tgl_Gaji'])) ?></p>
+    </div>
+    
+    <div class="space-y-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 border border-gray-200 rounded-lg p-4">
+            <div class="flex justify-between border-b pb-2"><span class="text-sm font-medium text-gray-500">Nama Karyawan</span><span class="text-sm font-semibold text-gray-800"><?= e($gaji_data['Nama_Karyawan']) ?></span></div>
+            <div class="flex justify-between border-b pb-2"><span class="text-sm font-medium text-gray-500">Jabatan</span><span class="text-sm font-semibold text-gray-800"><?= e($gaji_data['Nama_Jabatan']) ?></span></div>
+            <div class="flex justify-between"><span class="text-sm font-medium text-gray-500">Tanggal Gaji</span><span class="text-sm font-semibold text-gray-800"><?= date('d F Y', strtotime($gaji_data['Tgl_Gaji'])) ?></span></div>
+            <div class="flex justify-between"><span class="text-sm font-medium text-gray-500">Masa Kerja</span><span class="text-sm font-semibold text-gray-800"><?= e($masa_kerja_text) ?></span></div>
         </div>
 
-        <!-- Content Grid -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <!-- Income Section -->
-            <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
-                <div class="bg-gradient-to-r from-green-500 to-emerald-600 p-6 text-white">
-                    <h3 class="text-xl font-bold flex items-center gap-3">
-                        <div class="bg-white/20 rounded-full p-2">
-                            <i class="fas fa-arrow-up text-lg"></i>
-                        </div>
-                        <span>PENDAPATAN</span>
-                    </h3>
+        <div class="space-y-4">
+            <div>
+                <h3 class="font-bold text-lg text-green-700 mb-2">PENDAPATAN</h3>
+                <div class="border rounded-md">
+                    <div class="flex justify-between py-2.5 px-4 border-b"><span class="text-sm">Gaji Pokok</span><span class="font-semibold">Rp <?= number_format($gaji_pokok, 2, ',', '.') ?></span></div>
+                    <div class="flex justify-between py-2.5 px-4 border-b"><span class="text-sm">Tunjangan</span><span class="font-semibold">Rp <?= number_format($gaji_data['Total_Tunjangan'], 2, ',', '.') ?></span></div>
+                    <div class="flex justify-between py-2.5 px-4"><span class="text-sm">Lembur (<?= e($jam_lembur) ?> jam)</span><span class="font-semibold">Rp <?= number_format($gaji_data['Total_Lembur'] ?? $uang_lembur, 2, ',', '.') ?></span></div>
                 </div>
-                <div class="p-6 space-y-4">
-                    <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                        <div class="flex items-center gap-3">
-                            <div class="w-3 h-3 bg-blue-400 rounded-full"></div>
-                            <span class="font-medium text-gray-700">Gaji Pokok</span>
-                        </div>
-                        <span class="font-bold text-lg text-gray-900">Rp <?= number_format($gaji_pokok, 0, ',', '.') ?></span>
-                    </div>
-                    <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                        <div class="flex items-center gap-3">
-                            <div class="w-3 h-3 bg-purple-400 rounded-full"></div>
-                            <span class="font-medium text-gray-700">Tunjangan</span>
-                        </div>
-                        <span class="font-bold text-lg text-gray-900">Rp <?= number_format($gaji_data['Total_Tunjangan'], 0, ',', '.') ?></span>
-                    </div>
-                    <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                        <div class="flex items-center gap-3">
-                            <div class="w-3 h-3 bg-orange-400 rounded-full"></div>
-                            <span class="font-medium text-gray-700">Lembur <span class="text-sm text-gray-500">(<?= e($jam_lembur) ?> jam)</span></span>
-                        </div>
-                        <span class="font-bold text-lg text-gray-900">Rp <?= number_format($uang_lembur, 0, ',', '.') ?></span>
-                    </div>
-                    <div class="border-t-2 border-green-200 pt-4">
-                        <div class="flex justify-between items-center p-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg">
-                            <span class="font-bold text-lg">Total Pendapatan</span>
-                            <span class="font-bold text-xl">Rp <?= number_format($gaji_data['Gaji_Kotor'], 0, ',', '.') ?></span>
-                        </div>
-                    </div>
-                </div>
+                <div class="flex justify-between py-2.5 px-4 bg-gray-100 rounded-b-md font-bold"><span>Total Pendapatan (Gaji Kotor)</span><span>Rp <?= number_format($gaji_data['Gaji_Kotor'], 2, ',', '.') ?></span></div>
             </div>
 
-            <!-- Deductions Section -->
-            <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
-                <div class="bg-gradient-to-r from-red-500 to-pink-600 p-6 text-white">
-                    <h3 class="text-xl font-bold flex items-center gap-3">
-                        <div class="bg-white/20 rounded-full p-2">
-                            <i class="fas fa-arrow-down text-lg"></i>
-                        </div>
-                        <span>POTONGAN</span>
-                    </h3>
-                </div>
-                <div class="p-6 space-y-4">
+            <div>
+                <h3 class="font-bold text-lg text-red-700 mb-2">POTONGAN</h3>
+                <div class="border rounded-md">
                     <?php if(!empty($detail_potongan_display)): ?>
                         <?php foreach($detail_potongan_display as $p): ?>
-                        <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                            <div class="flex items-center gap-3">
-                                <div class="w-3 h-3 bg-red-400 rounded-full"></div>
-                                <span class="font-medium text-gray-700"><?= e($p['nama']) ?></span>
-                            </div>
-                            <span class="font-bold text-lg text-red-600">-Rp <?= number_format($p['jumlah'], 0, ',', '.') ?></span>
-                        </div>
+                            <div class="flex justify-between py-2.5 px-4 border-b"><span class="text-sm"><?= e($p['nama']) ?></span><span class="text-sm font-semibold text-red-600">- Rp <?= number_format($p['jumlah'], 2, ',', '.') ?></span></div>
                         <?php endforeach; ?>
                     <?php else: ?>
-                        <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                            <div class="flex items-center gap-3">
-                                <div class="w-3 h-3 bg-green-400 rounded-full"></div>
-                                <span class="font-medium text-gray-500">Tidak ada potongan</span>
-                            </div>
-                            <span class="font-bold text-lg text-gray-900">Rp 0</span>
-                        </div>
+                        <div class="flex justify-between py-2.5 px-4"><span class="text-sm text-gray-500">Tidak ada potongan</span><span class="font-semibold text-red-600">- Rp 0</span></div>
                     <?php endif; ?>
-                    <div class="border-t-2 border-red-200 pt-4">
-                        <div class="flex justify-between items-center p-4 bg-gradient-to-r from-red-500 to-pink-600 text-white rounded-lg">
-                            <span class="font-bold text-lg">Total Potongan</span>
-                            <span class="font-bold text-xl">-Rp <?= number_format($gaji_data['Total_Potongan'], 0, ',', '.') ?></span>
-                        </div>
-                    </div>
+                </div>
+                <div class="flex justify-between py-2.5 px-4 bg-gray-100 rounded-b-md font-bold"><span class="text-red-600">Total Potongan</span><span class="text-red-600">- Rp <?= number_format($gaji_data['Total_Potongan'], 2, ',', '.') ?></span></div>
+            </div>
+            
+            <div>
+                <h3 class="font-bold text-lg text-blue-700 mb-2">RINCIAN KEHADIRAN</h3>
+                <div class="border rounded-md divide-y">
+                    <div class="flex justify-between py-2.5 px-4"><span class="text-sm">Hadir</span><span class="font-semibold"><?= e($presensi_data['Hadir'] ?? 0) ?> hari</span></div>
+                    <div class="flex justify-between py-2.5 px-4"><span class="text-sm">Sakit</span><span class="font-semibold"><?= e($presensi_data['Sakit'] ?? 0) ?> hari</span></div>
+                    <div class="flex justify-between py-2.5 px-4"><span class="text-sm">Izin</span><span class="font-semibold"><?= e($presensi_data['Izin'] ?? 0) ?> hari</span></div>
+                    <div class="flex justify-between py-2.5 px-4"><span class="text-sm">Alpha</span><span class="font-semibold"><?= e($presensi_data['Alpha'] ?? 0) ?> hari</span></div>
                 </div>
             </div>
         </div>
 
-        <!-- Attendance Section -->
-        <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden mt-8">
-            <div class="bg-gradient-to-r from-purple-500 to-indigo-600 p-6 text-white">
-                <h3 class="text-xl font-bold flex items-center gap-3">
-                    <div class="bg-white/20 rounded-full p-2">
-                        <i class="fas fa-calendar-check text-lg"></i>
-                    </div>
-                    <span>RINCIAN KEHADIRAN</span>
-                </h3>
-            </div>
-            <div class="p-6">
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div class="text-center p-4 bg-green-50 rounded-lg border border-green-200">
-                        <div class="bg-green-500 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3 text-white">
-                            <i class="fas fa-check text-lg"></i>
-                        </div>
-                        <div class="text-3xl font-bold text-green-600 mb-1"><?= e($presensi_data['Hadir'] ?? 0) ?></div>
-                        <div class="text-sm text-gray-600 font-medium">Hari Hadir</div>
-                    </div>
-                    <div class="text-center p-4 bg-yellow-50 rounded-lg border border-yellow-200">
-                        <div class="bg-yellow-500 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3 text-white">
-                            <i class="fas fa-thermometer-half text-lg"></i>
-                        </div>
-                        <div class="text-3xl font-bold text-yellow-600 mb-1"><?= e($presensi_data['Sakit'] ?? 0) ?></div>
-                        <div class="text-sm text-gray-600 font-medium">Hari Sakit</div>
-                    </div>
-                    <div class="text-center p-4 bg-blue-50 rounded-lg border border-blue-200">
-                        <div class="bg-blue-500 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3 text-white">
-                            <i class="fas fa-hand-paper text-lg"></i>
-                        </div>
-                        <div class="text-3xl font-bold text-blue-600 mb-1"><?= e($presensi_data['Izin'] ?? 0) ?></div>
-                        <div class="text-sm text-gray-600 font-medium">Hari Izin</div>
-                    </div>
-                    <div class="text-center p-4 bg-red-50 rounded-lg border border-red-200">
-                        <div class="bg-red-500 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3 text-white">
-                            <i class="fas fa-times text-lg"></i>
-                        </div>
-                        <div class="text-3xl font-bold text-red-600 mb-1"><?= e($presensi_data['Alpha'] ?? 0) ?></div>
-                        <div class="text-sm text-gray-600 font-medium">Hari Alpha</div>
-                    </div>
-                </div>
-            </div>
+        <div class="bg-green-100 border-l-4 border-green-500 text-green-800 p-4 rounded-lg flex justify-between items-center mt-6">
+            <span class="text-lg font-bold font-poppins">GAJI BERSIH (TAKE HOME PAY)</span>
+            <span class="text-xl font-bold">Rp <?= number_format($gaji_data['Gaji_Bersih'], 2, ',', '.') ?></span>
         </div>
 
-        <!-- Final Amount Section -->
-        <div class="bg-gradient-to-r from-indigo-600 to-purple-700 rounded-2xl p-8 text-white text-center shadow-xl mt-8">
-            <div class="mb-4">
-                <div class="bg-white/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto">
-                    <i class="fas fa-wallet text-2xl"></i>
-                </div>
-            </div>
-            <div class="space-y-2">
-                <h3 class="text-2xl font-bold uppercase tracking-wide">Gaji Bersih Diterima</h3>
-                <p class="text-lg opacity-90">(Take Home Pay)</p>
-                <div class="text-5xl font-bold mt-6">Rp <?= number_format($gaji_data['Gaji_Bersih'], 0, ',', '.') ?></div>
-            </div>
-        </div>
-
-        <!-- Action Button -->
-        <div class="flex items-center justify-center pt-8 pb-4">
-            <a href="penggajian_pemilik.php" class="inline-flex items-center gap-2 px-8 py-3 rounded-xl text-gray-600 bg-white hover:bg-gray-50 font-semibold text-lg transition-all shadow-lg hover:shadow-xl border border-gray-200">
-                <i class="fas fa-arrow-left"></i>
-                <span>Kembali ke Daftar Persetujuan</span>
-            </a>
+        <div class="flex items-center justify-end pt-6">
+            <a href="penggajian_pemilik.php" class="px-6 py-2.5 rounded-lg text-gray-600 bg-gray-100 hover:bg-gray-200 font-semibold text-sm transition-colors">Kembali ke Daftar Gaji</a>
         </div>
     </div>
 </div>
