@@ -148,7 +148,6 @@ require_once __DIR__ .
                         <th class="px-2 py-3">Izin</th>
                         <th class="px-2 py-3">Alpha</th>
                         <th class="px-2 py-3">Jam Lembur</th>
-                        <th class="px-2 py-3">Uang Lembur</th>
                         <th class="px-4 py-3 text-center">Aksi</th>
                     </tr>
                 </thead>
@@ -200,7 +199,6 @@ require_once __DIR__ .
                             <td class="px-2 py-3"><span class="font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded"><?= e($row['Izin']) ?></span></td>
                             <td class="px-2 py-3"><span class="font-bold text-red-600 bg-red-50 px-2 py-1 rounded"><?= e($row['Alpha']) ?></span></td>
                             <td class="px-2 py-3"><span class="font-bold text-purple-600 bg-purple-50 px-2 py-1 rounded"><?= e($row['Jam_Lembur'] ?? '0') ?></span></td>
-                            <td class="px-2 py-3"><span class="font-bold text-gray-600 bg-gray-50 px-2 py-1 rounded"><?= e(number_format($row['Uang_Lembur'] ?? 0, 0, ',', '.')) ?></span></td>
                             <td class="px-4 py-3">
                                 <div class="flex items-center justify-center gap-4">
                                     <a href="presensi.php?action=edit&id=<?= e($row['Id_Presensi']) ?>" class="text-blue-600 hover:text-blue-800" title="Edit"><i class="fa-solid fa-pen-to-square"></i></a>
@@ -247,20 +245,20 @@ require_once __DIR__ .
                 </div>
                 <div>
                     <label for="Bulan" class="block mb-2 text-sm font-medium text-gray-700">Bulan</label>
-                    <select name="Bulan" id="Bulan" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" required>
+                    <select name="Bulan" id="Bulan" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" required disabled>
                         <?php 
                         $current_month_numeric = date("n"); // Numeric month (1-12)
                         $current_month_name = $bulan_list[$current_month_numeric - 1]; // Get month name from array
-                        $selected_month = $presensi_data['Bulan'] ?? $current_month_name; // Use existing data or current month
                         foreach($bulan_list as $b): 
                         ?>
-                        <option value="<?= e($b) ?>" <?= ($b == $selected_month) ? 'selected' : '' ?>><?= e($b) ?></option>
+                        <option value="<?= e($b) ?>" <?= ($b == $current_month_name) ? 'selected' : '' ?>><?= e($b) ?></option>
                         <?php endforeach; ?>
                     </select>
+                    <input type="hidden" name="Bulan" value="<?= e($current_month_name) ?>">
                 </div>
                 <div>
                     <label for="Tahun" class="block mb-2 text-sm font-medium text-gray-700">Tahun</label>
-                    <input type="number" name="Tahun" id="Tahun" value="<?= e($presensi_data['Tahun'] ?? date('Y')) ?>" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" required min="2020" max="<?= date('Y') + 1 ?>">
+                    <input type="number" name="Tahun" id="Tahun" value="<?= date('Y') ?>" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" required readonly>
                 </div>
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:col-span-2">
                     <div>
