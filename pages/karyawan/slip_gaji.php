@@ -88,211 +88,191 @@ require_once __DIR__ . '/../../includes/header.php';
     </div>
 
     <?php if ($slip_data): ?>
-        <div class="bg-white rounded-xl shadow-lg border-2 border-gray-300 overflow-hidden print:shadow-none print:border-2 print:border-black">
-            <!-- Outer border table structure -->
-            <table class="w-full border-collapse">
+        <div class="bg-white shadow-lg print:shadow-none max-w-4xl mx-auto rounded-lg overflow-hidden">
+            <!-- Main Salary Slip Table -->
+            <table class="w-full border border-gray-300 table-fixed" style="border-collapse: collapse;">
                 <!-- Company Header -->
                 <tr>
-                    <td class="border border-gray-400 p-6 text-center bg-gradient-to-r from-blue-50 to-indigo-50 print:bg-white">
-                        <div class="space-y-2">
-                            <h1 class="text-2xl font-bold text-gray-800 font-poppins">CV. KARYA WAHANA SENTOSA</h1>
-                            <p class="text-gray-600 text-sm">Jl. Imogiri Barat, Km.17, Bungas, Jetis, Bantul</p>
-                            <div class="mt-4 pt-4 border-t border-gray-300">
-                                <h2 class="text-xl font-bold text-gray-800">SLIP GAJI KARYAWAN</h2>
-                                <p class="text-gray-600 text-sm mt-1">Periode : <?= e(date('F Y', strtotime($slip_data['Tgl_Gaji']))) ?></p>
+                    <td colspan="2" class="border-b border-gray-300 p-8 text-center bg-white">
+                        <h1 class="text-3xl font-bold text-green-700 mb-2">CV. KARYA WAHANA SENTOSA</h1>
+                        <p class="text-gray-600 text-base mb-6">Jl. Imogiri Barat, Km.17, Bungas, Jetis, Bantul</p>
+                        
+                        <h2 class="text-2xl font-bold text-gray-800 mb-2">SLIP GAJI KARYAWAN</h2>
+                        <p class="text-gray-600 text-base">Periode : <?= e(date('F Y', strtotime($slip_data['Tgl_Gaji']))) ?></p>
+                    </td>
+                </tr>
+                
+                <!-- Employee Details Row -->
+                <tr>
+                    <td class="border-r border-gray-300 border-b border-gray-300 p-6 w-1/2 bg-gray-50">
+                        <div class="space-y-4">
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600 font-medium">Nama Karyawan :</span>
+                                <span class="font-bold text-gray-800"><?= e($slip_data['Nama_Karyawan']) ?></span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600 font-medium">Jabatan :</span>
+                                <span class="font-bold text-gray-800"><?= e($slip_data['Nama_Jabatan']) ?></span>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="border-b border-gray-300 p-6 w-1/2 bg-white">
+                        <div class="space-y-4">
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600 font-medium">ID Karyawan :</span>
+                                <span class="font-bold text-gray-800"><?= e($id_karyawan_login) ?></span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600 font-medium">Tanggal Pembayaran :</span>
+                                <span class="font-bold text-gray-800"><?= e(date('d F Y', strtotime($slip_data['Tgl_Gaji']))) ?></span>
                             </div>
                         </div>
                     </td>
                 </tr>
+
+                <!-- PENDAPATAN Section Header -->
+                <tr>
+                    <td colspan="2" class="border-b border-gray-300 p-4 bg-gradient-to-r from-green-100 to-emerald-100">
+                        <h3 class="text-lg font-bold text-green-700">PENDAPATAN</h3>
+                    </td>
+                </tr>
                 
-                <!-- Employee Details -->
+                <!-- PENDAPATAN Items -->
+                <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="border-r border-gray-300 border-b border-gray-300 p-4 w-2/3">
+                        <span class="text-gray-700 font-medium">Gaji Pokok</span>
+                    </td>
+                    <td class="border-r border-gray-300 border-b border-gray-300 p-4 text-right w-1/3">
+                        <span class="font-bold text-gray-800 text-base">Rp <?= number_format($slip_data['Gaji_Pokok'] ?? 0, 0, ',', '.') ?>,00</span>
+                    </td>
+                </tr>
+                
+                <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="border-r border-gray-300 border-b border-gray-300 p-4 w-2/3">
+                        <span class="text-gray-700 font-medium">Tunjangan</span>
+                    </td>
+                    <td class="border-r border-gray-300 border-b border-gray-300 p-4 text-right w-1/3">
+                        <span class="font-bold text-gray-800 text-base">Rp <?= number_format($slip_data['Total_Tunjangan'], 0, ',', '.') ?>,00</span>
+                    </td>
+                </tr>
+                
+                <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="border-r border-gray-300 border-b border-gray-300 p-4 w-2/3">
+                        <span class="text-gray-700 font-medium">Lembur <span class="text-gray-500 text-sm">(<?= e($presensi_data['Jam_Lembur'] ?? 0) ?> Jam)</span></span>
+                    </td>
+                    <td class="border-r border-gray-300 border-b border-gray-300 p-4 text-right w-1/3">
+                        <span class="font-bold text-gray-800 text-base">Rp <?= number_format($uang_lembur, 0, ',', '.') ?>,00</span>
+                    </td>
+                </tr>
+                
+                <!-- Total PENDAPATAN -->
                 <tr>
-                    <td class="border border-gray-400 p-0">
-                        <table class="w-full">
-                            <tr>
-                                <td class="border-r border-gray-400 p-4 w-1/2 bg-gray-50">
-                                    <div class="space-y-3 text-sm">
-                                        <div class="flex items-center">
-                                            <span class="w-32 text-gray-600 font-medium">Nama Karyawan :</span>
-                                            <span class="font-bold text-gray-800"><?= e($slip_data['Nama_Karyawan']) ?></span>
-                                        </div>
-                                        <div class="flex items-center">
-                                            <span class="w-32 text-gray-600 font-medium">Jabatan :</span>
-                                            <span class="font-bold text-gray-800"><?= e($slip_data['Nama_Jabatan']) ?></span>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td class="p-4 w-1/2 bg-white">
-                                    <div class="space-y-3 text-sm">
-                                        <div class="flex items-center">
-                                            <span class="w-32 text-gray-600 font-medium">ID Karyawan :</span>
-                                            <span class="font-bold text-gray-800 font-mono"><?= e($id_karyawan_login) ?></span>
-                                        </div>
-                                        <div class="flex items-center">
-                                            <span class="w-32 text-gray-600 font-medium">Tanggal Pembayaran :</span>
-                                            <span class="font-bold text-gray-800"><?= e(date('d F Y', strtotime($slip_data['Tgl_Gaji']))) ?></span>
-                                        </div>
-                                    </div>
-                                </td>
-                            </tr>
-                        </table>
+                    <td class="border-r border-gray-300 border-b border-gray-300 p-4 bg-green-50 w-2/3">
+                        <span class="font-bold text-green-700 text-base">Total Pendapatan</span>
+                    </td>
+                    <td class="border-r border-gray-300 border-b border-gray-300 p-4 bg-green-50 text-right w-1/3">
+                        <span class="font-bold text-green-700 text-lg">Rp <?= number_format($slip_data['Gaji_Kotor'], 0, ',', '.') ?>,00</span>
                     </td>
                 </tr>
 
-                <!-- PENDAPATAN Section -->
+                <!-- POTONGAN Section Header -->
                 <tr>
-                    <td class="border border-gray-400 p-0">
-                        <table class="w-full">
-                            <tr>
-                                <td class="bg-gradient-to-r from-green-100 to-emerald-100 p-4 border-b border-gray-400 print:bg-green-100">
-                                    <h3 class="text-lg font-bold text-green-800 flex items-center gap-2">
-                                        <span class="text-green-600 text-xl">💰</span> PENDAPATAN
-                                    </h3>
-                                </td>
-                            </tr>
-                        </table>
-                        <table class="w-full text-sm">
-                            <tr class="bg-gray-50 hover:bg-gray-100 transition-colors">
-                                <td class="border-r border-gray-400 p-4 font-medium text-gray-700">Gaji Pokok</td>
-                                <td class="p-4 text-right font-bold text-gray-900 text-base">Rp <?= number_format($slip_data['Gaji_Pokok'] ?? 0, 0, ',', '.') ?></td>
-                            </tr>
-                            <tr class="bg-white hover:bg-gray-50 transition-colors">
-                                <td class="border-r border-gray-400 p-4 font-medium text-gray-700">Tunjangan</td>
-                                <td class="p-4 text-right font-bold text-gray-900 text-base">Rp <?= number_format($slip_data['Total_Tunjangan'], 0, ',', '.') ?></td>
-                            </tr>
-                            <tr class="bg-gray-50 hover:bg-gray-100 transition-colors">
-                                <td class="border-r border-gray-400 p-4 font-medium text-gray-700">Lembur <span class="text-gray-500 text-xs">(<?= e($presensi_data['Jam_Lembur'] ?? 0) ?> Jam @ Rp 20.000)</span></td>
-                                <td class="p-4 text-right font-bold text-gray-900 text-base">Rp <?= number_format($uang_lembur, 0, ',', '.') ?></td>
-                            </tr>
-                            <tr class="border-t-2 border-green-500 bg-green-50">
-                                <td class="border-r border-gray-400 p-4 font-bold text-green-800 text-base">Total Pendapatan</td>
-                                <td class="p-4 text-right font-bold text-green-800 text-lg">Rp <?= number_format($slip_data['Gaji_Kotor'], 0, ',', '.') ?></td>
-                            </tr>
-                        </table>
+                    <td colspan="2" class="border-b border-gray-300 p-4 bg-gradient-to-r from-red-100 to-pink-100">
+                        <h3 class="text-lg font-bold text-red-800">POTONGAN</h3>
                     </td>
                 </tr>
-
-                <!-- POTONGAN Section -->
+                
+                <!-- POTONGAN Items -->
+                <?php
+                $gaji_pokok = $slip_data['Gaji_Pokok'] ?? 0;
+                $detail_potongan_display = [];
+                
+                // Potongan BPJS Ketenagakerjaan (2%)
+                $potongan_bpjs = $gaji_pokok * 0.02;
+                if ($potongan_bpjs > 0) {
+                    $detail_potongan_display[] = ['nama' => 'Potongan BPJS Ketenagakerjaan', 'keterangan' => '(2%)', 'jumlah' => $potongan_bpjs];
+                }
+                
+                // Potongan Absensi
+                $total_hari_tidak_hadir = ($presensi_data['Sakit'] ?? 0) + ($presensi_data['Izin'] ?? 0) + ($presensi_data['Alpha'] ?? 0);
+                if ($total_hari_tidak_hadir > 0) {
+                    $potongan_absensi = ($gaji_pokok * 0.03) * $total_hari_tidak_hadir;
+                    $detail_potongan_display[] = ['nama' => "Potongan Absensi", 'keterangan' => "({$total_hari_tidak_hadir} Hari)", 'jumlah' => $potongan_absensi];
+                }
+                
+                if (!empty($detail_potongan_display)):
+                    foreach ($detail_potongan_display as $potongan):
+                ?>
+                <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="border-r border-gray-300 border-b border-gray-300 p-4 w-2/3">
+                        <div class="font-medium text-gray-700"><?= e($potongan['nama']) ?></div>
+                        <div class="text-sm text-gray-500 mt-1"><?= e($potongan['keterangan']) ?></div>
+                    </td>
+                    <td class="border-r border-gray-300 border-b border-gray-300 p-4 text-right w-1/3">
+                        <span class="font-bold text-red-600 text-base">Rp <?= number_format($potongan['jumlah'], 0, ',', '.') ?>,00</span>
+                    </td>
+                </tr>
+                <?php 
+                    endforeach;
+                else:
+                ?>
+                <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="border-r border-gray-300 border-b border-gray-300 p-4 w-2/3">
+                        <span class="text-gray-700 font-medium">Tidak ada potongan</span>
+                    </td>
+                    <td class="border-r border-gray-300 border-b border-gray-300 p-4 text-right w-1/3">
+                        <span class="font-bold text-gray-800 text-base">Rp 0,00</span>
+                    </td>
+                </tr>
+                <?php endif; ?>
+                
+                <!-- Total POTONGAN -->
                 <tr>
-                    <td class="border border-gray-400 p-0">
-                        <table class="w-full">
-                            <tr>
-                                <td class="bg-gradient-to-r from-red-100 to-pink-100 p-4 border-b border-gray-400 print:bg-red-100">
-                                    <h3 class="text-lg font-bold text-red-800 flex items-center gap-2">
-                                        <span class="text-red-600 text-xl">📉</span> POTONGAN
-                                    </h3>
-                                </td>
-                            </tr>
-                        </table>
-                        <table class="w-full text-sm">
-                            <?php
-                            $gaji_pokok = $slip_data['Gaji_Pokok'] ?? 0;
-                            $detail_potongan_display = [];
-                            
-                            // Potongan BPJS Ketenagakerjaan (2%)
-                            $potongan_bpjs = $gaji_pokok * 0.02;
-                            if ($potongan_bpjs > 0) {
-                                $detail_potongan_display[] = ['nama' => 'BPJS Ketenagakerjaan', 'keterangan' => '(2% dari gaji pokok)', 'jumlah' => $potongan_bpjs];
-                            }
-                            
-                            // Potongan Absensi
-                            $total_hari_tidak_hadir = ($presensi_data['Sakit'] ?? 0) + ($presensi_data['Izin'] ?? 0) + ($presensi_data['Alpha'] ?? 0);
-                            if ($total_hari_tidak_hadir > 0) {
-                                $potongan_absensi = ($gaji_pokok * 0.03) * $total_hari_tidak_hadir;
-                                $detail_potongan_display[] = ['nama' => 'Potongan Absensi', 'keterangan' => "({$total_hari_tidak_hadir} hari tidak hadir)", 'jumlah' => $potongan_absensi];
-                            }
-                            
-                            if (!empty($detail_potongan_display)):
-                                $row_count = 0;
-                                foreach ($detail_potongan_display as $potongan):
-                                    $bg_class = ($row_count % 2 == 0) ? 'bg-gray-50 hover:bg-gray-100' : 'bg-white hover:bg-gray-50';
-                            ?>
-                            <tr class="<?= $bg_class ?> transition-colors">
-                                <td class="border-r border-gray-400 p-4">
-                                    <div class="font-medium text-gray-700"><?= e($potongan['nama']) ?></div>
-                                    <div class="text-xs text-gray-500 mt-1"><?= e($potongan['keterangan']) ?></div>
-                                </td>
-                                <td class="p-4 text-right font-bold text-red-600 text-base">-Rp <?= number_format($potongan['jumlah'], 0, ',', '.') ?></td>
-                            </tr>
-                            <?php 
-                                    $row_count++;
-                                endforeach;
-                            else:
-                            ?>
-                            <tr class="bg-gray-50">
-                                <td class="border-r border-gray-400 p-4 text-gray-500 font-medium">Tidak ada potongan</td>
-                                <td class="p-4 text-right font-bold text-gray-900 text-base">Rp 0</td>
-                            </tr>
-                            <?php endif; ?>
-                            <tr class="border-t-2 border-red-500 bg-red-50">
-                                <td class="border-r border-gray-400 p-4 font-bold text-red-800 text-base">Total Potongan</td>
-                                <td class="p-4 text-right font-bold text-red-800 text-lg">-Rp <?= number_format($slip_data['Total_Potongan'], 0, ',', '.') ?></td>
-                            </tr>
-                        </table>
+                    <td class="border-r border-gray-300 border-b border-gray-300 p-4 bg-red-50 w-2/3">
+                        <span class="font-bold text-red-800 text-base">Total Potongan</span>
+                    </td>
+                    <td class="border-r border-gray-300 border-b border-gray-300 p-4 bg-red-50 text-right w-1/3">
+                        <span class="font-bold text-red-800 text-lg">Rp <?= number_format($slip_data['Total_Potongan'], 0, ',', '.') ?>,00</span>
                     </td>
                 </tr>
 
                 <!-- RINCIAN KEHADIRAN Section -->
                 <tr>
-                    <td class="border border-gray-400 p-0">
-                        <table class="w-full">
-                            <tr>
-                                <td class="bg-gradient-to-r from-blue-100 to-indigo-100 p-4 border-b border-gray-400 print:bg-blue-100">
-                                    <h4 class="text-lg font-bold text-blue-800 flex items-center gap-2">
-                                        <span class="text-blue-600 text-xl">📅</span> RINCIAN KEHADIRAN
-                                    </h4>
-                                </td>
-                            </tr>
-                        </table>
-                        <table class="w-full text-sm">
-                            <tr class="bg-gray-50">
-                                <td class="border-r border-gray-400 p-4 text-center w-1/4 hover:bg-gray-100 transition-colors">
-                                    <div class="space-y-2">
-                                        <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center mx-auto text-white text-xs font-bold">✓</div>
-                                        <div class="font-bold text-green-600 text-xl"><?= e($presensi_data['Hadir'] ?? 0) ?></div>
-                                        <div class="text-gray-600 text-xs font-medium">Hari Hadir</div>
-                                    </div>
-                                </td>
-                                <td class="border-r border-gray-400 p-4 text-center w-1/4 hover:bg-gray-100 transition-colors">
-                                    <div class="space-y-2">
-                                        <div class="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center mx-auto text-white text-xs font-bold">🤒</div>
-                                        <div class="font-bold text-yellow-600 text-xl"><?= e($presensi_data['Sakit'] ?? 0) ?></div>
-                                        <div class="text-gray-600 text-xs font-medium">Hari Sakit</div>
-                                    </div>
-                                </td>
-                                <td class="border-r border-gray-400 p-4 text-center w-1/4 hover:bg-gray-100 transition-colors">
-                                    <div class="space-y-2">
-                                        <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center mx-auto text-white text-xs font-bold">🕋</div>
-                                        <div class="font-bold text-blue-600 text-xl"><?= e($presensi_data['Izin'] ?? 0) ?></div>
-                                        <div class="text-gray-600 text-xs font-medium">Hari Izin</div>
-                                    </div>
-                                </td>
-                                <td class="p-4 text-center w-1/4 hover:bg-gray-100 transition-colors">
-                                    <div class="space-y-2">
-                                        <div class="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center mx-auto text-white text-xs font-bold">✕</div>
-                                        <div class="font-bold text-red-600 text-xl"><?= e($presensi_data['Alpha'] ?? 0) ?></div>
-                                        <div class="text-gray-600 text-xs font-medium">Hari Alpha</div>
-                                    </div>
-                                </td>
-                            </tr>
-                        </table>
+                    <td colspan="2" class="border-b border-gray-300 p-4 bg-gradient-to-r from-blue-100 to-indigo-100">
+                        <h3 class="text-lg font-bold text-blue-800">RINCIAN KEHADIRAN</h3>
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td colspan="2" class="border-b border-gray-300 p-6 text-center bg-white">
+                        <div class="flex justify-around items-center">
+                            <div class="text-center">
+                                <div class="font-bold text-black text-2xl mb-1"><?= e($presensi_data['Hadir'] ?? 0) ?></div>
+                                <div class="text-gray-600 text-sm">Jumlah Hadir</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="font-bold text-black text-2xl mb-1"><?= e($presensi_data['Sakit'] ?? 0) ?></div>
+                                <div class="text-gray-600 text-sm">Jumlah Sakit</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="font-bold text-black text-2xl mb-1"><?= e($presensi_data['Izin'] ?? 0) ?></div>
+                                <div class="text-gray-600 text-sm">Jumlah Izin</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="font-bold text-black text-2xl mb-1"><?= e($presensi_data['Alpha'] ?? 0) ?></div>
+                                <div class="text-gray-600 text-sm">Jumlah Alpha</div>
+                            </div>
+                        </div>
                     </td>
                 </tr>
 
-                <!-- GAJI BERSIH Section -->
+                <!-- GAJI BERSIH DITERIMA Section -->
                 <tr>
-                    <td class="border border-gray-400 p-0">
-                        <table class="w-full bg-gray-50">
-                            <tr>
-                                <td class="p-8 text-center">
-                                    <div class="space-y-3">
-                                        <h3 class="text-lg font-bold text-gray-700 uppercase tracking-wide">Gaji Bersih Diterima</h3>
-                                        <p class="text-sm text-gray-600">(Take Home Pay)</p>
-                                        <div class="text-4xl font-bold text-gray-800 mt-4">Rp <?= number_format($slip_data['Gaji_Bersih'], 0, ',', '.') ?></div>
-                                    </div>
-                                </td>
-                            </tr>
-                        </table>
+                    <td colspan="2" class="border border-gray-300 p-6 text-center bg-gray-50">
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold text-gray-800 text-xl">GAJI BERSIH DITERIMA (TAKE HOME PAY)</span>
+                            <span class="font-bold text-green-700 text-2xl">Rp <?= number_format($slip_data['Gaji_Bersih'], 0, ',', '.') ?>,00</span>
+                        </div>
                     </td>
                 </tr>
             </table>
@@ -307,3 +287,54 @@ require_once __DIR__ . '/../../includes/header.php';
 </div>
 
 <?php require_once __DIR__ . '/../../includes/footer.php'; ?>
+
+<style>
+@media print {
+    .no-print { display: none !important; }
+    body { 
+        font-family: Arial, sans-serif; 
+        color: black !important;
+        background: white !important;
+        font-size: 12px;
+    }
+    table {
+        border-collapse: collapse !important;
+        width: 100% !important;
+    }
+    .border-gray-300 { border-color: #999 !important; }
+    .text-gray-700, .text-gray-800 { color: #333 !important; }
+    .text-gray-600 { color: #666 !important; }
+    .text-green-700 { color: #15803d !important; }
+    .text-red-800 { color: #991b1b !important; }
+    .text-blue-800 { color: #1e40af !important; }
+    .text-green-600 { color: #16a34a !important; }
+    .text-red-600 { color: #dc2626 !important; }
+    .text-yellow-600 { color: #ca8a04 !important; }
+    .text-blue-600 { color: #2563eb !important; }
+    .bg-gradient-to-r { background: linear-gradient(to right, var(--tw-gradient-stops)) !important; }
+    .from-green-50 { --tw-gradient-from: #f0fdf4 !important; }
+    .to-emerald-50 { --tw-gradient-to: #ecfdf5 !important; }
+    .from-green-100 { --tw-gradient-from: #dcfce7 !important; }
+    .to-emerald-100 { --tw-gradient-to: #d1fae5 !important; }
+    .from-red-100 { --tw-gradient-from: #fee2e2 !important; }
+    .to-pink-100 { --tw-gradient-to: #fce7f3 !important; }
+    .from-blue-100 { --tw-gradient-from: #dbeafe !important; }
+    .to-indigo-100 { --tw-gradient-to: #e0e7ff !important; }
+    .bg-gray-50, .bg-green-50, .bg-red-50 { background-color: #f9f9f9 !important; }
+    .font-bold { font-weight: bold !important; }
+    .text-center { text-align: center !important; }
+    .text-right { text-align: right !important; }
+    .rounded-lg { border-radius: 8px !important; }
+    .shadow-lg { box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1) !important; }
+}
+
+.hover\:bg-gray-50:hover {
+    background-color: #f9fafb;
+}
+
+.transition-colors {
+    transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 150ms;
+}
+</style>

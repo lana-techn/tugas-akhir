@@ -72,14 +72,14 @@ $detail_potongan_display = [];
 // Potongan BPJS Ketenagakerjaan (2%)
 $potongan_bpjs = $gaji_pokok * 0.02;
 if ($potongan_bpjs > 0) {
-    $detail_potongan_display[] = ['nama' => 'Potongan BPJS Ketenagakerjaan (2%)', 'jumlah' => $potongan_bpjs];
+    $detail_potongan_display[] = ['nama' => 'Potongan BPJS Ketenagakerjaan', 'keterangan' => '(2%)', 'jumlah' => $potongan_bpjs];
 }
 
 // Potongan Absensi
 $total_hari_tidak_hadir = ($presensi_data['Sakit'] ?? 0) + ($presensi_data['Izin'] ?? 0) + ($presensi_data['Alpha'] ?? 0);
 if ($total_hari_tidak_hadir > 0) {
     $potongan_absensi = ($gaji_pokok * 0.03) * $total_hari_tidak_hadir;
-    $detail_potongan_display[] = ['nama' => "Potongan Absensi ({$total_hari_tidak_hadir} hari)", 'jumlah' => $potongan_absensi];
+    $detail_potongan_display[] = ['nama' => "Potongan Absensi", 'keterangan' => "({$total_hari_tidak_hadir} Hari)", 'jumlah' => $potongan_absensi];
 }
 
 // Buat HTML untuk PDF
@@ -93,135 +93,179 @@ $html = '
         @page { margin: 15mm; }
         body { 
             font-family: "Arial", sans-serif; 
-            font-size: 11px; 
+            font-size: 12px; 
             color: #000; 
             margin: 0; 
             padding: 0;
             line-height: 1.4;
         }
         .slip-container { 
-            border: 2px solid #000; 
+            border: 2px solid #333; 
             width: 100%; 
             border-collapse: collapse;
             background: #fff;
         }
-        .header-row td {
-            background: linear-gradient(135deg, #dbeafe, #bfdbfe);
-            border-bottom: 2px solid #000;
-            padding: 25px;
+        .header-section {
+            background: #fff;
+            border-bottom: 2px solid #333;
+            padding: 30px;
             text-align: center;
         }
         .company-name { 
-            font-size: 24px; 
+            font-size: 28px; 
             font-weight: bold; 
-            margin-bottom: 8px;
-            color: #1e3a8a;
+            margin-bottom: 10px;
+            color: #16a34a;
         }
         .company-address { 
-            font-size: 12px; 
-            color: #4b5563;
-            margin-bottom: 15px; 
+            font-size: 14px; 
+            color: #6b7280;
+            margin-bottom: 20px; 
         }
         .slip-title { 
-            font-size: 20px; 
+            font-size: 22px; 
             font-weight: bold; 
-            margin: 15px 0 8px 0;
+            margin: 20px 0 10px 0;
             color: #1f2937;
-            border-top: 1px solid #d1d5db;
-            padding-top: 15px;
         }
         .period { 
-            font-size: 12px;
+            font-size: 14px;
             color: #6b7280;
         }
-        .detail-row td {
-            border: 1px solid #000;
-            padding: 10px;
-            font-size: 12px;
+        .employee-info {
+            padding: 0;
         }
-        .detail-label {
-            width: 120px;
-            background: #f7fafc;
-            font-weight: bold;
-            color: #2d3748;
+        .info-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .info-row td {
+            border: 1px solid #333;
+            padding: 15px;
+            font-size: 13px;
+        }
+        .info-label {
+            width: 50%;
+            background: #f9fafb;
+            font-weight: 600;
+            color: #374151;
         }
         .section-header {
-            background: linear-gradient(135deg, #4299e1, #3182ce);
-            color: white;
+            background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+            color: #15803d;
             padding: 12px;
             font-weight: bold;
-            font-size: 14px;
-            text-align: center;
-            border: 1px solid #000;
-        }
-        .section-header.income {
-            background: linear-gradient(135deg, #48bb78, #38a169);
+            font-size: 16px;
+            text-align: left;
+            border: 1px solid #333;
         }
         .section-header.deduction {
-            background: linear-gradient(135deg, #f56565, #e53e3e);
+            background: linear-gradient(135deg, #fecaca, #fca5a5);
+            color: #dc2626;
+        }
+        .section-header.attendance {
+            background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+            color: #1d4ed8;
+        }
+        .item-table {
+            width: 100%;
+            border-collapse: collapse;
         }
         .item-row td {
-            border: 1px solid #000;
-            padding: 8px;
-            font-size: 12px;
+            border: 1px solid #333;
+            padding: 12px;
+            font-size: 13px;
         }
-        .item-row:nth-child(even) {
-            background-color: #f7fafc;
+        .item-row:hover {
+            background-color: #f9fafb;
+        }
+        .item-desc {
+            width: 66.67%;
+            font-weight: 500;
+            color: #374151;
         }
         .amount {
             text-align: right;
             font-weight: bold;
-            width: 150px;
+            width: 33.33%;
+            font-size: 13px;
+            color: #1f2937;
+        }
+        .item-desc-left {
+            width: 66.67%;
+            font-weight: 500;
+            color: #374151;
+            text-align: left;
         }
         .total-row {
-            background: #e2e8f0;
+            background: #f3f4f6;
             font-weight: bold;
         }
         .total-row td {
-            border: 2px solid #000;
-            padding: 10px;
-            font-size: 13px;
-        }
-        .attendance-header {
-            background: linear-gradient(135deg, #805ad5, #6b46c1);
-            color: white;
+            border: 2px solid #333;
             padding: 12px;
-            font-weight: bold;
             font-size: 14px;
-            text-align: center;
-            border: 1px solid #000;
+        }
+        .total-income {
+            background: #dcfce7;
+        }
+        .total-deduction {
+            background: #fecaca;
+        }
+        .attendance-section {
+            padding: 0;
+        }
+        .attendance-row {
+            width: 100%;
+            border-collapse: collapse;
         }
         .attendance-row td {
-            border: 1px solid #000;
-            padding: 15px;
+            border: 1px solid #333;
+            padding: 20px;
             text-align: center;
-            font-size: 11px;
+            width: 25%;
         }
         .attendance-number {
             font-weight: bold;
-            font-size: 18px;
-            margin-bottom: 5px;
+            font-size: 20px;
+            margin-bottom: 8px;
+            color: #000;
         }
         .attendance-label {
-            font-size: 10px;
-            color: #4a5568;
+            font-size: 11px;
+            color: #6b7280;
+            font-weight: 500;
         }
         .final-amount {
-            background: #f3f4f6;
+            background: #f9fafb;
             color: #1f2937;
             padding: 25px;
-            text-align: center;
             font-weight: bold;
-            font-size: 14px;
-            border: 2px solid #000;
+            font-size: 16px;
+            border: 2px solid #333;
+        }
+        .final-amount-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+        }
+        .final-amount-label {
+            font-size: 20px;
+            color: #1f2937;
+        }
+        .final-amount-number {
+            font-size: 24px;
+            color: #16a34a;
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
     <table class="slip-container">
         <!-- Header Perusahaan -->
-        <tr class="header-row">
-            <td>
+        <tr>
+            <td class="header-section">
                 <div class="company-name">CV. KARYA WAHANA SENTOSA</div>
                 <div class="company-address">Jl. Imogiri Barat, Km.17, Bungas, Jetis, Bantul</div>
                 <div class="slip-title">SLIP GAJI KARYAWAN</div>
@@ -231,19 +275,17 @@ $html = '
         
         <!-- Detail Karyawan -->
         <tr>
-            <td style="padding: 0;">
-                <table style="width: 100%; border-collapse: collapse;">
+            <td class="employee-info">
+                <table class="info-table">
                     <tr>
-                        <td class="detail-row detail-label">Nama Karyawan :</td>
-                        <td class="detail-row" style="width: 30%;">' . e($slip_data['Nama_Karyawan']) . '</td>
-                        <td class="detail-row detail-label">ID Karyawan :</td>
-                        <td class="detail-row">' . e($slip_data['id_karyawan_db']) . '</td>
-                    </tr>
-                    <tr>
-                        <td class="detail-row detail-label">Jabatan :</td>
-                        <td class="detail-row">' . e($slip_data['Nama_Jabatan']) . '</td>
-                        <td class="detail-row detail-label">Tanggal Pembayaran :</td>
-                        <td class="detail-row">' . e(date('d/m/y', strtotime($slip_data['Tgl_Gaji']))) . '</td>
+                        <td class="info-row info-label">
+                            <div style="margin-bottom: 15px;"><strong>Nama Karyawan :</strong> ' . e($slip_data['Nama_Karyawan']) . '</div>
+                            <div><strong>Jabatan :</strong> ' . e($slip_data['Nama_Jabatan']) . '</div>
+                        </td>
+                        <td class="info-row">
+                            <div style="margin-bottom: 15px;"><strong>ID Karyawan :</strong> ' . e($slip_data['id_karyawan_db']) . '</div>
+                            <div><strong>Tanggal Pembayaran :</strong> ' . e(date('d F Y', strtotime($slip_data['Tgl_Gaji']))) . '</div>
+                        </td>
                     </tr>
                 </table>
             </td>
@@ -251,28 +293,28 @@ $html = '
         
         <!-- PENDAPATAN -->
         <tr>
-            <td class="section-header income">
-                💰 PENDAPATAN
+            <td class="section-header">
+                PENDAPATAN
             </td>
         </tr>
         <tr>
             <td style="padding: 0;">
-                <table style="width: 100%; border-collapse: collapse;">
+                <table class="item-table">
                     <tr class="item-row">
-                        <td style="border: 1px solid #000; padding: 6px;">Gaji Pokok</td>
-                        <td class="amount" style="border: 1px solid #000; padding: 6px;">Rp ' . number_format($slip_data['Gaji_Pokok'] ?? 0, 0, ',', '.') . '</td>
+                        <td class="item-desc-left">Gaji Pokok</td>
+                        <td class="amount">Rp ' . number_format($slip_data['Gaji_Pokok'] ?? 0, 0, ',', '.') . ',00</td>
                     </tr>
                     <tr class="item-row">
-                        <td style="border: 1px solid #000; padding: 6px;">Tunjangan</td>
-                        <td class="amount" style="border: 1px solid #000; padding: 6px;">Rp ' . number_format($slip_data['Total_Tunjangan'], 0, ',', '.') . '</td>
+                        <td class="item-desc-left">Tunjangan</td>
+                        <td class="amount">Rp ' . number_format($slip_data['Total_Tunjangan'], 0, ',', '.') . ',00</td>
                     </tr>
                     <tr class="item-row">
-                        <td style="border: 1px solid #000; padding: 6px;">Lembur (' . e($jam_lembur) . ' Jam)</td>
-                        <td class="amount" style="border: 1px solid #000; padding: 6px;">Rp ' . number_format($uang_lembur, 0, ',', '.') . '</td>
+                        <td class="item-desc-left">Lembur <span style="color: #6b7280; font-size: 11px;">(' . e($jam_lembur) . ' Jam)</span></td>
+                        <td class="amount">Rp ' . number_format($uang_lembur, 0, ',', '.') . ',00</td>
                     </tr>
-                    <tr class="total-row">
-                        <td style="border: 2px solid #000; padding: 6px; font-weight: bold;">Total Pendapatan</td>
-                        <td class="amount" style="border: 2px solid #000; padding: 6px; font-weight: bold;">Rp ' . number_format($slip_data['Gaji_Kotor'], 0, ',', '.') . '</td>
+                    <tr class="total-row total-income">
+                        <td style="color: #16a34a;">Total Pendapatan</td>
+                        <td class="amount" style="color: #16a34a;">Rp ' . number_format($slip_data['Gaji_Kotor'], 0, ',', '.') . ',00</td>
                     </tr>
                 </table>
             </td>
@@ -281,33 +323,33 @@ $html = '
         <!-- POTONGAN -->
         <tr>
             <td class="section-header deduction">
-                📉 POTONGAN
+                POTONGAN
             </td>
         </tr>
         <tr>
             <td style="padding: 0;">
-                <table style="width: 100%; border-collapse: collapse;">';
+                <table class="item-table">';
                 
                 if(!empty($detail_potongan_display)) {
-                    $row_count = 0;
                     foreach($detail_potongan_display as $p) {
-                        $bg_style = ($row_count % 2 == 0) ? 'background-color: #f8f8f8;' : '';
-                        $html .= '<tr style="' . $bg_style . '">
-                            <td style="border: 1px solid #000; padding: 6px;">' . e($p['nama']) . '</td>
-                            <td class="amount" style="border: 1px solid #000; padding: 6px;">Rp ' . number_format($p['jumlah'], 0, ',', '.') . '</td>
+                        $html .= '<tr class="item-row">
+                            <td class="item-desc-left">
+                                <div style="font-weight: 500; color: #374151;">' . e($p['nama']) . '</div>
+                                <div style="font-size: 11px; color: #6b7280; margin-top: 4px;">' . e($p['keterangan']) . '</div>
+                            </td>
+                            <td class="amount" style="color: #dc2626;">Rp ' . number_format($p['jumlah'], 0, ',', '.') . ',00</td>
                         </tr>';
-                        $row_count++;
                     }
                 } else {
-                    $html .= '<tr style="background-color: #f8f8f8;">
-                        <td style="border: 1px solid #000; padding: 6px;">Tidak ada potongan</td>
-                        <td class="amount" style="border: 1px solid #000; padding: 6px;">Rp 0</td>
+                    $html .= '<tr class="item-row">
+                        <td class="item-desc-left">Tidak ada potongan</td>
+                        <td class="amount">Rp 0,00</td>
                     </tr>';
                 }
                 
-$html .= '          <tr class="total-row">
-                        <td style="border: 2px solid #000; padding: 6px; font-weight: bold; color: #cc0000;">Total Potongan</td>
-                        <td class="amount" style="border: 2px solid #000; padding: 6px; font-weight: bold; color: #cc0000;">Rp ' . number_format($slip_data['Total_Potongan'], 0, ',', '.') . '</td>
+$html .= '          <tr class="total-row total-deduction">
+                        <td style="color: #dc2626;">Total Potongan</td>
+                        <td class="amount" style="color: #dc2626;">Rp ' . number_format($slip_data['Total_Potongan'], 0, ',', '.') . ',00</td>
                     </tr>
                 </table>
             </td>
@@ -315,27 +357,27 @@ $html .= '          <tr class="total-row">
         
         <!-- RINCIAN KEHADIRAN -->
         <tr>
-            <td class="attendance-header">
-                📅 RINCIAN KEHADIRAN
+            <td class="section-header attendance">
+                RINCIAN KEHADIRAN
             </td>
         </tr>
         <tr>
-            <td style="padding: 0;">
-                <table style="width: 100%; border-collapse: collapse;">
-                    <tr class="attendance-row">
-                        <td style="border: 1px solid #000; width: 25%;">
+            <td class="attendance-section">
+                <table class="attendance-row">
+                    <tr>
+                        <td style="border: 1px solid #333; padding: 20px; text-align: center;">
                             <div class="attendance-number">' . $kehadiran_hari . '</div>
                             <div class="attendance-label">Jumlah Hadir</div>
                         </td>
-                        <td style="border: 1px solid #000; width: 25%;">
+                        <td style="border: 1px solid #333; padding: 20px; text-align: center;">
                             <div class="attendance-number">' . ($presensi_data['Sakit'] ?? 0) . '</div>
                             <div class="attendance-label">Jumlah Sakit</div>
                         </td>
-                        <td style="border: 1px solid #000; width: 25%;">
+                        <td style="border: 1px solid #333; padding: 20px; text-align: center;">
                             <div class="attendance-number">' . ($presensi_data['Izin'] ?? 0) . '</div>
                             <div class="attendance-label">Jumlah Izin</div>
                         </td>
-                        <td style="border: 1px solid #000; width: 25%;">
+                        <td style="border: 1px solid #333; padding: 20px; text-align: center;">
                             <div class="attendance-number">' . ($presensi_data['Alpha'] ?? 0) . '</div>
                             <div class="attendance-label">Jumlah Alpha</div>
                         </td>
@@ -347,8 +389,10 @@ $html .= '          <tr class="total-row">
         <!-- GAJI BERSIH -->
         <tr>
             <td class="final-amount">
-                <div>GAJI BERSIH DITERIMA (TAKE HOME PAY)</div>
-                <div style="font-size: 22px; margin-top: 10px; color: #111827;">Rp ' . number_format($slip_data['Gaji_Bersih'], 0, ',', '.') . '</div>
+                <div class="final-amount-content">
+                    <span class="final-amount-label">GAJI BERSIH DITERIMA (TAKE HOME PAY)</span>
+                    <span class="final-amount-number">Rp ' . number_format($slip_data['Gaji_Bersih'], 0, ',', '.') . ',00</span>
+                </div>
             </td>
         </tr>
     </table>
